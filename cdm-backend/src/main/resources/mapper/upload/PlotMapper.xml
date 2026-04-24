@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.PlotMapper">
+
+  <!--
+    Vocabulary 테이블 참조: MyBatis ${} 대신 고정 토큰 사용.
+    kr.or.kids.domain.cm.upload.mybatis.PlotVocabularyTableInterceptor 가
+    plotVocab 파라미터로부터 SqlIdentifierGuard.qualify 로 조립한 식별자로 치환한다.
+    토큰: __PLOT_VOCAB_CONCEPT__, __PLOT_VOCAB_CONCEPT_ANCESTOR__
+  -->
+
+  <!-- ═══════════════════════════════════════════
+       공통 SQL fragment
+       ═══════════════════════════════════════════ -->
+
+  <!--
+    conceptFilter: concept_id 조건 생성
+    - includeDescendant=true : concept_ancestor 조인 + concept 유효성 검증 (standard_concept='S', domain_id 선택, minLevels 선택)
+    - includeDescendant=false: 단순 = #{conceptId}
+  -->
+  <sql id="conceptFilter">
+    <choose>
+      <when test="includeDescendant">
+        IN (
+          SELECT ca.descendant_concept_id
+            FROM __PLOT_VOCAB_CONCEPT_ANCESTOR__ ca
+            JOIN __PLOT_VOCAB_CONCEPT__ c_std
+              ON c_std.concept_id = ca.descendant_concept_id
+             AND c_std.standard_concept = 'S'
+             <if test="domainId != null">AND c_std.domain_id = #{domainId}</if>
+           WHERE ca.ancestor_concept_id = #{conceptId}
+             <if test="minLevels != null">AND ca.min_levels_of_separation &gt;= #{minLevels}</if>
+          UNION ALL
+          SELECT #{conceptId}
+        )
+      </when>
+      <otherwise>
+        = #{conceptId}
+      </otherwise>
+    </choose>
+  </sql>
+
+  <!-- 생년월일: year + month만 사용(일은 해당월 1일). day_of_birth 컬럼 미사용 -->
+  <sql id="ageGroupExpression">
+    CASE
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 10  THEN '0~9세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 20  THEN '10~19세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 30  THEN '20~29세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 40  THEN '30~39세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 50  THEN '40~49세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 60  THEN '50~59세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 70  THEN '60~69세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 80  THEN '70~79세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 90  THEN '80~89세'
+      WHEN EXTRACT(YEAR FROM AGE(vo.visit_start_date,
+            MAKE_DATE(p.year_of_birth,
+                      COALESCE(p.month_of_birth,1),
+                      1))) &lt; 100 THEN '90~99세'
+      ELSE '100세 이상'
+    END
+  </sql>
+
+  <!-- ═══════════════════════════════════════════
+       1) 전체 환자 수
+       ═══════════════════════════════════════════ -->
+  <select id="countAllPatients" resultType="java.lang.Long">
+    SELECT COUNT(DISTINCT p.person_id)
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+     WHERE 1=1
+       <if test="instTaskSn != null">AND p.inst_task_sn = #{instTaskSn}</if>
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       2) 성별 분포 (Pie)
+       ═══════════════════════════════════════════ -->
+  <select id="genderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id
+             WHEN 8507 THEN 'Male'
+             WHEN 8532 THEN 'Female'
+             ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR), 'Unknown')
+           END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+     WHERE 1=1
+       <if test="instTaskSn != null">AND p.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       3) 연령 분포 (Bar) — person 단독 조회 (visit_occurrence 불필요)
+       빈 문자열/공백/비숫자 시 CAST 오류 방지: TRIM, NULLIF, 숫자 정규식 필터 사용
+       ═══════════════════════════════════════════ -->
+  <select id="ageDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               CASE
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 10  THEN '0~9세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 20  THEN '10~19세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 30  THEN '20~29세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 40  THEN '30~39세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 50  THEN '40~49세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 60  THEN '50~59세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 70  THEN '60~69세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 80  THEN '70~79세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 90  THEN '80~89세'
+                 WHEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, bd.birth_dt)) &lt; 100 THEN '90~99세'
+                 ELSE '100세 이상'
+               END AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          CROSS JOIN LATERAL (
+            SELECT CASE
+              WHEN NULLIF(TRIM(COALESCE(p.year_of_birth::text,'')), '') IS NOT NULL
+               AND TRIM(COALESCE(p.year_of_birth::text,'')) ~ '^[0-9]+$'
+              THEN MAKE_DATE(
+                CAST(TRIM(p.year_of_birth::text) AS INTEGER),
+                COALESCE(CASE WHEN TRIM(COALESCE(p.month_of_birth::text,'')) ~ '^[0-9]+$' THEN CAST(TRIM(p.month_of_birth::text) AS INTEGER) END, 1),
+                1
+              )
+              ELSE NULL
+            END AS birth_dt
+          ) bd
+         WHERE bd.birth_dt IS NOT NULL
+           <if test="instTaskSn != null">AND p.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     WHERE age_group IS NOT NULL
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       4) 시계열 방문 환자 분포 (Line)
+       ═══════════════════════════════════════════ -->
+  <select id="visitTimeSeries" resultType="map">
+    SELECT TO_CHAR(vo.visit_start_date, 'YYYY-MM') AS "label",
+           COUNT(DISTINCT vo.person_id)             AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+     WHERE vo.visit_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND vo.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY TO_CHAR(vo.visit_start_date, 'YYYY-MM')
+     ORDER BY "label"
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       5) 방문 유형별 환자 수 (Pie) — concept 이름 표시
+       ═══════════════════════════════════════════ -->
+  <select id="visitTypeDistribution" resultType="map">
+    SELECT COALESCE(c_visit.concept_name, CAST(vo.visit_concept_id AS VARCHAR), 'Unknown') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      LEFT JOIN __PLOT_VOCAB_CONCEPT__ c_visit ON c_visit.concept_id = vo.visit_concept_id
+     WHERE 1=1
+       <if test="instTaskSn != null">AND vo.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY vo.visit_concept_id, c_visit.concept_name
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       6~9) 특정 진단(condition) 필터
+       ═══════════════════════════════════════════ -->
+  <select id="conditionGenderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id WHEN 8507 THEN 'Male' WHEN 8532 THEN 'Female' ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR),'Unknown') END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+      JOIN kids_link_own.tb_cm_i_tmpr_condition_occurrence co ON co.person_id = p.person_id
+     WHERE co.condition_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND co.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <select id="conditionAgeDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               <include refid="ageGroupExpression"/> AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          JOIN kids_link_own.tb_cm_i_tmpr_condition_occurrence co ON co.person_id = p.person_id
+          JOIN kids_link_own.tb_cm_i_tmpr_visit_occurrence vo ON vo.person_id = p.person_id
+         WHERE co.condition_concept_id <include refid="conceptFilter"/>
+           AND p.year_of_birth IS NOT NULL
+           <if test="instTaskSn != null">AND co.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <select id="conditionVisitTimeSeries" resultType="map">
+    SELECT TO_CHAR(vo.visit_start_date, 'YYYY-MM') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_condition_occurrence co ON co.person_id = vo.person_id
+     WHERE co.condition_concept_id <include refid="conceptFilter"/>
+       AND vo.visit_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND co.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY TO_CHAR(vo.visit_start_date, 'YYYY-MM')
+     ORDER BY "label"
+  </select>
+
+  <select id="conditionVisitTypeDistribution" resultType="map">
+    SELECT COALESCE(c_visit.concept_name, CAST(vo.visit_concept_id AS VARCHAR), 'Unknown') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_condition_occurrence co ON co.person_id = vo.person_id
+      LEFT JOIN __PLOT_VOCAB_CONCEPT__ c_visit ON c_visit.concept_id = vo.visit_concept_id
+     WHERE co.condition_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND co.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY vo.visit_concept_id, c_visit.concept_name
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       10~13) 특정 약물(drug) 필터
+       ═══════════════════════════════════════════ -->
+  <select id="drugGenderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id WHEN 8507 THEN 'Male' WHEN 8532 THEN 'Female' ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR),'Unknown') END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+      JOIN kids_link_own.tb_cm_i_tmpr_drug_exposure de ON de.person_id = p.person_id
+     WHERE de.drug_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND de.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <select id="drugAgeDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               <include refid="ageGroupExpression"/> AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          JOIN kids_link_own.tb_cm_i_tmpr_drug_exposure de ON de.person_id = p.person_id
+          JOIN kids_link_own.tb_cm_i_tmpr_visit_occurrence vo ON vo.person_id = p.person_id
+         WHERE de.drug_concept_id <include refid="conceptFilter"/>
+           AND p.year_of_birth IS NOT NULL
+           <if test="instTaskSn != null">AND de.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <select id="drugVisitTimeSeries" resultType="map">
+    SELECT TO_CHAR(vo.visit_start_date, 'YYYY-MM') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_drug_exposure de ON de.person_id = vo.person_id
+     WHERE de.drug_concept_id <include refid="conceptFilter"/>
+       AND vo.visit_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND de.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY TO_CHAR(vo.visit_start_date, 'YYYY-MM')
+     ORDER BY "label"
+  </select>
+
+  <select id="drugVisitTypeDistribution" resultType="map">
+    SELECT COALESCE(c_visit.concept_name, CAST(vo.visit_concept_id AS VARCHAR), 'Unknown') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_drug_exposure de ON de.person_id = vo.person_id
+      LEFT JOIN __PLOT_VOCAB_CONCEPT__ c_visit ON c_visit.concept_id = vo.visit_concept_id
+     WHERE de.drug_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND de.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY vo.visit_concept_id, c_visit.concept_name
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       14~17) 특정 처치/수술(procedure) 필터
+       ═══════════════════════════════════════════ -->
+  <select id="procedureGenderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id WHEN 8507 THEN 'Male' WHEN 8532 THEN 'Female' ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR),'Unknown') END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+      JOIN kids_link_own.tb_cm_i_tmpr_procedure_occurrence po ON po.person_id = p.person_id
+     WHERE po.procedure_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND po.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <select id="procedureAgeDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               <include refid="ageGroupExpression"/> AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          JOIN kids_link_own.tb_cm_i_tmpr_procedure_occurrence po ON po.person_id = p.person_id
+          JOIN kids_link_own.tb_cm_i_tmpr_visit_occurrence vo ON vo.person_id = p.person_id
+         WHERE po.procedure_concept_id <include refid="conceptFilter"/>
+           AND p.year_of_birth IS NOT NULL
+           <if test="instTaskSn != null">AND po.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <select id="procedureVisitTimeSeries" resultType="map">
+    SELECT TO_CHAR(vo.visit_start_date, 'YYYY-MM') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_procedure_occurrence po ON po.person_id = vo.person_id
+     WHERE po.procedure_concept_id <include refid="conceptFilter"/>
+       AND vo.visit_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND po.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY TO_CHAR(vo.visit_start_date, 'YYYY-MM')
+     ORDER BY "label"
+  </select>
+
+  <select id="procedureVisitTypeDistribution" resultType="map">
+    SELECT COALESCE(c_visit.concept_name, CAST(vo.visit_concept_id AS VARCHAR), 'Unknown') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_procedure_occurrence po ON po.person_id = vo.person_id
+      LEFT JOIN __PLOT_VOCAB_CONCEPT__ c_visit ON c_visit.concept_id = vo.visit_concept_id
+     WHERE po.procedure_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND po.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY vo.visit_concept_id, c_visit.concept_name
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       18~21) 특정 검사(measurement) 필터
+       ═══════════════════════════════════════════ -->
+  <select id="measurementGenderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id WHEN 8507 THEN 'Male' WHEN 8532 THEN 'Female' ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR),'Unknown') END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+      JOIN kids_link_own.tb_cm_i_tmpr_measurement m ON m.person_id = p.person_id
+     WHERE m.measurement_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND m.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <select id="measurementAgeDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               <include refid="ageGroupExpression"/> AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          JOIN kids_link_own.tb_cm_i_tmpr_measurement m ON m.person_id = p.person_id
+          JOIN kids_link_own.tb_cm_i_tmpr_visit_occurrence vo ON vo.person_id = p.person_id
+         WHERE m.measurement_concept_id <include refid="conceptFilter"/>
+           AND p.year_of_birth IS NOT NULL
+           <if test="instTaskSn != null">AND m.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <select id="measurementVisitTimeSeries" resultType="map">
+    SELECT TO_CHAR(vo.visit_start_date, 'YYYY-MM') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_measurement m ON m.person_id = vo.person_id
+     WHERE m.measurement_concept_id <include refid="conceptFilter"/>
+       AND vo.visit_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND m.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY TO_CHAR(vo.visit_start_date, 'YYYY-MM')
+     ORDER BY "label"
+  </select>
+
+  <select id="measurementVisitTypeDistribution" resultType="map">
+    SELECT COALESCE(c_visit.concept_name, CAST(vo.visit_concept_id AS VARCHAR), 'Unknown') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_measurement m ON m.person_id = vo.person_id
+      LEFT JOIN __PLOT_VOCAB_CONCEPT__ c_visit ON c_visit.concept_id = vo.visit_concept_id
+     WHERE m.measurement_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND m.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY vo.visit_concept_id, c_visit.concept_name
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       22~25) 특정 관찰(observation) 필터
+       ═══════════════════════════════════════════ -->
+  <select id="observationGenderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id WHEN 8507 THEN 'Male' WHEN 8532 THEN 'Female' ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR),'Unknown') END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+      JOIN kids_link_own.tb_cm_i_tmpr_observation ob ON ob.person_id = p.person_id
+     WHERE ob.observation_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND ob.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <select id="observationAgeDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               <include refid="ageGroupExpression"/> AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          JOIN kids_link_own.tb_cm_i_tmpr_observation ob ON ob.person_id = p.person_id
+          JOIN kids_link_own.tb_cm_i_tmpr_visit_occurrence vo ON vo.person_id = p.person_id
+         WHERE ob.observation_concept_id <include refid="conceptFilter"/>
+           AND p.year_of_birth IS NOT NULL
+           <if test="instTaskSn != null">AND ob.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <select id="observationVisitTimeSeries" resultType="map">
+    SELECT TO_CHAR(vo.visit_start_date, 'YYYY-MM') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_observation ob ON ob.person_id = vo.person_id
+     WHERE ob.observation_concept_id <include refid="conceptFilter"/>
+       AND vo.visit_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND ob.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY TO_CHAR(vo.visit_start_date, 'YYYY-MM')
+     ORDER BY "label"
+  </select>
+
+  <select id="observationVisitTypeDistribution" resultType="map">
+    SELECT COALESCE(c_visit.concept_name, CAST(vo.visit_concept_id AS VARCHAR), 'Unknown') AS "label",
+           COUNT(DISTINCT vo.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_visit_occurrence vo
+      JOIN kids_link_own.tb_cm_i_tmpr_observation ob ON ob.person_id = vo.person_id
+      LEFT JOIN __PLOT_VOCAB_CONCEPT__ c_visit ON c_visit.concept_id = vo.visit_concept_id
+     WHERE ob.observation_concept_id <include refid="conceptFilter"/>
+       <if test="instTaskSn != null">AND ob.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY vo.visit_concept_id, c_visit.concept_name
+     ORDER BY "cnt" DESC
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       26~29) 사망정보 (death)
+       ═══════════════════════════════════════════ -->
+  <select id="countDeathPatients" resultType="java.lang.Long">
+    SELECT COUNT(DISTINCT d.person_id)
+      FROM kids_link_own.tb_cm_i_tmpr_death d
+     WHERE 1=1
+       <if test="instTaskSn != null">AND d.inst_task_sn = #{instTaskSn}</if>
+  </select>
+
+  <select id="deathGenderDistribution" resultType="map">
+    SELECT CASE p.gender_concept_id WHEN 8507 THEN 'Male' WHEN 8532 THEN 'Female' ELSE COALESCE(CAST(p.gender_concept_id AS VARCHAR),'Unknown') END AS "label",
+           COUNT(DISTINCT p.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_person p
+      JOIN kids_link_own.tb_cm_i_tmpr_death d ON d.person_id = p.person_id
+     WHERE 1=1
+       <if test="instTaskSn != null">AND d.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY p.gender_concept_id
+     ORDER BY "cnt" DESC
+  </select>
+
+  <select id="deathAgeDistribution" resultType="map">
+    SELECT age_group AS "label", COUNT(DISTINCT person_id) AS "cnt"
+      FROM (
+        SELECT p.person_id,
+               CASE
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 10  THEN '0~9세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 20  THEN '10~19세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 30  THEN '20~29세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 40  THEN '30~39세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 50  THEN '40~49세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 60  THEN '50~59세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 70  THEN '60~69세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 80  THEN '70~79세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 90  THEN '80~89세'
+                 WHEN EXTRACT(YEAR FROM AGE(d.death_date,
+                       MAKE_DATE(p.year_of_birth, COALESCE(p.month_of_birth,1), 1))) &lt; 100 THEN '90~99세'
+                 ELSE '100세 이상'
+               END AS age_group
+          FROM kids_link_own.tb_cm_i_tmpr_person p
+          JOIN kids_link_own.tb_cm_i_tmpr_death d ON d.person_id = p.person_id
+         WHERE p.year_of_birth IS NOT NULL AND d.death_date IS NOT NULL
+           <if test="instTaskSn != null">AND d.inst_task_sn = #{instTaskSn}</if>
+      ) sub
+     GROUP BY age_group
+     ORDER BY age_group
+  </select>
+
+  <select id="deathYearDistribution" resultType="map">
+    SELECT CAST(EXTRACT(YEAR FROM d.death_date) AS VARCHAR) AS "label",
+           COUNT(DISTINCT d.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_death d
+     WHERE d.death_date IS NOT NULL
+       <if test="instTaskSn != null">AND d.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY EXTRACT(YEAR FROM d.death_date)
+     ORDER BY "label"
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       30~32) 관찰기간 (observation_period)
+       ═══════════════════════════════════════════ -->
+  <select id="countObservationPeriodPatients" resultType="java.lang.Long">
+    SELECT COUNT(DISTINCT op.person_id)
+      FROM kids_link_own.tb_cm_i_tmpr_observation_period op
+     WHERE 1=1
+       <if test="instTaskSn != null">AND op.inst_task_sn = #{instTaskSn}</if>
+  </select>
+
+  <select id="observationPeriodYearDistribution" resultType="map">
+    SELECT CAST(EXTRACT(YEAR FROM op.observation_period_start_date) AS VARCHAR) AS "label",
+           COUNT(DISTINCT op.person_id) AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_observation_period op
+     WHERE op.observation_period_start_date IS NOT NULL
+       <if test="instTaskSn != null">AND op.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY EXTRACT(YEAR FROM op.observation_period_start_date)
+     ORDER BY "label"
+  </select>
+
+  <select id="observationPeriodAvgDuration" resultType="map">
+    SELECT CAST(EXTRACT(YEAR FROM op.observation_period_start_date) AS VARCHAR) AS "label",
+           ROUND(AVG(op.observation_period_end_date - op.observation_period_start_date))::INTEGER AS "cnt"
+      FROM kids_link_own.tb_cm_i_tmpr_observation_period op
+     WHERE op.observation_period_start_date IS NOT NULL
+       AND op.observation_period_end_date IS NOT NULL
+       <if test="instTaskSn != null">AND op.inst_task_sn = #{instTaskSn}</if>
+     GROUP BY EXTRACT(YEAR FROM op.observation_period_start_date)
+     ORDER BY "label"
+  </select>
+
+  <!-- ═══════════════════════════════════════════
+       Concept 이름 조회
+       ═══════════════════════════════════════════ -->
+  <select id="getConceptName" resultType="String">
+    SELECT concept_name
+      FROM __PLOT_VOCAB_CONCEPT__
+     WHERE concept_id = #{conceptId}
+     LIMIT 1
+  </select>
+
+</mapper>

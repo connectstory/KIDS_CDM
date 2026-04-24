@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.rule.RuleCompletenessMapper">
+
+  <!-- 정합성(04) 중 필수(esntl_yn=Y) 컬럼 — 완전성(NULL) 검증에 사용 -->
+  <select id="findByTableAndRuleAndReqired" resultType="kr.or.kids.domain.cm.upload.model.RuleCompletenessRow">
+    SELECT
+      vrfc_sn      AS ruleId,
+      levl_seq     AS level,
+      vrfc_tbl_nm  AS srcTable,
+      vrfc_col_nm  AS field,
+      vrfc_rul_nm  AS rule,
+      rfrnc_nm     AS ref,
+      rfrnc_dtl_nm AS refDetail,
+      CASE WHEN esntl_yn = 'Y' THEN true ELSE false END AS required
+    FROM kids_own.tb_cm_m_vrfc
+    WHERE std_se_cd = '02'
+      AND vrfc_tbl_nm = #{table}
+      AND vrfc_rul_nm = #{rule}
+      AND esntl_yn = 'Y'
+    ORDER BY vrfc_sn
+  </select>
+
+        <!-- 정합성(04) 중 필수(esntl_yn=Y) 컬럼 — 완전성(NULL) 검증에 사용 -->
+<select id="findByTableAndRule" resultType="kr.or.kids.domain.cm.upload.model.RuleCompletenessRow">
+SELECT
+  vrfc_sn      AS ruleId,
+  levl_seq     AS level,
+  vrfc_tbl_nm  AS srcTable,
+  vrfc_col_nm  AS field,
+  vrfc_rul_nm  AS rule,
+  rfrnc_nm     AS ref,
+  rfrnc_dtl_nm AS refDetail,
+  CASE WHEN esntl_yn = 'Y' THEN true ELSE false END AS required
+FROM kids_own.tb_cm_m_vrfc
+WHERE std_se_cd = '02'
+  AND vrfc_tbl_nm = #{table}
+  AND vrfc_rul_nm = #{rule}
+ORDER BY vrfc_sn
+</select>
+</mapper>

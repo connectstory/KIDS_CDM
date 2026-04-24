@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.common.mapper.CommonAuthrtMapper">
+
+    <resultMap id="TbPpMAuthrtResultMap" type="kr.or.kids.domain.cm.common.vo.TbPpMAuthrtVO">
+        <id     property="authrtCd"      column="authrt_cd"/>
+        <result property="upAuthrtCd"    column="up_authrt_cd"/>
+        <result property="taskSeCd"      column="task_se_cd"/>
+        <result property="authrtNm"      column="authrt_nm"/>
+        <result property="authrtTypeCd"  column="authrt_type_cd"/>
+        <result property="authrtExpln"   column="authrt_expln"/>
+        <result property="useYn"         column="use_yn"/>
+        <result property="wrtrDeptNm"    column="wrtr_dept_nm"/>
+        <result property="mdfrDeptNm"    column="mdfr_dept_nm"/>
+        <result property="rgtrId"        column="rgtr_id"/>
+        <result property="regDt"         column="reg_dt"/>
+        <result property="mdfrId"        column="mdfr_id"/>
+        <result property="mdfcnDt"       column="mdfcn_dt"/>
+    </resultMap>
+
+    <resultMap id="TbPpMExprtAuthrtResultMap" type="kr.or.kids.domain.cm.common.vo.TbPpMExprtAuthrtVO">
+        <result property="mbrNo"         column="mbr_no"/>
+        <result property="exprtTaskSn"   column="exprt_task_sn"/>
+        <result property="authrtCd"      column="authrt_cd"/>
+        <result property="rgtrId"        column="rgtr_id"/>
+        <result property="regDt"         column="reg_dt"/>
+        <result property="mdfrId"        column="mdfr_id"/>
+        <result property="mdfcnDt"       column="mdfcn_dt"/>
+    </resultMap>
+
+    <resultMap id="TbPpMDeptAuthrtResultMap" type="kr.or.kids.domain.cm.common.vo.TbPpMDeptAuthrtVO">
+        <result property="deptNo"            column="dept_no"/>
+        <result property="authrtCd"          column="authrt_cd"/>
+        <result property="deptAuthrtRmrkCn"  column="dept_authrt_rmrk_cn"/>
+        <result property="rgtrId"            column="rgtr_id"/>
+        <result property="regDt"             column="reg_dt"/>
+        <result property="mdfrId"            column="mdfr_id"/>
+        <result property="mdfcnDt"           column="mdfcn_dt"/>
+    </resultMap>
+
+    <select id="selectMemberAuthList" parameterType="string" resultMap="TbPpMAuthrtResultMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileUldList */
+               a.authrt_cd
+             , a.up_authrt_cd
+             , a.task_se_cd
+             , a.authrt_nm
+             , a.authrt_type_cd
+             , a.authrt_expln
+             , a.use_yn
+             , a.wrtr_dept_nm
+             , a.mdfr_dept_nm
+             , a.rgtr_id
+             , a.reg_dt
+             , a.mdfr_id
+             , a.mdfcn_dt
+          FROM kids_own.tb_pp_m_exprt_authrt e
+          JOIN kids_own.tb_pp_m_authrt a
+            ON e.authrt_cd = a.authrt_cd
+         WHERE e.mbr_no = #{mbrNo}
+           AND a.use_yn = 'Y'
+         ORDER BY reg_dt DESC
+    </select>
+
+    <select id="selectOneExprtAuthrtByMbrNo" resultMap="TbPpMExprtAuthrtResultMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectOneExprtAuthrtByMbrNo */
+               mbr_no, exprt_task_sn, authrt_cd, rgtr_id, reg_dt, mdfr_id, mdfcn_dt
+          FROM kids_own.tb_pp_m_exprt_authrt
+         WHERE mbr_no = #{mbrNo}
+         ORDER BY exprt_task_sn DESC
+         LIMIT 1
+    </select>
+
+    <select id="selectEmpInfoByEmpNo" parameterType="string" resultType="kr.or.kids.domain.cm.common.vo.TbPpMEmpInfoVO">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectEmpInfoByEmpNo */
+               emp_no AS empNo,
+               emp_nm AS empNm,
+               dept_no AS deptNo,
+               encpt_emp_eml_nm AS encptEmpEmlNm,
+               encpt_emp_telno  AS encptEmpTelno,
+               reg_dt           AS regDt,
+               mdfr_id          AS mdfrId,
+               mdfcn_dt         AS mdfcnDt
+          FROM kids_own.tb_pp_m_emp_info
+         WHERE emp_no = #{empNo}
+         LIMIT 1
+    </select>
+
+
+    <!-- 회원정보와 기관정보 조회 (mbr_id로) -->
+    <select id="selectMemberAndInstByMbrId" parameterType="String" resultType="kr.or.kids.domain.cm.common.vo.MemberAndInstVO">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectMemberAndInstByMbrId */
+               m.mbr_no             AS mbrNo
+             , m.mbr_id             AS mbrId
+             , m.encpt_mbr_flnm     AS mbrEncptFlnm
+             , m.encpt_mbr_eml_nm   AS mbrEncptEmlNm
+             , m.encpt_mbr_telno    AS mbrEncptTelno
+             , m.mbr_type_cd        AS mbrTypeCd
+             , m.mbr_join_stts_cd   AS mbrJoinSttsCd
+             , m.mbr_join_dt        AS mbrJoinDt
+             , i.brno               AS instBrno
+             , i.inst_nm            AS instNm
+             , i.del_yn             AS instDelYn
+             , e.exprt_hdof_yn      AS exprtHdofYn
+             , e.aprv_stts_cd       AS exprtAprvSttsCd
+          FROM kids_own.tb_pp_m_mbr_info m
+     LEFT JOIN kids_own.tb_pp_m_exprt_info e ON m.mbr_no = e.mbr_no
+     LEFT JOIN kids_own.tb_pp_m_inst i ON e.brno = i.brno
+         WHERE m.mbr_id = #{mbrId}
+         LIMIT 1
+    </select>
+
+    <!-- 협력기관 사용자용 메뉴 목록 조회 (CM/E 타입, getMeAdmin의 menuAuthList 구조와 동일) -->
+    <select id="selectPartnerMenuAuthList" resultType="map">
+        WITH RECURSIVE menu_tree AS (
+            SELECT m.menu_sn
+                 , m.menu_nm
+                 , m.up_menu_sn
+                 , m.task_se_cd
+                 , m.menu_seq
+                 , d.menu_url_addr
+                 , 1 AS menu_lv
+              FROM kids_own.tb_pp_m_menu m
+         LEFT JOIN kids_own.tb_pp_d_menu d ON m.menu_sn = d.menu_sn
+             WHERE m.up_menu_sn IS NULL
+               AND m.task_se_cd = 'CM'
+               AND m.menu_type_cd = 'E'
+               AND m.use_yn = 'Y'
+             UNION ALL
+            SELECT m.menu_sn
+                 , m.menu_nm
+                 , m.up_menu_sn
+                 , m.task_se_cd
+                 , m.menu_seq
+                 , d.menu_url_addr
+                 , t.menu_lv + 1
+              FROM kids_own.tb_pp_m_menu m
+         LEFT JOIN kids_own.tb_pp_d_menu d ON m.menu_sn = d.menu_sn
+              JOIN menu_tree t ON m.up_menu_sn = t.menu_sn
+             WHERE m.task_se_cd = 'CM'
+               AND m.menu_type_cd = 'E'
+               AND m.use_yn = 'Y'
+        )
+        SELECT menu_sn      AS "menuSn"
+             , menu_nm      AS "menuNm"
+             , up_menu_sn   AS "upMenuSn"
+             , menu_lv      AS "menuLv"
+             , task_se_cd   AS "taskSeCd"
+             , menu_seq     AS "menuSeq"
+             , menu_url_addr AS "menuUrl"
+          FROM menu_tree
+         ORDER BY menu_lv, menu_seq
+    </select>
+
+</mapper>

@@ -1,0 +1,161 @@
+.ag-theme-cdm {
+  --ag-font-size: 1rem;
+  --ag-font-family: "Pretendard GOV", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --ag-font-weight: 400;
+
+  --ag-header-text-color: var(--main-font-color);
+  --ag-header-background-color: oklch(96.7% 0.003 264.542);
+  --ag-header-foreground-color: #000;
+
+  --ag-odd-row-background-color: #fafafa;
+  --ag-row-hover-color: var(--selected-row-background-color);
+
+  --ag-border-color: #e5e7eb;
+
+  --ag-header-height: 40px;
+  --ag-row-height: 50px;
+
+  --ag-selected-row-background-color: var(--selected-row-background-color);
+
+  overflow: hidden;
+  height: fit-content;
+  border-radius: 0 !important;
+}
+
+.ag-theme-cdm .ag-root-wrapper {
+  border-radius: 0 !important;
+}
+
+.ag-theme-cdm .ag-header {
+  border-radius: 0 !important;
+  border-top: 1px solid #212124;
+  font-weight: 600;
+}
+
+.ag-theme-cdm .ag-body-viewport {
+  border-radius: 0 !important;
+}
+
+.ag-theme-cdm .ag-root-wrapper {
+  /* border: none !important; */
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.ag-theme-cdm .ag-header-cell-label,
+.ag-theme-alpine .ag-header-cell-label {
+  justify-content: left;
+  text-align: left;
+}
+
+/* 헤더 셀 전체 가운데 */
+.ag-theme-cdm .ag-header-center .ag-header-cell-label,
+.ag-theme-alpine .ag-header-center .ag-header-cell-label {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* 헤더 셀 왼쪽 정렬 */
+.ag-theme-cdm .ag-header-left .ag-header-cell-label,
+.ag-theme-alpine .ag-header-left .ag-header-cell-label {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+/* 모든 헤더 텍스트를 가운데 */
+/* .ag-theme-cdm .ag-header-cell-label,
+.ag-theme-alpine .ag-header-cell-label {
+  justify-content: center;
+} */
+
+/* (정렬 아이콘까지 같이 쓸 경우 대비) */
+/* .ag-theme-cdm .ag-header-cell-text,
+.ag-theme-alpine .ag-header-cell-text {
+  text-align: center;
+} */
+
+/* 셀 전체 높이를 쓰게 만든 뒤 중앙 정렬 */
+.ag-theme-cdm .ag-cell-center-vertical {
+  height: 100%;
+  display: flex;
+  align-items: center; /* 세로 가운데 */
+  justify-content: center; /* 가로 가운데 (원하면 제거) */
+}
+
+.ag-theme-cdm .ag-row-odd,
+.ag-theme-cdm .ag-row-even {
+  background-color: transparent !important;
+}
+
+/* 셀 포커스(border / outline 제거) */
+.ag-theme-cdm .ag-cell:focus,
+.ag-theme-cdm .ag-cell:focus-within {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ag-header-cell-resize {
+  width: 3px;
+}
+
+/* 헤더 정렬 비활성화 */
+.ag-theme-cdm .ag-header-cell {
+  cursor: default !important;
+}
+
+.ag-theme-cdm .ag-header-cell-label {
+  cursor: default !important;
+  pointer-events: none;
+}
+
+.ag-theme-cdm .ag-sort-indicator-container {
+  display: none !important;
+}
+
+.ag-theme-cdm .ag-header-cell-text {
+  pointer-events: none;
+}
+
+/* 셀 텍스트 폰트 통일 */
+.ag-theme-cdm .ag-cell {
+  font-family: "Pretendard GOV", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400 !important;
+}
+
+.ag-center-cols-container,
+.ag-center-cols-viewport {
+  /* min-height: 100% !important; */
+  min-height: 40px !important;
+}
+
+/* 선택된 행을 active 상태로 표시 */
+.ag-theme-cdm .ag-row-selected {
+  background-color: var(--ag-row-hover-color) !important;
+}
+
+.ag-cell,
+.ag-full-width-row .ag-cell-wrapper.ag-row-group {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* AG Grid 내부 래퍼의 height: 100% 제거 */
+/* .ag-theme-cdm > div {
+  height: auto !important;
+} */
+
+/* 연구과제 제목 앞 검토진행 표시(5px 원) */
+.ag-theme-cdm .research-title-with-review-dot::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
+  border-radius: 50%;
+  background-color: #2877ff;
+  margin-right: 6px;
+  vertical-align: middle;
+}

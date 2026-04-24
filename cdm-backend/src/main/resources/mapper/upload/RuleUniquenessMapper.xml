@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.rule.RuleUniquenessMapper">
+
+  <select id="findByTable" resultType="kr.or.kids.domain.cm.upload.model.RuleUniquenessRow">
+    SELECT
+      vrfc_sn      AS ruleId,
+      levl_seq     AS level,
+      vrfc_tbl_nm  AS srcTable,
+      vrfc_col_nm  AS field,
+      vrfc_rul_nm  AS rule,
+      rfrnc_nm     AS ref
+    FROM kids_own.tb_cm_m_vrfc
+    WHERE std_se_cd = '03'
+      AND vrfc_tbl_nm = #{table}
+    ORDER BY vrfc_sn
+  </select>
+
+</mapper>
+

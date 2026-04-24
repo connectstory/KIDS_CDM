@@ -1,0 +1,2097 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.research.mapper.ResearchMapper">
+
+  <resultMap id="TbCmMAsmtVOMap" type="kr.or.kids.domain.cm.research.vo.TbCmMAsmtVO">
+    <id property="asmtSn" column="asmt_sn"/>
+    <result property="asmtId" column="asmt_id"/>
+    <result property="asmtPrgrsSttsCd" column="asmt_prgrs_stts_cd"/>
+    <result property="asmtNm" column="asmt_nm"/>
+    <result property="asmtArtclDtlCn" column="asmt_artcl_dtl_cn"/>
+    <result property="flfmtBgngDt" column="flfmt_bgng_dt"/>
+    <result property="flfmtEndDt" column="flfmt_end_dt"/>
+    <result property="trgtDbCn" column="trgt_db_cn"/>
+    <result property="rschDesignCn" column="rsch_design_cn"/>
+    <result property="instId" column="inst_id"/>
+    <result property="anlsTblCn" column="anls_tbl_cn"/>
+    <result property="asmtClsCn" column="asmt_ddln_cn"/>
+    <result property="asmtClsDt" column="asmt_ddln_dt"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+  </resultMap>
+
+  <resultMap id="ResearchListRowVOMap" type="kr.or.kids.domain.cm.research.vo.ResearchListRowVO">
+    <id property="asmtSn" column="asmt_sn"/>
+    <result property="asmtId" column="asmt_id"/>
+    <result property="asmtPrgrsSttsCd" column="asmt_prgrs_stts_cd"/>
+    <result property="asmtNm" column="asmt_nm"/>
+    <result property="flfmtBgngDt" column="flfmt_bgng_dt"/>
+    <result property="flfmtEndDt" column="flfmt_end_dt"/>
+    <result property="instId" column="inst_id"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="deptNm" column="dept_nm"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="metaAnalysisCount" column="meta_analysis_count"/>
+    <result property="ptcpPrgrsSttsCd" column="ptcp_prgrs_stts_cd"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+  </resultMap>
+
+  <resultMap id="OpinionListRowVOMap" type="kr.or.kids.domain.cm.research.vo.OpinionListRowVO">
+    <result property="asmtSn" column="asmt_sn"/>
+    <result property="instId" column="inst_id"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="opnnIntgRsltSn" column="opnn_intg_rslt_sn"/>
+    <result property="asmtMetaRsltSn" column="asmt_meta_rslt_sn"/>
+    <result property="rsltGroupCd" column="rslt_group_cd"/>
+    <result property="opnnIntgDmndCn" column="opnn_intg_dmnd_cn"/>
+    <result property="utlzAgreSeCd" column="utlz_agre_se_cd"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrNm" column="mdfr_nm"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="uldInstPrgrsSttsCd" column="uld_inst_prgrs_stts_cd"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+    <result property="asmtOpnnSttsCd" column="asmt_opnn_stts_cd"/>
+  </resultMap>
+
+  <resultMap id="OrgPartnerLatestMetaVOMap" type="kr.or.kids.domain.cm.research.vo.OrgPartnerLatestMetaVO">
+    <result property="asmtPtcpInstSn" column="asmt_ptcp_inst_sn"/>
+    <result property="asmtSn" column="asmt_sn"/>
+    <result property="instId" column="inst_id"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+    <result property="asmtMetaRsltSn" column="asmt_meta_rslt_sn"/>
+    <result property="asmtMetaRsltCn" column="asmt_meta_rslt_cn"/>
+    <result property="asmtMetaRsltSttsCd" column="asmt_meta_rslt_stts_cd"/>
+    <result property="rsltGroupCd" column="rslt_group_cd"/>
+    <result property="regDt" column="reg_dt"/>
+  </resultMap>
+
+  <resultMap id="ResearchDetailVOMap" type="kr.or.kids.domain.cm.research.vo.ResearchAsmtDetailVO">
+    <id column="asmt_sn" property="asmtSn"/>
+    <result column="asmt_id" property="asmtId"/>
+    <result column="asmt_prgrs_stts_cd" property="asmtPrgrsSttsCd"/>
+    <result column="asmt_nm" property="asmtNm"/>
+    <result column="asmt_artcl_dtl_cn" property="asmtArtclDtlCn"/>
+    <result column="flfmt_bgng_dt" property="flfmtBgngDt"/>
+    <result column="flfmt_end_dt" property="flfmtEndDt"/>
+    <result column="trgt_db_cn" property="trgtDbCn"/>
+    <result column="rsch_design_cn" property="rschDesignCn"/>
+    <result column="inst_id" property="instId"/>
+    <result column="anls_tbl_cn" property="anlsTblCn"/>
+    <result column="asmt_ddln_cn" property="asmtDdlnCn"/>
+    <result column="asmt_ddln_dt" property="asmtDdlnDt"/>
+    <result column="del_yn" property="delYn"/>
+    <result column="rgtr_id" property="rgtrId"/>
+    <result column="reg_dt" property="regDt"/>
+    <result column="mdfr_id" property="mdfrId"/>
+    <result column="mdfcn_dt" property="mdfcnDt"/>
+    <result column="inst_nm" property="instNm"/>
+    <result column="mbr_encpt_flnm" property="mbrEncptFlnm"/>
+    <result column="emp_nm" property="empNm"/>
+  </resultMap>
+
+  <resultMap id="ResearchPartnerVOMap" type="kr.or.kids.domain.cm.research.vo.ResearchPartnerVO">
+    <result property="asmtPtcpInstSn" column="asmt_ptcp_inst_sn"/>
+    <result property="asmtSn" column="asmt_sn"/>
+    <result property="instId" column="inst_id"/>
+    <result property="ptcpPrgrsSttsCd" column="ptcp_prgrs_stts_cd"/>
+    <result property="asmtRqstrId" column="asmt_rqstr_id"/>
+    <result property="asmtDmndDt" column="asmt_dmnd_dt"/>
+    <result property="asmtPtcpAgreId" column="asmt_ptcp_agre_id"/>
+    <result property="asmtPtcpAgreDt" column="asmt_ptcp_agre_dt"/>
+    <result property="asmtRsltRegId" column="asmt_rslt_reg_id"/>
+    <result property="asmtRsltRegDt" column="asmt_rslt_reg_dt"/>
+    <result property="asmtPtcpRtrcnId" column="asmt_ptcp_rtrcn_id"/>
+    <result property="asmtPtcpRtrcnMbrEncptFlnm" column="asmt_ptcp_rtrcn_mbr_encpt_flnm"/>
+    <result property="asmtPtcpRtrcnEmpNm" column="asmt_ptcp_rtrcn_emp_nm"/>
+    <result property="asmtPtcpRtrcnRsn" column="asmt_ptcp_rtrcn_rsn"/>
+    <result property="asmtPtcpRtrcnDt" column="asmt_ptcp_rtrcn_dt"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="mbrEncptFlnm" column="mbr_encpt_flnm"/>
+    <result property="empNm" column="emp_nm"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="uldInstPrgrsSttsStcd" column="uld_inst_prgrs_stts_cd"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="brno" column="brno"/>
+    <result property="utlzAgreSeCd" column="utlz_agre_se_cd"/>
+    <result property="uldFileCnt" column="uld_file_cnt"/>
+    <result property="opnnAgreCnt" column="opnn_agre_cnt"/>
+    <result property="opnnNotUseCnt" column="opnn_notuse_cnt"/>
+  </resultMap>
+
+  <resultMap id="TbPpMInstTaskVOMap" type="kr.or.kids.domain.cm.research.vo.TbPpMInstTaskVO">
+    <id property="bzmnTaskMngNo" column="bzmn_task_mng_no"/>
+    <result property="brno" column="brno"/>
+    <result property="taskSeCd" column="task_se_cd"/>
+    <result property="tkcgExprtNo" column="tkcg_exprt_no"/>
+    <result property="useYn" column="use_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+  </resultMap>
+
+  <resultMap id="TbCmEAsmtMetaVOMap" type="kr.or.kids.domain.cm.research.vo.TbCmEAsmtMetaVO">
+    <id property="asmtMetaRsltSn" column="asmt_meta_rslt_sn"/>
+    <result property="asmtSn" column="asmt_sn"/>
+    <result property="asmtMetaRsltCn" column="asmt_meta_rslt_cn"/>
+    <result property="asmtMetaRsltSttsCd" column="asmt_meta_rslt_stts_cd"/>
+    <result property="rsltNotiDt" column="rslt_noti_dt"/>
+    <result property="rsltGroupCd" column="rslt_group_cd"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="opnnCount" column="opnn_count"/>
+    <result property="utlzAgreSeCd" column="utlz_agre_se_cd"/>
+  </resultMap>
+
+  <resultMap id="TbCmEOpnnJoinMap" type="kr.or.kids.domain.cm.research.vo.TbCmEOpnnVO">
+    <id property="opnnIntgRsltSn" column="opnn_intg_rslt_sn"/>
+    <result property="asmtMetaRsltSn" column="opnn_asmt_meta_rslt_sn"/>
+    <result property="asmtSn" column="opnn_asmt_sn"/>
+    <result property="instId" column="opnn_inst_id"/>
+    <result property="opnnIntgDmndCn" column="opnn_intg_dmnd_cn"/>
+    <result property="utlzAgreSeCd" column="opnn_utlz_agre_se_cd"/>
+    <result property="asmtOpnnSttsCd" column="opnn_asmt_opnn_stts_cd"/>
+    <result property="delYn" column="opnn_del_yn"/>
+    <result property="rgtrId" column="opnn_rgtr_id"/>
+    <result property="regDt" column="opnn_reg_dt"/>
+    <result property="mdfrId" column="opnn_mdfr_id"/>
+    <result property="mdfcnDt" column="opnn_mdfcn_dt"/>
+    <result property="mbrId" column="opnn_mbr_no"/>
+    <result property="mbrEncptFlnm" column="opnn_mbr_encpt_flnm"/>
+    <result property="empNm" column="opnn_emp_nm"/>
+    <result property="brno" column="opnn_brno"/>
+    <result property="exprtHdofYn" column="opnn_exprt_hdof_yn"/>
+    <result property="instNm" column="opnn_inst_nm"/>
+  </resultMap>
+
+  <resultMap id="TbCmMUldPrstLatestByInstMap" type="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO">
+    <result property="instId" column="inst_id"/>
+    <result property="pblntSn" column="pblnt_sn"/>
+    <result property="ptcpInstSn" column="ptcp_inst_sn"/>
+    <result property="uldInstPrgrsSttsStcd" column="uld_inst_prgrs_stts_cd"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+  </resultMap>
+
+  <resultMap id="TbCmMAsmtPrcpVOMap" type="kr.or.kids.domain.cm.research.vo.TbCmMAsmtPrcpVO">
+    <id property="asmtPtcpInstSn" column="asmt_ptcp_inst_sn"/>
+    <result property="asmtSn" column="asmt_sn"/>
+    <result property="instId" column="inst_id"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="brno" column="brno"/>
+    <result property="ptcpPrgrsSttsCd" column="ptcp_prgrs_stts_cd"/>
+    <result property="asmtRqstrId" column="asmt_rqstr_id"/>
+    <result property="asmtDmndDt" column="asmt_dmnd_dt"/>
+    <result property="asmtPtcpAgreId" column="asmt_ptcp_agre_id"/>
+    <result property="asmtPtcpAgreDt" column="asmt_ptcp_agre_dt"/>
+    <result property="asmtRsltRegId" column="asmt_rslt_reg_id"/>
+    <result property="asmtRsltRegDt" column="asmt_rslt_reg_dt"/>
+    <result property="asmtPtcpRtrcnRsn" column="asmt_ptcp_rtrcn_rsn"/>
+    <result property="asmtPtcpRtrcnDt" column="asmt_ptcp_rtrcn_dt"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+  </resultMap>
+
+  <resultMap id="TbCmMAsmtAccountVOMap" type="kr.or.kids.domain.cm.research.vo.TbCmMAsmtAccountVO">
+    <id property="asmtUserInfoSn" column="asmt_user_info_sn"/>
+    <result property="asmtUserFlnm" column="asmt_user_flnm"/>
+    <result property="enpswd" column="enpswd"/>
+    <result property="asmtUserIpAddr" column="asmt_user_ip_addr"/>
+    <result property="asmtUserSrvcNo" column="asmt_user_srvc_no"/>
+    <result property="userSeCd" column="user_se_cd"/>
+    <result property="asmtSn" column="asmt_sn"/>
+    <result property="useYn" column="use_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="asmtAnalysisSchema" column="asmt_lnkg_schm_nm"/>
+    <result property="asmtId" column="asmt_id"/>
+  </resultMap>
+
+  <!-- ####################################################### -->
+  <!-- 과제 목록 조회 -->
+  <!-- ####################################################### -->
+  <select id="searchResearchList" parameterType="kr.or.kids.domain.cm.research.dto.ResearchSearchRequest" resultMap="ResearchListRowVOMap">
+    SELECT
+    asmt.asmt_sn,
+    asmt.asmt_id,
+    asmt.asmt_prgrs_stts_cd,
+    asmt.asmt_nm,
+    asmt.flfmt_bgng_dt,
+    asmt.flfmt_end_dt,
+    asmt.inst_id,
+    inst.inst_nm,
+    dept.dept_nm,
+    asmt.rgtr_id,
+    asmt.del_yn,
+    asmt.reg_dt,
+    asmt.mdfr_id,
+    asmt.mdfcn_dt,
+    COALESCE(meta_cnt.meta_analysis_count, 0) AS meta_analysis_count
+    FROM kids_own.TB_CM_M_ASMT asmt
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON asmt.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_DEPT_INFO dept ON asmt.inst_id = dept.dept_no
+    LEFT JOIN (
+    SELECT
+    m.asmt_sn,
+    COUNT(*) AS meta_analysis_count
+    FROM kids_own.TB_CM_E_ASMT_META m
+    WHERE m.rslt_group_cd = '04'
+    AND (m.del_yn IS NULL OR m.del_yn = 'N')
+    GROUP BY m.asmt_sn
+    ) meta_cnt ON meta_cnt.asmt_sn = asmt.asmt_sn
+    <where>
+      AND (asmt.del_yn IS NULL OR asmt.del_yn = 'N')
+
+      <!-- 진행상태 조건: progressStatus로 과제진행상태코드 필터링 -->
+      <if test="request.progressStatus != null and request.progressStatus != ''">
+        AND asmt.asmt_prgrs_stts_cd = #{request.progressStatus}
+      </if>
+
+      <!-- 검색어 조건: keyword와 searchType에 따라 과제명 또는 과제항목상세내용 검색 -->
+      <if test="request.keyword != null and request.keyword != ''">
+        <choose>
+          <when test="request.searchType == 'title'">
+            AND asmt.asmt_nm LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'content'">
+            AND asmt.asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'both' or request.searchType == null or request.searchType == ''">
+            AND (asmt.asmt_nm LIKE CONCAT('%', #{request.keyword}, '%') OR asmt.asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+
+      <!-- 날짜 범위 조건: 지정된 기간 안에 연구기간이 하루라도 포함되면 검색 -->
+      <!-- 조건: (flfmt_bgng_dt <= searchEndDate) AND (flfmt_end_dt >= searchStartDate) -->
+      <if test="request.searchStartDate != null and request.searchEndDate != null">
+        AND asmt.flfmt_bgng_dt &lt;= #{request.searchEndDate}
+        AND asmt.flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate != null and request.searchEndDate == null">
+        AND asmt.flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate == null and request.searchEndDate != null">
+        AND asmt.flfmt_bgng_dt &lt;= #{request.searchEndDate}
+      </if>
+
+      <!-- 기관 필터링 조건: instId와 연구과제의 inst_id를 비교하여 동일한 기관의 과제만 조회 -->
+      <if test="instId != null and instId != ''">
+        AND asmt.inst_id = #{instId}
+      </if>
+    </where>
+    ORDER BY asmt.reg_dt DESC
+    LIMIT #{request.limit} OFFSET #{request.offset};
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 목록 조회 (참여기관 기준) -->
+  <!-- ####################################################### -->
+  <select id="searchResearchListByPartner" parameterType="kr.or.kids.domain.cm.research.dto.ResearchSearchRequest" resultMap="ResearchListRowVOMap">
+    SELECT DISTINCT
+    asmt.asmt_sn,
+    asmt.asmt_id,
+    asmt.asmt_prgrs_stts_cd,
+    asmt.asmt_nm,
+    asmt.flfmt_bgng_dt,
+    asmt.flfmt_end_dt,
+    asmt.inst_id,
+    inst.inst_nm,
+    dept.dept_nm,
+    asmt.rgtr_id,
+    asmt.del_yn,
+    asmt.reg_dt,
+    asmt.mdfr_id,
+    asmt.mdfcn_dt,
+    COALESCE(meta_cnt.meta_analysis_count, 0) AS meta_analysis_count,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.uld_type_cd AS uld_type_cd
+    FROM kids_own.TB_CM_M_ASMT asmt
+    INNER JOIN kids_own.TB_CM_M_ASMT_PRCP prcp ON asmt.asmt_sn = prcp.asmt_sn
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON asmt.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_DEPT_INFO dept ON asmt.inst_id = dept.dept_no
+    LEFT JOIN (
+    SELECT
+    m.asmt_sn,
+    COUNT(*) AS meta_analysis_count
+    FROM kids_own.TB_CM_E_ASMT_META m
+    WHERE m.rslt_group_cd = '04'
+    AND (m.del_yn IS NULL OR m.del_yn = 'N')
+    GROUP BY m.asmt_sn
+    ) meta_cnt ON meta_cnt.asmt_sn = asmt.asmt_sn
+    <where>
+      AND (asmt.del_yn IS NULL OR asmt.del_yn = 'N')
+      AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+      AND prcp.inst_id = #{instBrno}
+
+      <!-- 진행상태 조건: progressStatus로 참여진행상태코드 필터링 (미참여 포함) -->
+      <if test="request.progressStatus != null and request.progressStatus != ''">
+        AND prcp.ptcp_prgrs_stts_cd = #{request.progressStatus}
+      </if>
+
+      <!-- 검색어 조건: keyword와 searchType에 따라 과제명 또는 과제항목상세내용 검색 -->
+      <if test="request.keyword != null and request.keyword != ''">
+        <choose>
+          <when test="request.searchType == 'title'">
+            AND asmt.asmt_nm LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'content'">
+            AND asmt.asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'both' or request.searchType == null or request.searchType == ''">
+            AND (asmt.asmt_nm LIKE CONCAT('%', #{request.keyword}, '%') OR asmt.asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+
+      <!-- 날짜 범위 조건: 지정된 기간 안에 연구기간이 하루라도 포함되면 검색 -->
+      <!-- 조건: (flfmt_bgng_dt <= searchEndDate) AND (flfmt_end_dt >= searchStartDate) -->
+      <if test="request.searchStartDate != null and request.searchEndDate != null">
+        AND asmt.flfmt_bgng_dt &lt;= #{request.searchEndDate}
+        AND asmt.flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate != null and request.searchEndDate == null">
+        AND asmt.flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate == null and request.searchEndDate != null">
+        AND asmt.flfmt_bgng_dt &lt;= #{request.searchEndDate}
+      </if>
+    </where>
+    ORDER BY asmt.reg_dt DESC
+    LIMIT #{request.limit} OFFSET #{request.offset};
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 목록 조회 카운트 -->
+  <!-- ####################################################### -->
+  <select id="count" resultType="int">
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_M_ASMT
+    <where>
+      AND (del_yn IS NULL OR del_yn = 'N')
+
+      <!-- 진행상태 조건: progressStatus로 과제진행상태코드 필터링 -->
+      <if test="request.progressStatus != null and request.progressStatus != ''">
+        AND asmt_prgrs_stts_cd = #{request.progressStatus}
+      </if>
+
+      <!-- 검색어 조건: keyword와 searchType에 따라 과제명 또는 과제항목상세내용 검색 -->
+      <if test="request.keyword != null and request.keyword != ''">
+        <choose>
+          <when test="request.searchType == 'title'">
+            AND asmt_nm LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'content'">
+            AND asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'both' or request.searchType == null or request.searchType == ''">
+            AND (asmt_nm LIKE CONCAT('%', #{request.keyword}, '%') OR asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+
+      <!-- 날짜 범위 조건: 지정된 기간 안에 연구기간이 하루라도 포함되면 검색 -->
+      <!-- 조건: (flfmt_bgng_dt <= searchEndDate) AND (flfmt_end_dt >= searchStartDate) -->
+      <if test="request.searchStartDate != null and request.searchEndDate != null">
+        AND flfmt_bgng_dt &lt;= #{request.searchEndDate}
+        AND flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate != null and request.searchEndDate == null">
+        AND flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate == null and request.searchEndDate != null">
+        AND flfmt_bgng_dt &lt;= #{request.searchEndDate}
+      </if>
+
+      <!-- 기관 필터링 조건: instId와 연구과제의 inst_id를 비교하여 동일한 기관의 과제만 조회 -->
+      <if test="instId != null and instId != ''">
+        AND inst_id = #{instId}
+      </if>
+    </where>
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 목록 조회 카운트 (참여기관 기준) -->
+  <!-- ####################################################### -->
+  <select id="countByPartner" resultType="int">
+    SELECT COUNT(DISTINCT asmt.asmt_sn)
+    FROM kids_own.TB_CM_M_ASMT asmt
+    INNER JOIN kids_own.TB_CM_M_ASMT_PRCP prcp ON asmt.asmt_sn = prcp.asmt_sn
+    <where>
+      AND (asmt.del_yn IS NULL OR asmt.del_yn = 'N')
+      AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+      AND prcp.inst_id = #{instBrno}
+
+      <!-- 진행상태 조건: progressStatus로 참여진행상태코드 필터링 (미참여 포함) -->
+      <if test="request.progressStatus != null and request.progressStatus != ''">
+        AND prcp.ptcp_prgrs_stts_cd = #{request.progressStatus}
+      </if>
+
+      <!-- 검색어 조건: keyword와 searchType에 따라 과제명 또는 과제항목상세내용 검색 -->
+      <if test="request.keyword != null and request.keyword != ''">
+        <choose>
+          <when test="request.searchType == 'title'">
+            AND asmt.asmt_nm LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'content'">
+            AND asmt.asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'both' or request.searchType == null or request.searchType == ''">
+            AND (asmt.asmt_nm LIKE CONCAT('%', #{request.keyword}, '%') OR asmt.asmt_artcl_dtl_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+
+      <!-- 날짜 범위 조건: 지정된 기간 안에 연구기간이 하루라도 포함되면 검색 -->
+      <!-- 조건: (flfmt_bgng_dt <= searchEndDate) AND (flfmt_end_dt >= searchStartDate) -->
+      <if test="request.searchStartDate != null and request.searchEndDate != null">
+        AND asmt.flfmt_bgng_dt &lt;= #{request.searchEndDate}
+        AND asmt.flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate != null and request.searchEndDate == null">
+        AND asmt.flfmt_end_dt &gt;= #{request.searchStartDate}
+      </if>
+      <if test="request.searchStartDate == null and request.searchEndDate != null">
+        AND asmt.flfmt_bgng_dt &lt;= #{request.searchEndDate}
+      </if>
+    </where>
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 상세 조회 -->
+  <!-- ####################################################### -->
+  <select id="findById" parameterType="long" resultMap="ResearchDetailVOMap">
+    SELECT
+    asmt.asmt_sn,
+    asmt.asmt_id,
+    asmt.asmt_prgrs_stts_cd,
+    asmt.asmt_nm,
+    asmt.asmt_artcl_dtl_cn,
+    asmt.flfmt_bgng_dt,
+    asmt.flfmt_end_dt,
+    asmt.trgt_db_cn,
+    asmt.rsch_design_cn,
+    asmt.inst_id,
+    asmt.anls_tbl_cn,
+    asmt.asmt_ddln_cn,
+    asmt.asmt_ddln_dt,
+    asmt.del_yn,
+    asmt.rgtr_id,
+    asmt.reg_dt,
+    asmt.mdfr_id,
+    asmt.mdfcn_dt,
+    inst.inst_nm,
+    mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+    emp.emp_nm AS emp_nm
+    FROM kids_own.TB_CM_M_ASMT asmt
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON asmt.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON asmt.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON asmt.rgtr_id = emp.emp_no
+    WHERE asmt.asmt_sn = #{asmtSn}
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 생성 -->
+  <!-- ####################################################### -->
+  <insert id="insert" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtVO">
+    <selectKey keyProperty="asmtSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_asmt_sn')
+    </selectKey>
+    INSERT INTO kids_own.TB_CM_M_ASMT(asmt_sn, asmt_id, asmt_prgrs_stts_cd, asmt_nm, asmt_artcl_dtl_cn, flfmt_bgng_dt, flfmt_end_dt, inst_id, del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt)
+    VALUES (#{asmtSn}, #{asmtId}, #{asmtPrgrsSttsCd}, #{asmtNm}, #{asmtArtclDtlCn}, #{flfmtBgngDt}, #{flfmtEndDt}, #{instId}, #{delYn}, #{rgtrId}, #{regDt}, #{mdfrId}, #{mdfcnDt})
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 과제 수정 -->
+  <!-- ####################################################### -->
+  <update id="updateResearch" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtVO">
+    UPDATE kids_own.TB_CM_M_ASMT
+    SET asmt_nm = #{asmtNm},
+    asmt_artcl_dtl_cn = #{asmtArtclDtlCn},
+    flfmt_bgng_dt = #{flfmtBgngDt},
+    flfmt_end_dt = #{flfmtEndDt}
+    WHERE asmt_sn = #{asmtSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 상태 수정 -->
+  <!-- ####################################################### -->
+  <update id="updateResearchStatus">
+    UPDATE kids_own.TB_CM_M_ASMT
+    SET asmt_prgrs_stts_cd = #{asmtPrgrsSttsCd},
+    mdfr_id = #{mdfrId},
+    mdfcn_dt = NOW()
+    WHERE asmt_sn = #{asmtSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 마감 -->
+  <!-- ####################################################### -->
+  <update id="closeResearch">
+    UPDATE kids_own.TB_CM_M_ASMT
+    SET asmt_prgrs_stts_cd = #{asmtPrgrsSttsCd},
+    asmt_ddln_cn = #{asmtClsCn},
+    asmt_ddln_dt = to_char(NOW(), 'YYYYMMDDHH24MISS'),
+    mdfr_id = #{mdfrId},
+    mdfcn_dt = NOW()
+    WHERE asmt_sn = #{asmtSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 삭제 -->
+  <!-- ####################################################### -->
+  <delete id="deleteResearch" parameterType="long">
+    DELETE FROM kids_own.TB_CM_M_ASMT WHERE asmt_sn = #{id}
+  </delete>
+
+  <!-- ####################################################### -->
+  <!-- 과제 참여기관 등록 -->
+  <!-- ####################################################### -->
+  <insert id="insertPartners" parameterType="list">
+    INSERT INTO kids_own.TB_CM_M_ASMT_PRCP (asmt_ptcp_inst_sn, asmt_sn, inst_id, brno, ptcp_prgrs_stts_cd, asmt_rqstr_id, asmt_dmnd_dt, del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt, uld_type_cd)
+    VALUES
+    <foreach collection="list" item="item" separator=",">
+      (nextval('kids_own.sq_cm_asmt_ptcp_inst_sn'), #{item.asmtSn}, #{item.instId}, #{item.brno}, #{item.ptcpPrgrsSttsCd}, #{item.asmtRqstrId}, #{item.asmtDmndDt}, #{item.delYn}, #{item.rgtrId}, #{item.regDt}, #{item.mdfrId}, #{item.mdfcnDt}, #{item.uldTypeCd})
+    </foreach>
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 참여기관의 해당 연도 개수 카운트 -->
+  <!-- ####################################################### -->
+  <select id="countByYearAndInstId" resultType="int">
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_M_ASMT
+    WHERE EXTRACT(YEAR FROM reg_dt) = #{year}
+    AND inst_id = #{instId}
+    AND (del_yn IS NULL OR del_yn = 'N')
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 기관 부서 정보: dept_nm 기준 dept_no 1건 -->
+  <!-- ####################################################### -->
+  <select id="findDeptNoByDeptNm" parameterType="string" resultType="java.lang.String">
+    SELECT
+      dept_no
+    FROM kids_own.tb_pp_m_dept_info
+    WHERE dept_nm = #{deptNm}
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 기관 부서 정보: dept_no 기준 dept_nm(=기관명) 조회 -->
+  <!-- ####################################################### -->
+  <select id="findInstNmByDeptNo" parameterType="string" resultType="java.lang.String">
+    SELECT
+      dept_nm
+    FROM kids_own.tb_pp_m_dept_info
+    WHERE TRIM(dept_no) = TRIM(#{deptNo})
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 기관 정보: brno/instId 기준 inst_nm 조회 -->
+  <!-- ####################################################### -->
+  <select id="findInstNmByInstId" parameterType="string" resultType="java.lang.String">
+    SELECT
+      inst_nm
+    FROM kids_own.TB_PP_M_INST
+    WHERE TRIM(brno) = TRIM(#{instId})
+    AND (del_yn IS NULL OR del_yn = 'N')
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 기관 과제 관리: 연구과제 ID 가운데값(bzmn_task_mng_no) 조회 -->
+  <!-- ####################################################### -->
+  <select id="findInstTaskByBrnoAndTaskSeCm" resultMap="TbPpMInstTaskVOMap">
+    SELECT
+      bzmn_task_mng_no,
+      brno,
+      task_se_cd,
+      tkcg_exprt_no,
+      use_yn,
+      rgtr_id,
+      reg_dt,
+      mdfr_id,
+      mdfcn_dt
+    FROM kids_own.tb_pp_m_inst_task
+    WHERE brno = #{brno}
+      AND task_se_cd = 'CM'
+    ORDER BY reg_dt DESC NULLS LAST, mdfcn_dt DESC NULLS LAST, bzmn_task_mng_no
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 참여기관 조회 -->
+  <!-- ####################################################### -->
+  <select id="searchPartners" resultMap="ResearchPartnerVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    prcp.brno,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.asmt_rqstr_id,
+    prcp.asmt_dmnd_dt,
+    prcp.asmt_ptcp_agre_id,
+    prcp.asmt_ptcp_agre_dt,
+    prcp.asmt_rslt_reg_id,
+    prcp.asmt_rslt_reg_dt,
+    prcp.asmt_ptcp_rtrcn_id,
+    mbr_rtrcn.encpt_mbr_flnm AS asmt_ptcp_rtrcn_mbr_encpt_flnm,
+    emp_rtrcn.emp_nm AS asmt_ptcp_rtrcn_emp_nm,
+    prcp.asmt_ptcp_rtrcn_rsn,
+    prcp.asmt_ptcp_rtrcn_dt,
+    prcp.del_yn,
+    prcp.rgtr_id,
+    mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+    emp.emp_nm AS emp_nm,
+    prcp.reg_dt,
+    prcp.mdfr_id,
+    prcp.mdfcn_dt,
+    prcp.uld_type_cd AS uld_type_cd,
+    uld.uld_inst_prgrs_stts_cd,
+    inst.inst_nm,
+    inst.brno,
+    <!-- opnn.utlz_agre_se_cd, -->
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_M_FILE_ULD file
+    WHERE file.pst_sn = uld.pblnt_sn
+    AND file.ptcp_inst_sn = uld.ptcp_inst_sn
+    AND file.file_se_cd = '07'
+    AND (file.del_yn IS NULL OR file.del_yn = 'N')
+    ), 0) as uld_file_cnt,
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn AND meta.rslt_group_cd = '02'
+    WHERE opnn.asmt_sn = prcp.asmt_sn
+    AND opnn.inst_id = prcp.inst_id
+    AND (opnn.utlz_agre_se_cd = '08' OR (opnn.utlz_agre_se_cd = '06' AND opnn.asmt_opnn_stts_cd = '08'))
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ), 0) as opnn_agre_cnt,
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn AND meta.rslt_group_cd = '04'
+    WHERE opnn.asmt_sn = prcp.asmt_sn
+    AND opnn.inst_id = prcp.inst_id
+    AND opnn.asmt_opnn_stts_cd = '10'
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ), 0) as opnn_notuse_cnt
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON prcp.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON prcp.rgtr_id = emp.emp_no
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr_rtrcn ON prcp.asmt_ptcp_rtrcn_id = mbr_rtrcn.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp_rtrcn ON prcp.asmt_ptcp_rtrcn_id = emp_rtrcn.emp_no
+    LEFT JOIN (
+    SELECT
+    u.inst_id,
+    u.pblnt_sn,
+    u.ptcp_inst_sn,
+    u.uld_inst_prgrs_stts_cd,
+    u.uld_type_cd
+    FROM (
+    SELECT
+    u1.inst_id,
+    u1.pblnt_sn,
+    u1.ptcp_inst_sn,
+    u1.uld_inst_prgrs_stts_cd,
+    u1.uld_type_cd,
+    ROW_NUMBER() OVER (
+    PARTITION BY u1.inst_id
+    ORDER BY u1.reg_dt DESC, COALESCE(u1.mdfcn_dt, u1.reg_dt) DESC, u1.ptcp_inst_sn DESC
+    ) as rn
+    FROM kids_own.TB_CM_M_ULD_PRST u1
+    WHERE (u1.del_yn IS NULL OR u1.del_yn = 'N')
+    AND u1.inst_id IS NOT NULL
+    ) u
+    WHERE u.rn = 1
+    ) uld ON prcp.inst_id = uld.inst_id
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    <!-- LEFT JOIN kids_own.TB_CM_E_OPNN opnn
+      ON prcp.asmt_sn = opnn.asmt_sn
+      AND prcp.inst_id = opnn.inst_id
+      AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N') -->
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    ORDER BY prcp.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 참여기관 조회 (기관아이디 조건 추가) -->
+  <!-- ####################################################### -->
+  <select id="searchPartnersByAsmtSnAndInstId" resultMap="ResearchPartnerVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    prcp.brno,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.asmt_rqstr_id,
+    prcp.asmt_dmnd_dt,
+    prcp.asmt_ptcp_agre_id,
+    prcp.asmt_ptcp_agre_dt,
+    prcp.asmt_rslt_reg_id,
+    prcp.asmt_rslt_reg_dt,
+    prcp.asmt_ptcp_rtrcn_id,
+    mbr_rtrcn.encpt_mbr_flnm AS asmt_ptcp_rtrcn_mbr_encpt_flnm,
+    emp_rtrcn.emp_nm AS asmt_ptcp_rtrcn_emp_nm,
+    prcp.asmt_ptcp_rtrcn_rsn,
+    prcp.asmt_ptcp_rtrcn_dt,
+    prcp.del_yn,
+    prcp.rgtr_id,
+    mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+    emp.emp_nm AS emp_nm,
+    prcp.reg_dt,
+    prcp.mdfr_id,
+    prcp.mdfcn_dt,
+    uld.uld_inst_prgrs_stts_cd,
+    prcp.uld_type_cd AS uld_type_cd,
+    inst.inst_nm,
+    inst.brno,
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_M_FILE_ULD file
+    WHERE file.pst_sn = uld.pblnt_sn
+    AND file.ptcp_inst_sn = uld.ptcp_inst_sn
+    AND file.file_se_cd = '07'
+    AND (file.del_yn IS NULL OR file.del_yn = 'N')
+    ), 0) as uld_file_cnt,
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn AND meta.rslt_group_cd = '02'
+    WHERE opnn.asmt_sn = prcp.asmt_sn
+    AND opnn.inst_id = prcp.inst_id
+    <choose>
+      <when test="'08'.equals(utlzAgreSeCd)">
+    AND (opnn.utlz_agre_se_cd = '08' OR (opnn.utlz_agre_se_cd = '06' AND opnn.asmt_opnn_stts_cd = '08'))
+      </when>
+      <otherwise>
+    AND opnn.utlz_agre_se_cd = #{utlzAgreSeCd}
+      </otherwise>
+    </choose>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ), 0) as opnn_agre_cnt,
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn AND meta.rslt_group_cd = '04'
+    WHERE opnn.asmt_sn = prcp.asmt_sn
+    AND opnn.inst_id = prcp.inst_id
+    <choose>
+      <when test="asmtOpnnSttsCd != null and asmtOpnnSttsCd != ''">
+    AND opnn.asmt_opnn_stts_cd = #{asmtOpnnSttsCd}
+      </when>
+      <otherwise>
+    AND 1 = 0
+      </otherwise>
+    </choose>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ), 0) as opnn_notuse_cnt
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON prcp.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON prcp.rgtr_id = emp.emp_no
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr_rtrcn ON prcp.asmt_ptcp_rtrcn_id = mbr_rtrcn.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp_rtrcn ON prcp.asmt_ptcp_rtrcn_id = emp_rtrcn.emp_no
+    LEFT JOIN (
+    SELECT
+    u.inst_id,
+    u.pblnt_sn,
+    u.ptcp_inst_sn,
+    u.uld_inst_prgrs_stts_cd,
+    u.uld_type_cd
+    FROM (
+    SELECT
+    u1.inst_id,
+    u1.pblnt_sn,
+    u1.ptcp_inst_sn,
+    u1.uld_inst_prgrs_stts_cd,
+    u1.uld_type_cd,
+    ROW_NUMBER() OVER (
+    PARTITION BY u1.inst_id
+    ORDER BY u1.reg_dt DESC, COALESCE(u1.mdfcn_dt, u1.reg_dt) DESC, u1.ptcp_inst_sn DESC
+    ) as rn
+    FROM kids_own.TB_CM_M_ULD_PRST u1
+    WHERE (u1.del_yn IS NULL OR u1.del_yn = 'N')
+    AND u1.inst_id IS NOT NULL
+    ) u
+    WHERE u.rn = 1
+    ) uld ON prcp.inst_id = uld.inst_id
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND prcp.inst_id = #{instId}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    ORDER BY prcp.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 참여기관 단건 조회 -->
+  <!-- ####################################################### -->
+  <select id="findPartnerById" resultMap="ResearchPartnerVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    prcp.brno,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.asmt_rqstr_id,
+    prcp.asmt_dmnd_dt,
+    prcp.asmt_ptcp_agre_id,
+    prcp.asmt_ptcp_agre_dt,
+    prcp.asmt_rslt_reg_id,
+    prcp.asmt_rslt_reg_dt,
+    prcp.asmt_ptcp_rtrcn_id,
+    mbr_rtrcn.encpt_mbr_flnm AS asmt_ptcp_rtrcn_mbr_encpt_flnm,
+    emp_rtrcn.emp_nm AS asmt_ptcp_rtrcn_emp_nm,
+    prcp.asmt_ptcp_rtrcn_rsn,
+    prcp.asmt_ptcp_rtrcn_dt,
+    prcp.del_yn,
+    prcp.rgtr_id,
+    mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+    emp.emp_nm AS emp_nm,
+    prcp.reg_dt,
+    prcp.mdfr_id,
+    prcp.mdfcn_dt,
+    uld.uld_inst_prgrs_stts_cd,
+    prcp.uld_type_cd AS uld_type_cd,
+    inst.inst_nm,
+    inst.brno,
+    COALESCE((
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_M_FILE_ULD file
+    WHERE file.pst_sn = uld.pblnt_sn
+    AND file.ptcp_inst_sn = uld.ptcp_inst_sn
+    AND file.file_se_cd = '07'
+    AND (file.del_yn IS NULL OR file.del_yn = 'N')
+    ), 0) as uld_file_cnt
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON prcp.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON prcp.rgtr_id = emp.emp_no
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr_rtrcn ON prcp.asmt_ptcp_rtrcn_id = mbr_rtrcn.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp_rtrcn ON prcp.asmt_ptcp_rtrcn_id = emp_rtrcn.emp_no
+    LEFT JOIN (
+    SELECT
+    u.inst_id,
+    u.pblnt_sn,
+    u.ptcp_inst_sn,
+    u.uld_inst_prgrs_stts_cd,
+    u.uld_type_cd
+    FROM (
+    SELECT
+    u1.inst_id,
+    u1.pblnt_sn,
+    u1.ptcp_inst_sn,
+    u1.uld_inst_prgrs_stts_cd,
+    u1.uld_type_cd,
+    ROW_NUMBER() OVER (
+    PARTITION BY u1.inst_id
+    ORDER BY u1.reg_dt DESC, COALESCE(u1.mdfcn_dt, u1.reg_dt) DESC, u1.ptcp_inst_sn DESC
+    ) as rn
+    FROM kids_own.TB_CM_M_ULD_PRST u1
+    WHERE (u1.del_yn IS NULL OR u1.del_yn = 'N')
+    AND u1.inst_id IS NOT NULL
+    ) u
+    WHERE u.rn = 1
+    ) uld ON prcp.inst_id = uld.inst_id
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND prcp.asmt_ptcp_inst_sn = #{asmtPtcpInstSn}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 조회 -->
+  <!-- ####################################################### -->
+  <select id="searchAnalysisData" resultMap="TbCmEAsmtMetaVOMap">
+    SELECT
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_noti_dt,
+    meta.rslt_group_cd,
+    meta.del_yn,
+    meta.rgtr_id,
+    meta.reg_dt,
+    meta.mdfr_id,
+    meta.mdfcn_dt
+    FROM kids_own.TB_CM_E_ASMT_META meta
+    <if test="instId != null and instId != ''">
+      INNER JOIN kids_own.TB_PP_M_MBR_INFO mbr ON meta.rgtr_id = mbr.mbr_no
+      INNER JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    </if>
+    WHERE meta.asmt_sn = #{asmtSn}
+    AND (meta.del_yn IS NULL OR meta.del_yn = 'N')
+    <if test="instId != null and instId != ''">
+      AND exprt.brno = #{instId}
+    </if>
+    <if test="rsltGroupStcd != null and rsltGroupStcd != ''">
+      AND meta.rslt_group_cd = #{rsltGroupStcd}
+    </if>
+    ORDER BY meta.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 상세 조회 -->
+  <!-- ####################################################### -->
+  <select id="findAnalysisDataById" resultType="kr.or.kids.domain.cm.research.vo.TbCmEAsmtMetaVO">
+    SELECT
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_group_cd,
+    meta.rslt_noti_dt,
+    meta.del_yn,
+    meta.rgtr_id,
+    meta.reg_dt,
+    meta.mdfr_id,
+    meta.mdfcn_dt,
+    mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+    emp.emp_nm AS emp_nm,
+    exprt.brno as inst_brno
+    FROM kids_own.TB_CM_E_ASMT_META meta
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON meta.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON meta.rgtr_id = emp.emp_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    WHERE meta.asmt_meta_rslt_sn = #{asmtMetaRsltSn}
+    AND (meta.del_yn IS NULL OR meta.del_yn = 'N')
+    <if test="rsltGroupStcd != null and rsltGroupStcd != ''">
+      AND meta.rslt_group_cd = #{rsltGroupStcd}
+    </if>
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 의견 조회 (asmtMetaRsltSn과 instId로, 의견 구분은 meta.rslt_group_cd로 판단) -->
+  <!-- ####################################################### -->
+  <select id="findOpinionByAsmtMetaRsltSnAndInstId" resultMap="TbCmEOpnnJoinMap">
+    SELECT
+    opnn.opnn_intg_rslt_sn,
+    opnn.asmt_meta_rslt_sn as opnn_asmt_meta_rslt_sn,
+    opnn.asmt_sn as opnn_asmt_sn,
+    opnn.inst_id as opnn_inst_id,
+    opnn.opnn_intg_dmnd_cn,
+    opnn.utlz_agre_se_cd as opnn_utlz_agre_se_cd,
+    opnn.asmt_opnn_stts_cd as opnn_asmt_opnn_stts_cd,
+    opnn.del_yn as opnn_del_yn,
+    opnn.rgtr_id as opnn_rgtr_id,
+    opnn.reg_dt as opnn_reg_dt,
+    opnn.mdfr_id as opnn_mdfr_id,
+    opnn.mdfcn_dt as opnn_mdfcn_dt,
+    mbr.mbr_no as opnn_mbr_no,
+    mbr.encpt_mbr_flnm AS opnn_mbr_encpt_flnm,
+    emp.emp_nm AS opnn_emp_nm,
+    exprt.brno as opnn_brno,
+    exprt.exprt_hdof_yn as opnn_exprt_hdof_yn,
+    inst.inst_nm as opnn_inst_nm
+    FROM kids_own.TB_CM_E_OPNN opnn
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON opnn.mdfr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON opnn.mdfr_id = emp.emp_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON exprt.brno = inst.brno
+    WHERE opnn.asmt_meta_rslt_sn = #{asmtMetaRsltSn}
+    <if test="instId != null and instId != ''">
+      AND opnn.inst_id = #{instId}
+    </if>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ORDER BY opnn.reg_dt DESC
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 최신 분석 데이터 상세 조회 -->
+  <!-- ####################################################### -->
+  <select id="findLatestAnalysisDataByAsmtSn" resultType="kr.or.kids.domain.cm.research.vo.TbCmEAsmtMetaVO">
+    SELECT
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_group_cd,
+    meta.del_yn,
+    meta.rgtr_id,
+    meta.reg_dt,
+    meta.mdfr_id,
+    meta.mdfcn_dt,
+    meta.rslt_noti_dt,
+    mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+    emp.emp_nm AS emp_nm
+    FROM kids_own.TB_CM_E_ASMT_META meta
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON meta.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON meta.rgtr_id = emp.emp_no
+    WHERE meta.asmt_sn = #{asmtSn}
+    AND (meta.del_yn IS NULL OR meta.del_yn = 'N')
+    <if test="rsltGroupStcd != null and rsltGroupStcd != ''">
+      AND meta.rslt_group_cd = #{rsltGroupStcd}
+    </if>
+    ORDER BY meta.reg_dt DESC
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 생성 -->
+  <!-- ####################################################### -->
+  <insert id="insertAnalysisData" parameterType="kr.or.kids.domain.cm.research.vo.TbCmEAsmtMetaVO">
+    <selectKey keyProperty="asmtMetaRsltSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_asmt_meta_rslt_sn')
+    </selectKey>
+    INSERT INTO kids_own.TB_CM_E_ASMT_META(asmt_meta_rslt_sn, asmt_sn, asmt_meta_rslt_cn, asmt_meta_rslt_stts_cd, rslt_group_cd, rslt_noti_dt, del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt)
+    VALUES (#{asmtMetaRsltSn}, #{asmtSn}, #{asmtMetaRsltCn}, #{asmtMetaRsltSttsCd}, #{rsltGroupCd}, #{rsltNotiDt}, #{delYn}, #{rgtrId}, #{regDt}, #{mdfrId}, #{mdfcnDt})
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 수정 -->
+  <!-- ####################################################### -->
+  <update id="updateAnalysisData" parameterType="kr.or.kids.domain.cm.research.vo.TbCmEAsmtMetaVO">
+    UPDATE kids_own.TB_CM_E_ASMT_META
+    <set>
+      <if test="asmtMetaRsltCn != null">asmt_meta_rslt_cn = #{asmtMetaRsltCn},</if>
+      <if test="asmtMetaRsltSttsCd != null">asmt_meta_rslt_stts_cd = #{asmtMetaRsltSttsCd},</if>
+      <if test="rsltNotiDt != null">rslt_noti_dt = #{rsltNotiDt},</if>
+      mdfr_id = #{mdfrId},
+      mdfcn_dt = #{mdfcnDt}
+    </set>
+    WHERE asmt_meta_rslt_sn = #{asmtMetaRsltSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제참여결과내역 asmt_ptcp_rslt_cn 업데이트 (변경할 값이 있을 때만 해당 컬럼 업데이트) -->
+  <!-- ####################################################### -->
+  <update id="updateAsmtPrcpRsltCn" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtPrcpVO">
+    UPDATE kids_own.TB_CM_M_ASMT_PRCP
+    <trim prefix="SET" suffixOverrides=",">
+      <if test="ptcpPrgrsSttsCd != null">ptcp_prgrs_stts_cd = #{ptcpPrgrsSttsCd},</if>
+      <if test="mdfrId != null">mdfr_id = #{mdfrId},</if>
+      mdfcn_dt = COALESCE(#{mdfcnDt}, NOW())
+    </trim>
+    WHERE asmt_sn = #{asmtSn}
+    AND inst_id = #{instId}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제참여결과내역 asmt_ptcp_rslt_cn 복수 건 일괄 업데이트 (asmtSn + instId 목록, List<TbCmMAsmtPrcpVO> vos, 변경할 값이 있을 때만 해당 컬럼 업데이트) -->
+  <!-- ####################################################### -->
+  <update id="updateAsmtPrcpRsltCnBatch">
+    UPDATE kids_own.TB_CM_M_ASMT_PRCP
+    <trim prefix="SET" suffixOverrides=",">
+      <if test="vos != null and vos.size() > 0 and vos[0].ptcpPrgrsSttsCd != null">ptcp_prgrs_stts_cd = #{vos[0].ptcpPrgrsSttsCd},</if>
+      <if test="vos != null and vos.size() > 0 and vos[0].mdfrId != null">mdfr_id = #{vos[0].mdfrId},</if>
+      mdfcn_dt = COALESCE(#{vos[0].mdfcnDt}, NOW())
+    </trim>
+    WHERE asmt_sn = #{vos[0].asmtSn}
+    AND inst_id IN
+    <foreach collection="vos" item="vo" open="(" close=")" separator=",">
+      #{vo.instId}
+    </foreach>
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 검토 상태(01, 02, 03)인 분석 데이터 개수 카운트 -->
+  <!-- ####################################################### -->
+  <select id="countAnalysisDataNotInReviewStatus" resultType="int">
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_E_ASMT_META meta
+    <if test="instId != null and instId != ''">
+      INNER JOIN kids_own.TB_PP_M_MBR_INFO mbr ON meta.rgtr_id = mbr.mbr_no
+      INNER JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    </if>
+    WHERE meta.asmt_sn = #{asmtSn}
+    AND meta.rslt_group_cd = #{rsltGroupStcd}
+    AND (meta.del_yn IS NULL OR meta.del_yn = 'N')
+    AND meta.asmt_meta_rslt_stts_cd IN ('01', '02', '03')
+    <if test="instId != null and instId != ''">
+      AND exprt.brno = #{instId}
+    </if>
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 의견 조회 -->
+  <!-- ####################################################### -->
+  <select id="countOpinionByAsmtMetaRsltSnAndInstId" resultType="int">
+    SELECT COUNT(*)
+    FROM kids_own.TB_CM_E_OPNN
+    WHERE asmt_meta_rslt_sn = #{asmtMetaRsltSn}
+    AND inst_id = #{instId}
+    AND (del_yn IS NULL OR del_yn = 'N')
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 의견 등록 -->
+  <!-- ####################################################### -->
+  <insert id="insertOpinion" parameterType="kr.or.kids.domain.cm.research.vo.TbCmEOpnnVO">
+    <selectKey keyProperty="opnnIntgRsltSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_opnn_intg_rslt_sn')
+    </selectKey>
+    INSERT INTO kids_own.TB_CM_E_OPNN(opnn_intg_rslt_sn, asmt_meta_rslt_sn, asmt_sn, inst_id, opnn_intg_dmnd_cn, utlz_agre_se_cd, asmt_opnn_stts_cd, del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt)
+    VALUES (#{opnnIntgRsltSn}, #{asmtMetaRsltSn}, #{asmtSn}, #{instId}, #{opnnIntgDmndCn}, #{utlzAgreSeCd}, #{asmtOpnnSttsCd}, #{delYn}, #{rgtrId}, #{regDt}, #{mdfrId}, #{mdfcnDt})
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터 의견 수정 -->
+  <!-- ####################################################### -->
+  <update id="updateOpinion" parameterType="kr.or.kids.domain.cm.research.vo.TbCmEOpnnVO">
+    UPDATE kids_own.TB_CM_E_OPNN
+    <set>
+      <if test="opnnIntgDmndCn != null and opnnIntgDmndCn != ''">
+        opnn_intg_dmnd_cn = #{opnnIntgDmndCn},
+      </if>
+      <if test="utlzAgreSeCd != null and utlzAgreSeCd != ''">
+        utlz_agre_se_cd = #{utlzAgreSeCd},
+      </if>
+      <if test="asmtOpnnSttsCd != null and asmtOpnnSttsCd != ''">
+        asmt_opnn_stts_cd = #{asmtOpnnSttsCd},
+      </if>
+      <if test="rgtrId != null and rgtrId != ''">
+        rgtr_id = #{rgtrId},
+      </if>
+      <if test="mdfrId != null and mdfrId != ''">
+        mdfr_id = #{mdfrId},
+      </if>
+      <choose>
+        <when test="mdfcnDt != null">
+          mdfcn_dt = #{mdfcnDt},
+        </when>
+        <otherwise>
+          mdfcn_dt = mdfcn_dt,
+        </otherwise>
+      </choose>
+    </set>
+    WHERE opnn_intg_rslt_sn = #{opnnIntgRsltSn}
+    AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 순수 의견 목록 조회 (의견 구분은 meta.rslt_group_cd로 필터) -->
+  <!-- ####################################################### -->
+  <select id="searchOpinionDetailList" resultType="kr.or.kids.domain.cm.research.vo.TbCmEOpnnVO">
+    SELECT
+      opnn.opnn_intg_rslt_sn AS opnnIntgRsltSn,
+      opnn.asmt_meta_rslt_sn AS asmtMetaRsltSn,
+      opnn.asmt_sn AS asmtSn,
+      opnn.inst_id AS instId,
+      opnn.opnn_intg_dmnd_cn AS opnnIntgDmndCn,
+      opnn.utlz_agre_se_cd AS utlzAgreSeCd,
+      opnn.asmt_opnn_stts_cd AS asmtOpnnSttsCd,
+      opnn.del_yn AS delYn,
+      opnn.rgtr_id AS rgtrId,
+      opnn.reg_dt AS regDt,
+      opnn.mdfr_id AS mdfrId,
+      opnn.mdfcn_dt AS mdfcnDt,
+      mbr.mbr_no AS mbrId,
+      mbr.encpt_mbr_flnm AS mbr_encpt_flnm,
+      emp.emp_nm AS emp_nm,
+      exprt.brno AS brno,
+      exprt.exprt_hdof_yn AS exprtHdofYn,
+      inst.inst_nm AS instNm
+    FROM kids_own.TB_CM_E_OPNN opnn
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON opnn.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON opnn.rgtr_id = emp.emp_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON opnn.inst_id = inst.brno
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn
+    WHERE opnn.asmt_sn = #{asmtSn}
+    AND opnn.asmt_meta_rslt_sn = #{asmtMetaRsltSn}
+    <if test="instId != null and instId != ''">
+      AND opnn.inst_id = #{instId}
+    </if>
+    <if test="rsltGroupStcd != null and rsltGroupStcd != ''">
+      AND meta.rslt_group_cd = #{rsltGroupStcd}
+    </if>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ORDER BY opnn.reg_dt ASC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 의견 목록(결과제외): utlz_agre_se_cd 필터 (드라이빙: TB_CM_E_OPNN) -->
+  <!-- ####################################################### -->
+  <select id="searchOpinionByUtlzAgreSeCd" resultMap="OpinionListRowVOMap">
+    SELECT
+    prcp.asmt_sn,
+    prcp.inst_id,
+    inst.inst_nm,
+    opnn.opnn_intg_rslt_sn,
+    opnn.asmt_meta_rslt_sn,
+    meta.rslt_group_cd,
+    opnn.opnn_intg_dmnd_cn,
+    opnn.utlz_agre_se_cd,
+    opnn.asmt_opnn_stts_cd AS asmt_opnn_stts_cd,
+    opnn.rgtr_id,
+    opnn.reg_dt,
+    opnn.mdfr_id,
+    opnn.mdfcn_dt,
+    mbr.encpt_mbr_flnm AS mdfr_nm,
+    NULL AS uld_inst_prgrs_stts_cd,
+    prcp.uld_type_cd AS uld_type_cd
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_M_ASMT_PRCP prcp
+    ON prcp.asmt_sn = opnn.asmt_sn
+    AND prcp.inst_id = opnn.inst_id
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON opnn.mdfr_id = mbr.mbr_no
+    WHERE opnn.asmt_sn = #{asmtSn}
+    <if test="utlzAgreSeCd != null">
+      <choose>
+        <when test="utlzAgreSeCd.equals('08')">
+      AND (opnn.asmt_opnn_stts_cd = '08' OR opnn.asmt_opnn_stts_cd = '10')
+        </when>
+        <otherwise>
+      AND opnn.utlz_agre_se_cd = #{utlzAgreSeCd}
+        </otherwise>
+      </choose>
+    </if>
+    <if test="instId != null and instId != ''">
+      AND opnn.inst_id = #{instId}
+    </if>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ORDER BY opnn.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 의견 조회 (meta.rslt_group_cd='04', asmtOpnnSttsCd, instId로) (드라이빙: TB_CM_E_OPNN) -->
+  <!-- ####################################################### -->
+  <select id="searchOpinionByAsmtOpnnStatus" resultMap="OpinionListRowVOMap">
+    SELECT
+    prcp.asmt_sn,
+    prcp.inst_id,
+    inst.inst_nm,
+    opnn.opnn_intg_rslt_sn,
+    opnn.asmt_meta_rslt_sn,
+    meta.rslt_group_cd,
+    opnn.opnn_intg_dmnd_cn,
+    opnn.utlz_agre_se_cd,
+    opnn.asmt_opnn_stts_cd AS asmt_opnn_stts_cd,
+    opnn.rgtr_id,
+    opnn.reg_dt,
+    opnn.mdfr_id,
+    opnn.mdfcn_dt,
+    mbr.encpt_mbr_flnm AS mdfr_nm,
+    NULL AS uld_inst_prgrs_stts_cd,
+    prcp.uld_type_cd AS uld_type_cd
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_M_ASMT_PRCP prcp
+    ON prcp.asmt_sn = opnn.asmt_sn
+    AND prcp.inst_id = opnn.inst_id
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn AND meta.rslt_group_cd = '04'
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON opnn.mdfr_id = mbr.mbr_no
+    WHERE opnn.asmt_sn = #{asmtSn}
+    AND opnn.asmt_opnn_stts_cd = #{asmtOpnnSttsCd}
+    <if test="instId != null and instId != ''">
+      AND opnn.inst_id = #{instId}
+    </if>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    ORDER BY opnn.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- instId(brno) 기준 ULD 최신 1건 (pblnt_sn 포함, DRB 조회용) -->
+  <!-- ####################################################### -->
+  <select id="findLatestUldPrstByInstId" resultMap="TbCmMUldPrstLatestByInstMap">
+    SELECT /* kr.or.kids.domain.cm.research.mapper.findLatestUldPrstByInstId */
+           u1.inst_id
+         , u1.pblnt_sn
+         , u1.ptcp_inst_sn
+         , u1.uld_inst_prgrs_stts_cd
+         , u1.uld_type_cd
+         , u1.reg_dt
+         , u1.mdfcn_dt
+      FROM kids_own.TB_CM_M_ULD_PRST u1
+     WHERE (u1.del_yn IS NULL OR u1.del_yn = 'N')
+       AND u1.inst_id = #{instId}
+     ORDER BY u1.reg_dt DESC, COALESCE(u1.mdfcn_dt, u1.reg_dt) DESC, u1.ptcp_inst_sn DESC
+     LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 메타분석 의견 목록 조회 -->
+  <!-- ####################################################### -->
+  <select id="searchOpinionListForMeta" resultMap="OpinionListRowVOMap">
+    SELECT
+    opnn.asmt_sn,
+    opnn.inst_id,
+    inst.inst_nm,
+    opnn.opnn_intg_rslt_sn,
+    opnn.asmt_meta_rslt_sn,
+    meta.rslt_group_cd,
+    opnn.opnn_intg_dmnd_cn,
+    opnn.utlz_agre_se_cd,
+    opnn.rgtr_id,
+    opnn.reg_dt,
+    mbr.encpt_mbr_flnm AS mdfr_nm,
+    opnn.mdfr_id,
+    opnn.mdfcn_dt,
+    NULL AS uld_inst_prgrs_stts_cd,
+    NULL AS uld_type_cd,
+    opnn.asmt_opnn_stts_cd AS asmt_opnn_stts_cd
+    FROM kids_own.TB_CM_E_OPNN opnn
+    INNER JOIN kids_own.TB_CM_E_ASMT_META meta ON opnn.asmt_meta_rslt_sn = meta.asmt_meta_rslt_sn AND opnn.asmt_sn = meta.asmt_sn
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON opnn.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON opnn.mdfr_id = mbr.mbr_no
+    WHERE opnn.asmt_sn = #{asmtSn}
+    AND opnn.asmt_meta_rslt_sn = #{asmtMetaRsltSn}
+    <if test="utlzAgreSeCd != null">
+    AND opnn.utlz_agre_se_cd = #{utlzAgreSeCd}
+    </if>
+    AND (opnn.del_yn IS NULL OR opnn.del_yn = 'N')
+    <if test="instIds != null and instIds.size() > 0">
+    AND opnn.inst_id IN
+    <foreach collection="instIds" item="instId" open="(" separator="," close=")">
+      #{instId}
+    </foreach>
+    </if>
+    ORDER BY opnn.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 참여기관 목록 조회 (asmtSn 기준, 참여요청/미참여 제외) -->
+  <!-- ####################################################### -->
+  <select id="findActivePartnersByAsmtSn" resultMap="TbCmMAsmtPrcpVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    inst.inst_nm AS inst_nm,
+    prcp.brno,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.asmt_rqstr_id,
+    prcp.asmt_dmnd_dt,
+    prcp.asmt_ptcp_agre_id,
+    prcp.asmt_ptcp_agre_dt,
+    prcp.asmt_rslt_reg_id,
+    prcp.asmt_rslt_reg_dt,
+    prcp.asmt_ptcp_rtrcn_rsn,
+    prcp.asmt_ptcp_rtrcn_dt,
+    prcp.del_yn,
+    prcp.rgtr_id,
+    prcp.reg_dt,
+    prcp.mdfr_id,
+    prcp.mdfcn_dt,
+    prcp.uld_type_cd AS uld_type_cd
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    AND prcp.ptcp_prgrs_stts_cd NOT IN ('01', '02')
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 참여기관 조회 (asmtSn과 instId로) -->
+  <!-- ####################################################### -->
+  <select id="findPartnerByAsmtSnAndInstId" resultMap="TbCmMAsmtPrcpVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    inst.inst_nm AS inst_nm,
+    prcp.brno,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.asmt_rqstr_id,
+    prcp.asmt_dmnd_dt,
+    prcp.asmt_ptcp_agre_id,
+    prcp.asmt_ptcp_agre_dt,
+    prcp.asmt_rslt_reg_id,
+    prcp.asmt_rslt_reg_dt,
+    prcp.asmt_ptcp_rtrcn_rsn,
+    prcp.asmt_ptcp_rtrcn_dt,
+    prcp.del_yn,
+    prcp.rgtr_id,
+    prcp.reg_dt,
+    prcp.mdfr_id,
+    prcp.mdfcn_dt,
+    prcp.uld_type_cd AS uld_type_cd
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND prcp.inst_id = #{instId}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 참여기관 조회 (asmtSn과 asmtPtcpInstSn으로) -->
+  <!-- ####################################################### -->
+  <select id="findPartnerByAsmtSnAndPtcpInstSn" resultMap="TbCmMAsmtPrcpVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    inst.inst_nm AS inst_nm,
+    prcp.brno,
+    prcp.ptcp_prgrs_stts_cd,
+    prcp.asmt_rqstr_id,
+    prcp.asmt_dmnd_dt,
+    prcp.asmt_ptcp_agre_id,
+    prcp.asmt_ptcp_agre_dt,
+    prcp.asmt_rslt_reg_id,
+    prcp.asmt_rslt_reg_dt,
+    prcp.asmt_ptcp_rtrcn_rsn,
+    prcp.asmt_ptcp_rtrcn_dt,
+    prcp.del_yn,
+    prcp.rgtr_id,
+    prcp.reg_dt,
+    prcp.mdfr_id,
+    prcp.mdfcn_dt
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND prcp.asmt_ptcp_inst_sn = #{asmtPtcpInstSn}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 참여기관 업데이트 (asmtPtcpInstSn으로) -->
+  <!-- ####################################################### -->
+  <update id="updatePartner" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtPrcpVO">
+    UPDATE kids_own.TB_CM_M_ASMT_PRCP
+    <set>
+      <if test="asmtRqstrId != null">asmt_rqstr_id = #{asmtRqstrId},</if>
+      <if test="asmtDmndDt != null">asmt_dmnd_dt = #{asmtDmndDt},</if>
+      <if test="ptcpPrgrsSttsCd != null">ptcp_prgrs_stts_cd = #{ptcpPrgrsSttsCd},</if>
+      <if test="asmtPtcpAgreId != null">asmt_ptcp_agre_id = #{asmtPtcpAgreId},</if>
+      <if test="asmtPtcpAgreDt != null">asmt_ptcp_agre_dt = #{asmtPtcpAgreDt},</if>
+      <if test="asmtPtcpRtrcnId != null">asmt_ptcp_rtrcn_id = #{asmtPtcpRtrcnId},</if>
+      <if test="asmtPtcpRtrcnRsn != null">asmt_ptcp_rtrcn_rsn = #{asmtPtcpRtrcnRsn},</if>
+      <if test="asmtPtcpRtrcnDt != null">asmt_ptcp_rtrcn_dt = #{asmtPtcpRtrcnDt},</if>
+      <if test="mdfrId != null">mdfr_id = #{mdfrId},</if>
+      <if test="mdfcnDt != null">mdfcn_dt = #{mdfcnDt},</if>
+      <!-- 모든 값이 null로 들어오는 경우 SQL 문법 오류 방지용 no-op -->
+      <if test="ptcpPrgrsSttsCd == null
+                and asmtPtcpAgreId == null
+                and asmtPtcpAgreDt == null
+                and asmtPtcpRtrcnId == null
+                and asmtPtcpRtrcnRsn == null
+                and asmtPtcpRtrcnDt == null
+                and mdfrId == null
+                and mdfcnDt == null
+                ">
+        asmt_ptcp_inst_sn = asmt_ptcp_inst_sn
+      </if>
+    </set>
+    WHERE asmt_ptcp_inst_sn = #{asmtPtcpInstSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- Non-CDM 참여기관 + 최신 분석 데이터(rsltGroupStcd) 조회 -->
+  <!-- ####################################################### -->
+  <select id="searchNonCdmPartnersWithLatestAnalysis" resultMap="OrgPartnerLatestMetaVOMap">
+    SELECT
+    prcp.asmt_ptcp_inst_sn,
+    prcp.asmt_sn,
+    prcp.inst_id,
+    inst.inst_nm,
+    prcp.uld_type_cd AS uld_type_cd,
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_group_cd,
+    meta.reg_dt
+    FROM kids_own.TB_CM_M_ASMT_PRCP prcp
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON prcp.inst_id = inst.brno
+    LEFT JOIN (
+    SELECT
+    m1.*,
+    exprt.brno as meta_brno
+    FROM kids_own.TB_CM_E_ASMT_META m1
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON m1.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    INNER JOIN (
+    SELECT
+    m.asmt_sn,
+    e.brno,
+    MAX(m.reg_dt) as max_reg_dt
+    FROM kids_own.TB_CM_E_ASMT_META m
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mb ON m.rgtr_id = mb.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO e ON mb.mbr_no = e.mbr_no
+    WHERE (m.del_yn IS NULL OR m.del_yn = 'N')
+    AND m.rslt_group_cd = #{rsltGroupStcd}
+    GROUP BY m.asmt_sn, e.brno
+    ) m2 ON m1.asmt_sn = m2.asmt_sn
+    AND m1.reg_dt = m2.max_reg_dt
+    AND (exprt.brno = m2.brno OR (exprt.brno IS NULL AND m2.brno IS NULL))
+    WHERE (m1.del_yn IS NULL OR m1.del_yn = 'N')
+    AND m1.rslt_group_cd = #{rsltGroupStcd}
+    ) meta ON prcp.asmt_sn = meta.asmt_sn AND prcp.inst_id = meta.meta_brno
+    WHERE prcp.asmt_sn = #{asmtSn}
+    AND (prcp.del_yn IS NULL OR prcp.del_yn = 'N')
+    AND (prcp.ptcp_prgrs_stts_cd IS NULL OR prcp.ptcp_prgrs_stts_cd != '02')
+    AND (prcp.uld_type_cd IS NULL OR prcp.uld_type_cd != '01')
+    AND prcp.asmt_ptcp_rtrcn_dt IS NULL
+    ORDER BY prcp.reg_dt DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 의견 전체 상태 체크용 메타분석 최신 데이터 조회 (rsltGroupStcd='02' 최신 1개) -->
+  <!-- ####################################################### -->
+  <select id="findLatestMetaAnalysisForStatusCheck" parameterType="long" resultMap="TbCmEAsmtMetaVOMap">
+    SELECT
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_noti_dt,
+    meta.rslt_group_cd,
+    meta.del_yn,
+    meta.rgtr_id,
+    meta.reg_dt,
+    meta.mdfr_id,
+    meta.mdfcn_dt
+    FROM kids_own.TB_CM_E_ASMT_META meta
+    WHERE meta.asmt_sn = #{asmtSn}
+    AND meta.rslt_group_cd = '02'
+    AND (meta.del_yn IS NULL OR meta.del_yn = 'N')
+    ORDER BY meta.reg_dt DESC
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 결과그룹코드별 최신 메타분석 데이터 조회 -->
+  <!-- ####################################################### -->
+  <select id="findLatestMetaAnalysisByRsltGroupStcd" resultMap="TbCmEAsmtMetaVOMap">
+    SELECT
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_noti_dt,
+    meta.rslt_group_cd,
+    meta.del_yn,
+    meta.rgtr_id,
+    meta.reg_dt,
+    meta.mdfr_id,
+    meta.mdfcn_dt
+    FROM kids_own.TB_CM_E_ASMT_META meta
+    WHERE meta.asmt_sn = #{asmtSn}
+    AND meta.rslt_group_cd = #{rsltGroupStcd}
+    AND (meta.del_yn IS NULL OR meta.del_yn = 'N')
+    ORDER BY meta.reg_dt DESC
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 의견 전체 상태 체크용 원천데이터 분석 최신 데이터 조회 (rsltGroupStcd='03' 참여기관별 최신) -->
+  <!-- ####################################################### -->
+  <select id="findLatestOrgAnalysisForStatusCheck" parameterType="long" resultMap="TbCmEAsmtMetaVOMap">
+    SELECT
+    m1.asmt_meta_rslt_sn,
+    m1.asmt_sn,
+    m1.asmt_meta_rslt_cn,
+    m1.asmt_meta_rslt_stts_cd,
+    m1.rslt_noti_dt,
+    m1.rslt_group_cd,
+    m1.del_yn,
+    m1.rgtr_id,
+    m1.reg_dt,
+    m1.mdfr_id,
+    m1.mdfcn_dt
+    FROM kids_own.TB_CM_E_ASMT_META m1
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON m1.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    INNER JOIN (
+    SELECT
+    m.asmt_sn,
+    e.brno,
+    MAX(m.reg_dt) as max_reg_dt
+    FROM kids_own.TB_CM_E_ASMT_META m
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mb ON m.rgtr_id = mb.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO e ON mb.mbr_no = e.mbr_no
+    WHERE m.asmt_sn = #{asmtSn}
+    AND (m.del_yn IS NULL OR m.del_yn = 'N')
+    AND m.rslt_group_cd = '03'
+    GROUP BY m.asmt_sn, e.brno
+    ) m2 ON m1.asmt_sn = m2.asmt_sn
+    AND m1.reg_dt = m2.max_reg_dt
+    AND (exprt.brno = m2.brno OR (exprt.brno IS NULL AND m2.brno IS NULL))
+    WHERE m1.asmt_sn = #{asmtSn}
+    AND (m1.del_yn IS NULL OR m1.del_yn = 'N')
+    AND m1.rslt_group_cd = '03'
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- asmtSn 목록에 대해 rsltGroupStcd별 과제당 최신 1건 조회 (02, 04용) -->
+  <!-- ####################################################### -->
+  <select id="findLatestMetaByRsltGroupStcdBatch" resultMap="TbCmEAsmtMetaVOMap">
+    SELECT
+    meta.asmt_meta_rslt_sn,
+    meta.asmt_sn,
+    meta.asmt_meta_rslt_cn,
+    meta.asmt_meta_rslt_stts_cd,
+    meta.rslt_noti_dt,
+    meta.rslt_group_cd,
+    meta.del_yn,
+    meta.rgtr_id,
+    meta.reg_dt,
+    meta.mdfr_id,
+    meta.mdfcn_dt
+    FROM (
+    SELECT
+    m.asmt_meta_rslt_sn,
+    m.asmt_sn,
+    m.asmt_meta_rslt_cn,
+    m.asmt_meta_rslt_stts_cd,
+    m.rslt_noti_dt,
+    m.rslt_group_cd,
+    m.del_yn,
+    m.rgtr_id,
+    m.reg_dt,
+    m.mdfr_id,
+    m.mdfcn_dt,
+    ROW_NUMBER() OVER (PARTITION BY m.asmt_sn ORDER BY m.reg_dt DESC) AS rn
+    FROM kids_own.TB_CM_E_ASMT_META m
+    WHERE (m.del_yn IS NULL OR m.del_yn = 'N')
+    AND m.rslt_group_cd = #{rsltGroupStcd}
+    AND m.asmt_sn IN
+    <foreach collection="asmtSns" item="asmtSn" open="(" separator="," close=")">
+      #{asmtSn}
+    </foreach>
+    ) meta
+    WHERE meta.rn = 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- asmtSn 목록에 대해 rsltGroupStcd='03' 기관별 최신 조회 -->
+  <!-- ####################################################### -->
+  <select id="findLatestOrgAnalysisForStatusCheckBatch" resultMap="TbCmEAsmtMetaVOMap">
+    SELECT
+    m1.asmt_meta_rslt_sn,
+    m1.asmt_sn,
+    m1.asmt_meta_rslt_cn,
+    m1.asmt_meta_rslt_stts_cd,
+    m1.rslt_noti_dt,
+    m1.rslt_group_cd,
+    m1.del_yn,
+    m1.rgtr_id,
+    m1.reg_dt,
+    m1.mdfr_id,
+    m1.mdfcn_dt
+    FROM kids_own.TB_CM_E_ASMT_META m1
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON m1.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO exprt ON mbr.mbr_no = exprt.mbr_no
+    INNER JOIN (
+    SELECT
+    m.asmt_sn,
+    e.brno,
+    MAX(m.reg_dt) AS max_reg_dt
+    FROM kids_own.TB_CM_E_ASMT_META m
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mb ON m.rgtr_id = mb.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EXPRT_INFO e ON mb.mbr_no = e.mbr_no
+    WHERE (m.del_yn IS NULL OR m.del_yn = 'N')
+    AND m.rslt_group_cd = '03'
+    AND m.asmt_sn IN
+    <foreach collection="asmtSns" item="asmtSn" open="(" separator="," close=")">
+      #{asmtSn}
+    </foreach>
+    GROUP BY m.asmt_sn, e.brno
+    ) m2 ON m1.asmt_sn = m2.asmt_sn
+    AND m1.reg_dt = m2.max_reg_dt
+    AND (exprt.brno = m2.brno OR (exprt.brno IS NULL AND m2.brno IS NULL))
+    WHERE (m1.del_yn IS NULL OR m1.del_yn = 'N')
+    AND m1.rslt_group_cd = '03'
+    AND m1.asmt_sn IN
+    <foreach collection="asmtSns" item="asmtSn" open="(" separator="," close=")">
+      #{asmtSn}
+    </foreach>
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- asmtSn 목록 중 rslt_group_cd='01' 이면서 검토진행(약물역학/정보화) 상태인 메타가 있는 과제일련번호 (의견-opnn.asmt_meta_rslt_sn으로 메타와 연결) -->
+  <!-- ####################################################### -->
+  <select id="findAsmtSnsWithReviewInProgressBatch" resultType="long">
+    SELECT DISTINCT m.asmt_sn
+    FROM kids_own.TB_CM_E_ASMT_META m
+    <!-- INNER JOIN kids_own.TB_CM_E_OPNN o ON o.asmt_meta_rslt_sn = m.asmt_meta_rslt_sn AND o.asmt_sn = m.asmt_sn -->
+    WHERE m.asmt_sn IN
+    <foreach collection="asmtSns" item="asmtSn" open="(" separator="," close=")">
+      #{asmtSn}
+    </foreach>
+    AND m.rslt_group_cd = '01'
+    AND m.asmt_meta_rslt_stts_cd IN ('04', '05')
+    AND (m.del_yn IS NULL OR m.del_yn = 'N')
+    <!-- AND (o.del_yn IS NULL OR o.del_yn = 'N') -->
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 사용자(VDI/DB 계정) 목록 조회 -->
+  <!-- ####################################################### -->
+  <select id="searchAsmtAccounts" resultMap="TbCmMAsmtAccountVOMap">
+    SELECT
+      u.asmt_user_info_sn,
+      u.asmt_user_flnm,
+      u.enpswd,
+      u.asmt_user_ip_addr,
+      u.asmt_user_srvc_no,
+      u.user_se_cd,
+      u.asmt_sn,
+      u.use_yn,
+      u.rgtr_id,
+      u.reg_dt,
+      u.mdfr_id,
+      u.mdfcn_dt,
+      u.asmt_lnkg_schm_nm,
+      asmt.asmt_id
+    FROM kids_own.tb_cm_m_asmt_user_info u
+    LEFT JOIN kids_own.TB_CM_M_ASMT asmt ON u.asmt_sn = asmt.asmt_sn
+    ORDER BY u.asmt_user_info_sn DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 사용자 단건 조회 -->
+  <!-- ####################################################### -->
+  <select id="findAsmtAccountById" parameterType="long" resultMap="TbCmMAsmtAccountVOMap">
+    SELECT
+      u.asmt_user_info_sn,
+      u.asmt_user_flnm,
+      u.enpswd,
+      u.asmt_user_ip_addr,
+      u.asmt_user_srvc_no,
+      u.user_se_cd,
+      u.asmt_sn,
+      u.use_yn,
+      u.rgtr_id,
+      u.reg_dt,
+      u.mdfr_id,
+      u.mdfcn_dt,
+      u.asmt_lnkg_schm_nm,
+      asmt.asmt_id
+    FROM kids_own.tb_cm_m_asmt_user_info u
+    LEFT JOIN kids_own.TB_CM_M_ASMT asmt ON u.asmt_sn = asmt.asmt_sn
+    WHERE u.asmt_user_info_sn = #{asmtUserInfoSn}
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제일련번호 + 사용자구분코드로 과제 사용자 1건 조회 -->
+  <!-- ####################################################### -->
+  <select id="findAsmtAccountByAsmtSnAndUserSeCd" resultMap="TbCmMAsmtAccountVOMap">
+    SELECT
+      u.asmt_user_info_sn,
+      u.asmt_user_flnm,
+      u.enpswd,
+      u.asmt_user_ip_addr,
+      u.asmt_user_srvc_no,
+      u.user_se_cd,
+      u.asmt_sn,
+      u.use_yn,
+      u.rgtr_id,
+      u.reg_dt,
+      u.mdfr_id,
+      u.mdfcn_dt,
+      u.asmt_lnkg_schm_nm,
+      asmt.asmt_id
+    FROM kids_own.tb_cm_m_asmt_user_info u
+    LEFT JOIN kids_own.TB_CM_M_ASMT asmt ON u.asmt_sn = asmt.asmt_sn
+    WHERE u.asmt_sn = #{asmtSn}
+      AND u.user_se_cd = #{userSeCd}
+    LIMIT 1
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제에 미할당된 VDI/DB 사용자 조회 (user_se_cd vdi/db) -->
+  <!-- ####################################################### -->
+  <select id="selectUnassignedAsmtAccountsForAssign" resultMap="TbCmMAsmtAccountVOMap">
+    SELECT
+      asmt_user_info_sn,
+      asmt_user_flnm,
+      enpswd,
+      asmt_user_ip_addr,
+      asmt_user_srvc_no,
+      user_se_cd,
+      asmt_sn,
+      use_yn,
+      rgtr_id,
+      reg_dt,
+      mdfr_id,
+      mdfcn_dt,
+      asmt_lnkg_schm_nm
+    FROM kids_own.tb_cm_m_asmt_user_info
+    WHERE user_se_cd IN ('01', '02')
+      AND asmt_sn IS NULL
+      AND (use_yn IS NULL OR use_yn = 'N')
+    ORDER BY asmt_user_info_sn DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 사용자 등록 -->
+  <!-- ####################################################### -->
+  <insert id="insertAsmtAccount" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtAccountVO">
+    <selectKey keyProperty="asmtUserInfoSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_asmt_user_info_sn')
+    </selectKey>
+    INSERT INTO kids_own.tb_cm_m_asmt_user_info (asmt_user_info_sn, asmt_user_flnm, enpswd, asmt_user_ip_addr, asmt_user_srvc_no, user_se_cd, asmt_sn, use_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt, asmt_lnkg_schm_nm)
+    VALUES (#{asmtUserInfoSn}, #{asmtUserFlnm}, #{enpswd}, #{asmtUserIpAddr}, #{asmtUserSrvcNo}, #{userSeCd}, #{asmtSn}, COALESCE(#{useYn}, 'Y'), #{rgtrId}, COALESCE(#{regDt}, NOW()), #{mdfrId}, COALESCE(#{mdfcnDt}, NOW()), #{asmtAnalysisSchema})
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 과제 사용자 수정 -->
+  <!-- ####################################################### -->
+  <update id="updateAsmtAccount" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtAccountVO">
+    UPDATE kids_own.tb_cm_m_asmt_user_info
+    SET asmt_user_flnm = #{asmtUserFlnm},
+        asmt_user_ip_addr = #{asmtUserIpAddr},
+        asmt_user_srvc_no = #{asmtUserSrvcNo},
+        user_se_cd = #{userSeCd},
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = COALESCE(#{mdfcnDt}, NOW())
+    <if test="enpswd != null and enpswd != ''">
+      , enpswd = #{enpswd}
+    </if>
+    <if test="asmtAnalysisSchema != null">
+      , asmt_lnkg_schm_nm = #{asmtAnalysisSchema}
+    </if>
+    WHERE asmt_user_info_sn = #{asmtUserInfoSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 사용자 삭제 -->
+  <!-- ####################################################### -->
+  <delete id="deleteAsmtAccount" parameterType="long">
+    DELETE FROM kids_own.tb_cm_m_asmt_user_info
+    WHERE asmt_user_info_sn = #{asmtUserInfoSn}
+  </delete>
+
+  <!-- ####################################################### -->
+  <!-- 연구과제 마감 시 과제 사용자 계정 비활성화 (asmt_sn 매핑 해제 + use_yn = 'N') -->
+  <!-- ####################################################### -->
+  <update id="deactivateAsmtAccountsByAsmtSn">
+    UPDATE kids_own.tb_cm_m_asmt_user_info
+    SET asmt_sn = NULL,
+        use_yn = 'N',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = NOW()
+    WHERE asmt_sn = #{asmtSn}
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 일련번호를 과제 사용자에 매핑 -->
+  <!-- ####################################################### -->
+  <update id="assignAsmtSnToAccount">
+    UPDATE kids_own.tb_cm_m_asmt_user_info
+    SET asmt_sn = #{asmtSn}, use_yn = 'Y'
+    WHERE asmt_user_info_sn = #{asmtUserInfoSn}
+      AND asmt_sn IS NULL
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 댓글 목록 조회 -->
+  <!-- ####################################################### -->
+  <select id="selectComments" resultType="kr.or.kids.domain.cm.research.vo.CommentRowVO">
+    SELECT c.asmt_cmnt_sn   AS asmtCmntSn,
+    c.asmt_sn        AS asmtSn,
+    c.inst_id      AS instId,
+    inst.inst_nm   AS instNm,
+    dept.dept_nm   AS deptNm,
+    mbr.encpt_mbr_flnm AS mbrNm,
+    emp.emp_nm AS empNm,
+    c.cmnt_dtl_cn    AS cmntDtlCn,
+    c.orgnl_up_cmnt_ans_sn AS orgnlUpCmntAnsSn,
+    c.up_cmnt_ans_sn AS upCmntAnsSn,
+    c.cmnt_ans_depth_seq  AS cmntAnsDepth,
+    c.cmnt_ans_sn    AS cmntAnsSn,
+    c.del_indct_yn   AS delIndctYn,
+    c.del_yn         AS delYn,
+    c.rgtr_id        AS rgtrId,
+    c.reg_dt         AS regDt,
+    c.mdfr_id        AS mdfrId,
+    c.mdfcn_dt       AS mdfcnDt
+    FROM kids_own.TB_CM_M_ASMT_CMNT c
+    LEFT JOIN kids_own.TB_PP_M_INST inst ON c.inst_id = inst.brno
+    LEFT JOIN kids_own.TB_PP_M_DEPT_INFO dept ON c.inst_id = dept.dept_no
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON c.rgtr_id = mbr.mbr_no
+    LEFT JOIN kids_own.TB_PP_M_EMP_INFO emp ON c.rgtr_id = emp.emp_no
+    WHERE c.asmt_sn = #{asmtSn}
+    AND (c.del_yn IS NULL OR c.del_yn = 'N')
+    AND (c.bbs_id IS NULL)
+    ORDER BY COALESCE(c.orgnl_up_cmnt_ans_sn, c.asmt_cmnt_sn),
+    c.orgnl_up_cmnt_ans_sn NULLS FIRST,
+    c.cmnt_ans_sn,
+    c.reg_dt
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 댓글 단건 조회 -->
+  <!-- ####################################################### -->
+  <select id="findCommentByAsmtCmntSn" resultType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtCmntVO">
+    SELECT asmt_cmnt_sn         AS asmtCmntSn,
+    asmt_sn              AS asmtSn,
+    inst_id              AS instId,
+    cmnt_dtl_cn          AS cmntDtlCn,
+    orgnl_up_cmnt_ans_sn AS orgnlUpCmntAnsSn,
+    up_cmnt_ans_sn       AS upCmntAnsSn,
+    cmnt_ans_depth_seq   AS cmntAnsDepth,
+    cmnt_ans_sn          AS cmntAnsSn,
+    del_indct_yn         AS delIndctYn,
+    del_yn               AS delYn,
+    rgtr_id              AS rgtrId,
+    reg_dt               AS regDt,
+    mdfr_id              AS mdfrId,
+    mdfcn_dt             AS mdfcnDt
+    FROM kids_own.TB_CM_M_ASMT_CMNT
+    WHERE asmt_cmnt_sn = #{asmtCmntSn}
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 과제 댓글 등록 -->
+  <!-- ####################################################### -->
+  <insert id="insertComment" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtCmntVO">
+    <selectKey keyProperty="asmtCmntSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_asmt_cmnt_sn')
+    </selectKey>
+    INSERT INTO kids_own.TB_CM_M_ASMT_CMNT (asmt_cmnt_sn, asmt_sn, inst_id, cmnt_dtl_cn, orgnl_up_cmnt_ans_sn, up_cmnt_ans_sn, cmnt_ans_depth_seq, cmnt_ans_sn, del_indct_yn, del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt)
+    VALUES (#{asmtCmntSn}, #{asmtSn}, #{instId}, #{cmntDtlCn}, #{orgnlUpCmntAnsSn}, #{upCmntAnsSn}, #{cmntAnsDepth}, #{cmntAnsSn}, #{delIndctYn}, #{delYn}, #{rgtrId}, #{regDt}, #{mdfrId}, #{mdfcnDt})
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 과제 댓글 수정 -->
+  <!-- ####################################################### -->
+  <update id="updateComment" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMAsmtCmntVO">
+    UPDATE kids_own.TB_CM_M_ASMT_CMNT
+    SET cmnt_dtl_cn = #{cmntDtlCn},
+    mdfr_id = #{mdfrId},
+    mdfcn_dt = #{mdfcnDt}
+    WHERE asmt_cmnt_sn = #{asmtCmntSn}
+    AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 과제 댓글 논리 삭제 -->
+  <!-- ####################################################### -->
+  <update id="deleteComment">
+    UPDATE kids_own.TB_CM_M_ASMT_CMNT
+    SET del_yn = 'Y',
+    mdfr_id = #{mdfrId},
+    mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE asmt_cmnt_sn = #{asmtCmntSn}
+    AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- ####################################################### -->
+  <!-- 같은 스레드 내 다음 댓글 순번 -->
+  <!-- ####################################################### -->
+  <select id="nextCmntAnsSn" resultType="long">
+    SELECT COALESCE(MAX(cmnt_ans_sn), 0) + 1
+    FROM kids_own.TB_CM_M_ASMT_CMNT
+    WHERE asmt_sn = #{asmtSn}
+    AND (del_yn IS NULL OR del_yn = 'N')
+    AND (
+    (#{orgnlUpCmntAnsSn,jdbcType=NUMERIC} IS NULL AND orgnl_up_cmnt_ans_sn IS NULL)
+    OR orgnl_up_cmnt_ans_sn = #{orgnlUpCmntAnsSn,jdbcType=NUMERIC}
+    )
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 담당자 드롭다운용 직원 목록 (dept_no IN) -->
+  <!-- ####################################################### -->
+  <select id="selectEmpInfoByDeptNos" resultType="kr.or.kids.domain.cm.research.vo.EmpOptionVO">
+    SELECT emp_no AS empNo, emp_nm AS empNm, dept_no AS deptNo
+    FROM kids_own.tb_pp_m_emp_info
+    WHERE dept_no IN
+    <foreach collection="deptNos" item="d" open="(" separator="," close=")">
+      #{d}
+    </foreach>
+    ORDER BY dept_no, emp_no
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 이메일 발송용 직원 정보 조회 (emp_no IN) -->
+  <!-- ####################################################### -->
+  <select id="selectEmpInfoByEmpNos" resultType="kr.or.kids.domain.cm.common.vo.TbPpMEmpInfoVO">
+    SELECT
+      emp_no AS empNo,
+      emp_nm AS empNm,
+      dept_no AS deptNo,
+      encpt_emp_telno AS encptEmpTelno,
+      encpt_emp_eml_nm AS encptEmpEmlNm,
+      rgtr_id AS rgtrId,
+      reg_dt AS regDt,
+      mdfr_id AS mdfrId,
+      mdfcn_dt AS mdfcnDt
+    FROM kids_own.tb_pp_m_emp_info
+    WHERE emp_no IN
+    <foreach collection="empNos" item="e" open="(" separator="," close=")">
+      #{e}
+    </foreach>
+    ORDER BY emp_no
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 담당자 목록 (tb_cm_m_asmt_rsch_pic + emp_nm, dept_no 조인) -->
+  <!-- ####################################################### -->
+  <select id="selectAsmtPersonList" resultType="kr.or.kids.domain.cm.research.vo.AsmtPersonRowVO">
+    SELECT p.asmt_rsch_pic_sn AS personSn,
+           p.emp_no AS empNo,
+           e.emp_nm AS empNm,
+           e.dept_no AS deptNo
+    FROM kids_own.tb_cm_m_asmt_rsch_pic p
+    LEFT JOIN kids_own.tb_pp_m_emp_info e ON p.emp_no = e.emp_no
+    ORDER BY p.asmt_rsch_pic_sn DESC
+  </select>
+
+  <!-- ####################################################### -->
+  <!-- 담당자 등록 (tb_cm_m_asmt_rsch_pic). 시퀀스 sq_cm_asmt_rsch_pic_sn 필요 -->
+  <!-- ####################################################### -->
+  <insert id="insertAsmtPerson" parameterType="kr.or.kids.domain.cm.common.vo.TbCmMAsmtPersonVO">
+    <selectKey keyProperty="asmtUserPicSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_asmt_rsch_pic_sn')
+    </selectKey>
+    INSERT INTO kids_own.tb_cm_m_asmt_rsch_pic (asmt_rsch_pic_sn, emp_no, rgtr_id, reg_dt, mdfr_id, mdfcn_dt)
+    VALUES (#{asmtUserPicSn}, #{empNo}, #{rgtrId}, now(), #{mdfrId}, now())
+  </insert>
+
+  <!-- ####################################################### -->
+  <!-- 담당자 삭제 -->
+  <!-- ####################################################### -->
+  <delete id="deleteAsmtPerson">
+    DELETE FROM kids_own.tb_cm_m_asmt_rsch_pic
+    WHERE asmt_rsch_pic_sn = #{personSn}
+  </delete>
+
+  <!-- ####################################################### -->
+  <!-- 분석 데이터셋 복사: cohort (복수 기관). instTaskSnList에 해당하는 모든 기관 대상. patid = person_source_value (Sentinel 복사용) -->
+  <!-- 소스 스키마는 서비스 레이어에서 kids_link_own 으로 고정·검증되며, 여기서는 고정 스키마를 사용한다. -->
+  <!-- ####################################################### -->
+  <select id="selectCohortForAnalysisDatasetByInstList" resultType="kr.or.kids.domain.cm.research.vo.CohortRow">
+    SELECT DISTINCT p.person_id AS personId, op.inst_task_sn AS instTaskSn, p.person_source_value AS patid
+    FROM kids_link_own.person p
+    INNER JOIN kids_link_own.observation_period op ON op.person_id = p.person_id AND op.inst_task_sn = p.inst_task_sn
+    WHERE op.observation_period_start_date &lt;= #{endDate}
+      AND op.observation_period_end_date &gt;= #{startDate}
+      AND p.gender_concept_id = #{genderConceptId}
+      AND op.inst_task_sn IN
+      <foreach collection="instTaskSnList" item="inst" open="(" separator="," close=")">
+        #{inst}
+      </foreach>
+  </select>
+
+</mapper>

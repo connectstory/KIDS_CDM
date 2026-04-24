@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.common.mapper.CommonFileMapper">
+
+    <!-- =====================================================
+         기존: TbCmMFileUld
+    ===================================================== -->
+    <resultMap id="TbCmMFileUldMap" type="kr.or.kids.domain.cm.common.vo.TbCmMFileUldVO">
+        <result property="pstSn" column="pst_sn"/>
+        <result property="atchFileId" column="atch_file_id"/>
+        <result property="uldTaskSeCd" column="uld_task_se_cd"/>
+        <result property="fileSeCd" column="file_se_cd"/>
+        <result property="ptcpInstSn" column="ptcp_inst_sn"/>
+        <result property="delYn" column="del_yn"/>
+        <result property="rgtrId" column="rgtr_id"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="mdfrId" column="mdfr_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="fileId" column="file_id"/>
+        <result property="fileNm" column="file_nm"/>
+        <result property="fileExtnNm" column="file_extn_nm"/>
+        <result property="fileSz" column="file_sz"/>
+    </resultMap>
+
+    <insert id="insertFileUld" parameterType="kr.or.kids.domain.cm.common.vo.TbCmMFileUldVO">
+        /* kr.or.kids.domain.cm.common.mapper.insertFileUld */
+        INSERT INTO kids_own.tb_cm_m_file_uld (
+              pst_sn
+            , atch_file_id
+            , uld_task_se_cd
+            , file_se_cd
+            , ptcp_inst_sn
+            , del_yn
+            , rgtr_id
+            , reg_dt
+            , mdfr_id
+            , mdfcn_dt
+        ) VALUES (
+              #{pstSn}
+            , #{atchFileId}
+            , #{uldTaskSeCd}
+            , #{fileSeCd}
+            , #{ptcpInstSn}
+            , #{delYn}
+            , COALESCE(#{rgtrId}, '관리자')
+            , NOW()
+            , COALESCE(#{rgtrId}, '관리자')
+            , NOW()
+        )
+    </insert>
+
+    <select id="selectFileUldList" resultMap="TbCmMFileUldMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileUldList */
+               pst_sn
+             , atch_file_id
+             , uld_task_se_cd
+             , file_se_cd
+             , ptcp_inst_sn
+             , del_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+          FROM kids_own.tb_cm_m_file_uld
+         WHERE pst_sn = #{pstSn}
+        <if test="uldTaskSeCd != null and uldTaskSeCd != ''">
+           AND uld_task_se_cd = #{uldTaskSeCd}
+        </if>
+        <if test="fileSeCd != null and fileSeCd != ''">
+           AND file_se_cd = #{fileSeCd}
+        </if>
+           AND del_yn = 'N'
+    </select>
+
+    <select id="selectFileUldListByAsmtSnAndPtcpInstSn" resultMap="TbCmMFileUldMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileUldListByAsmtSnAndPtcpInstSn */
+               pst_sn
+             , atch_file_id
+             , uld_task_se_cd
+             , file_se_cd
+             , ptcp_inst_sn
+             , del_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+          FROM kids_own.tb_cm_m_file_uld
+         WHERE pst_sn = #{pstSn}
+           AND ptcp_inst_sn = #{ptcpInstSn}
+           AND del_yn = 'N'
+    </select>
+
+    <select id="selectFileUldListByPstSnAndTaskAndFileSeCd" resultMap="TbCmMFileUldMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileUldListByPstSnAndTaskAndFileSeCd */
+               u.pst_sn
+             , u.atch_file_id
+             , u.uld_task_se_cd
+             , u.file_se_cd
+             , u.ptcp_inst_sn
+             , u.del_yn
+             , u.rgtr_id
+             , u.reg_dt
+             , u.mdfr_id
+             , u.mdfcn_dt
+             , f1.file_id
+             , f1.file_nm
+             , f1.file_extn_nm
+             , f1.file_sz
+          FROM kids_own.tb_cm_m_file_uld u
+          LEFT JOIN LATERAL (
+              SELECT f.atch_file_id AS file_id
+                   , f.file_nm
+                   , f.file_extn_nm
+                   , f.file_sz
+                FROM kids_own.tb_ca_e_file_trsm f
+               WHERE f.atch_file_group_id = u.atch_file_id
+                 AND f.use_yn = 'Y'
+               ORDER BY f.file_seq
+               LIMIT 1
+          ) f1 ON TRUE
+         WHERE u.pst_sn = #{pstSn}
+           AND u.uld_task_se_cd = #{uldTaskSeCd}
+           AND u.file_se_cd = #{fileSeCd}
+           AND u.del_yn = 'N'
+    </select>
+
+    <select id="selectFileUldListByPstSnAndTaskAndFileSeCdAndInstId" resultMap="TbCmMFileUldMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileUldListByPstSnAndTaskAndFileSeCdAndInstId */
+               u.pst_sn
+             , u.atch_file_id
+             , u.uld_task_se_cd
+             , u.file_se_cd
+             , u.ptcp_inst_sn
+             , u.del_yn
+             , u.rgtr_id
+             , u.reg_dt
+             , u.mdfr_id
+             , u.mdfcn_dt
+             , f1.file_id
+             , f1.file_nm
+             , f1.file_extn_nm
+             , f1.file_sz
+          FROM kids_own.tb_cm_m_file_uld u
+          INNER JOIN kids_own.TB_PP_M_MBR_INFO m ON u.rgtr_id = m.mbr_id
+          INNER JOIN kids_own.TB_PP_M_EXPRT_INFO e ON m.mbr_no = e.mbr_no
+          LEFT JOIN LATERAL (
+              SELECT f.atch_file_id AS file_id
+                   , f.file_nm
+                   , f.file_extn_nm
+                   , f.file_sz
+                FROM kids_own.tb_ca_e_file_trsm f
+               WHERE f.atch_file_group_id = u.atch_file_id
+                 AND f.use_yn = 'Y'
+               ORDER BY f.file_seq
+               LIMIT 1
+          ) f1 ON TRUE
+         WHERE u.pst_sn = #{pstSn}
+           AND u.uld_task_se_cd = #{uldTaskSeCd}
+           AND u.file_se_cd = #{fileSeCd}
+           AND e.brno = #{instId}
+    </select>
+
+    <update id="deleteFileUld">
+        /* kr.or.kids.domain.cm.common.mapper.deleteFileUld */
+        UPDATE kids_own.tb_cm_m_file_uld
+           SET del_yn = 'Y'
+             , mdfr_id = COALESCE(#{mdfrId}, '관리자')
+             , mdfcn_dt = NOW()
+         WHERE pst_sn = #{pstSn}
+           AND atch_file_id = #{atchFileId}
+    </update>
+
+
+    <!-- =====================================================
+         신규 1: tb_ca_e_file_group_trsm
+    ===================================================== -->
+    <resultMap id="TbCaEFileGroupTrsmMap" type="kr.or.kids.domain.cm.common.vo.TbCaEFileGroupTrsmVo">
+        <result property="atchFileGroupId" column="atch_file_group_id"/>
+        <result property="taskSeCd" column="task_se_cd"/>
+        <result property="taskSeTrgtId" column="task_se_trgt_id"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="rgtrId" column="rgtr_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="mdfrId" column="mdfr_id"/>
+    </resultMap>
+
+    <insert id="insertFileGroup" parameterType="kr.or.kids.domain.cm.common.vo.TbCaEFileGroupTrsmVo">
+        /* kr.or.kids.domain.cm.common.mapper.insertFileGroup */
+        INSERT INTO kids_own.tb_ca_e_file_group_trsm (
+              atch_file_group_id
+            , task_se_cd
+            , task_se_trgt_id
+            , use_yn
+            , reg_dt
+            , rgtr_id
+            , mdfcn_dt
+            , mdfr_id
+        ) VALUES (
+              #{atchFileGroupId}
+            , #{taskSeCd}
+            , #{taskSeTrgtId}
+            , 'Y'
+            , NOW()
+            , COALESCE(#{rgtrId}, '관리자')
+            , NOW()
+            , COALESCE(#{rgtrId}, '관리자')
+        )
+    </insert>
+
+    <select id="selectFileGroup" resultMap="TbCaEFileGroupTrsmMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileGroup */
+               atch_file_group_id
+             , task_se_cd
+             , task_se_trgt_id
+             , use_yn
+             , reg_dt
+             , rgtr_id
+             , mdfcn_dt
+             , mdfr_id
+          FROM kids_own.tb_ca_e_file_group_trsm
+         WHERE atch_file_group_id = #{atchFileGroupId}
+    </select>
+
+    <update id="deleteFileGroup">
+        /* kr.or.kids.domain.cm.common.mapper.deleteFileGroup */
+        UPDATE kids_own.tb_ca_e_file_group_trsm
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+             , mdfr_id = COALESCE(#{mdfrId}, '관리자')
+         WHERE atch_file_group_id = #{atchFileGroupId}
+    </update>
+
+    <delete id="hardDeleteFileGroup">
+        /* kr.or.kids.domain.cm.common.mapper.hardDeleteFileGroup - local only */
+        DELETE FROM kids_own.tb_ca_e_file_group_trsm
+         WHERE atch_file_group_id = #{atchFileGroupId}
+    </delete>
+
+
+    <!-- =====================================================
+         신규 2: tb_ca_e_file_trsm
+    ===================================================== -->
+    <resultMap id="TbCaEFileTrsmMap" type="kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo">
+        <result property="atchFileId" column="atch_file_id"/>
+        <result property="atchFileGroupId" column="atch_file_group_id"/>
+        <result property="fileSeq" column="file_seq"/>
+        <result property="fileStrgPathDsctn" column="file_strg_path_dsctn"/>
+        <result property="prvcInclYn" column="prvc_incl_yn"/>
+        <result property="fileNm" column="file_nm"/>
+        <result property="fileExtnNm" column="file_extn_nm"/>
+        <result property="fileCn" column="file_cn"/>
+        <result property="fileSz" column="file_sz"/>
+        <result property="crtDt" column="crt_dt"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="regDt" column="reg_dt"/>
+        <result property="rgtrId" column="rgtr_id"/>
+        <result property="mdfcnDt" column="mdfcn_dt"/>
+        <result property="mdfrId" column="mdfr_id"/>
+        <result property="srvrFileNm" column="srvr_file_nm"/>
+    </resultMap>
+
+    <insert id="insertFileBatch">
+        /* kr.or.kids.domain.cm.common.mapper.insertFileBatch */
+        INSERT INTO kids_own.tb_ca_e_file_trsm (
+              atch_file_id
+            , atch_file_group_id
+            , file_seq
+            , file_strg_path_dsctn
+            , prvc_incl_yn
+            , file_nm
+            , file_extn_nm
+            , file_cn
+            , file_sz
+            , crt_dt
+            , use_yn
+            , reg_dt
+            , rgtr_id
+            , mdfcn_dt
+            , mdfr_id
+            , srvr_file_nm
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+              #{item.atchFileId}
+            , #{item.atchFileGroupId}
+            , #{item.fileSeq}
+            , #{item.fileStrgPathDsctn}
+            , #{item.prvcInclYn}
+            , #{item.fileNm}
+            , #{item.fileExtnNm}
+            , #{item.fileCn}
+            , #{item.fileSz}
+            , to_char(NOW(), 'YYYYMMDDHH24MISS')
+            , 'Y'
+            , NOW()
+            , COALESCE(#{item.rgtrId}, '관리자')
+            , NOW()
+            , COALESCE(#{item.rgtrId}, '관리자')
+            , #{item.srvrFileNm}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectFileListByGroup" resultMap="TbCaEFileTrsmMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileListByGroup */
+               atch_file_id
+             , atch_file_group_id
+             , file_seq
+             , file_strg_path_dsctn
+             , prvc_incl_yn
+             , file_nm
+             , file_extn_nm
+             , file_cn
+             , file_sz
+             , crt_dt
+             , use_yn
+             , reg_dt
+             , rgtr_id
+             , mdfcn_dt
+             , mdfr_id
+             , srvr_file_nm
+          FROM kids_own.tb_ca_e_file_trsm
+         WHERE atch_file_group_id = #{atchFileGroupId}
+         ORDER BY file_seq
+    </select>
+
+    <update id="deleteFile">
+        /* kr.or.kids.domain.cm.common.mapper.deleteFile */
+        UPDATE kids_own.tb_ca_e_file_trsm
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+             , mdfr_id = COALESCE(#{mdfrId}, '관리자')
+         WHERE atch_file_group_id = #{atchFileGroupId}
+    </update>
+
+    <update id="deleteFileById">
+        /* kr.or.kids.domain.cm.common.mapper.deleteFileById */
+        UPDATE kids_own.tb_ca_e_file_trsm
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+             , mdfr_id = COALESCE(#{mdfrId}, '관리자')
+         WHERE atch_file_id = #{atchFileId}
+    </update>
+
+    <delete id="hardDeleteFile">
+        /* kr.or.kids.domain.cm.common.mapper.hardDeleteFile - local only */
+        DELETE FROM kids_own.tb_ca_e_file_trsm
+         WHERE atch_file_group_id = #{atchFileGroupId}
+    </delete>
+
+    <delete id="hardDeleteFileById">
+        /* kr.or.kids.domain.cm.common.mapper.hardDeleteFileById - local only */
+        DELETE FROM kids_own.tb_ca_e_file_trsm
+         WHERE atch_file_id = #{atchFileId}
+    </delete>
+
+    <select id="selectFile" resultMap="TbCaEFileTrsmMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFile */
+               atch_file_id
+             , atch_file_group_id
+             , file_seq
+             , file_strg_path_dsctn
+             , prvc_incl_yn
+             , file_nm
+             , file_extn_nm
+             , file_cn
+             , file_sz
+             , crt_dt
+             , use_yn
+             , reg_dt
+             , rgtr_id
+             , mdfcn_dt
+             , mdfr_id
+             , srvr_file_nm
+          FROM kids_own.tb_ca_e_file_trsm
+         WHERE atch_file_id = #{atchFileId}
+    </select>
+
+    <select id="selectFileByGroupId" resultMap="TbCaEFileTrsmMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileByGroupId */
+               atch_file_id
+             , atch_file_group_id
+             , file_seq
+             , file_strg_path_dsctn
+             , prvc_incl_yn
+             , file_nm
+             , file_extn_nm
+             , file_cn
+             , file_sz
+             , crt_dt
+             , use_yn
+             , reg_dt
+             , rgtr_id
+             , mdfcn_dt
+             , mdfr_id
+             , srvr_file_nm
+          FROM kids_own.tb_ca_e_file_trsm
+         WHERE atch_file_group_id = #{atchFileGroupId}
+         LIMIT 1 
+    </select>
+
+    <select id="selectFileBySrvrFileNm" resultMap="TbCaEFileTrsmMap">
+        SELECT /* kr.or.kids.domain.cm.common.mapper.selectFileBySrvrFileNm */
+               atch_file_id
+             , atch_file_group_id
+             , file_seq
+             , file_strg_path_dsctn
+             , prvc_incl_yn
+             , file_nm
+             , file_extn_nm
+             , file_cn
+             , file_sz
+             , crt_dt
+             , use_yn
+             , reg_dt
+             , rgtr_id
+             , mdfcn_dt
+             , mdfr_id
+             , srvr_file_nm
+          FROM kids_own.tb_ca_e_file_trsm
+         WHERE srvr_file_nm = #{srvrFileNm}
+    </select>
+
+</mapper>

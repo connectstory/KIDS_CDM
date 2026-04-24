@@ -1,0 +1,415 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.community.dashboard.mapper.DashBoardApiMapper">
+
+    <!-- CDM 데이터 정보 조회 -->
+    <select id="selectCdmDataStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        WITH LATEST_PBLNT AS (
+                               SELECT MAX(pblnt_sn) AS pblnt_sn
+                                 FROM kids_own.tb_cm_m_uld_pblnt
+                                WHERE del_yn = 'N'
+                             )
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectCdmDataStats */
+               COALESCE(SUM(H.uld_nocs), 0) AS uldNocs
+             , ROUND(SUM(COALESCE(H.err_rt, 0) / 100.0 * COALESCE(H.uld_nocs, 0))) AS errNocs
+             , ROUND(SUM(COALESCE(H.err_rt, 0) * COALESCE(H.uld_nocs, 0)) / NULLIF(SUM(H.uld_nocs), 0), 2) AS errRt
+          FROM kids_own.tb_cm_m_uld_pblnt PB
+          JOIN LATEST_PBLNT L
+            ON PB.pblnt_sn = L.pblnt_sn
+          LEFT JOIN kids_own.tb_cm_m_uld_prst P
+            ON P.pblnt_sn = L.pblnt_sn
+           AND P.del_yn = 'N'
+          LEFT JOIN kids_own.tb_pp_m_inst I
+            ON I.brno = P.inst_id
+           AND I.del_yn = 'N'
+          LEFT JOIN kids_own.tb_cm_e_tbl_uld_stats_hist H
+            ON H.ptcp_inst_sn = P.ptcp_inst_sn
+           AND H.pblnt_sn = L.pblnt_sn
+           AND H.del_yn = 'N'
+    </select>
+
+    <!-- 공시진행현황 정보 -->
+    <select id="selectPblntPrgrStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectPblntPrgrStats */
+               COUNT(*) AS totalCnt
+             , COUNT(*) FILTER (WHERE pblnt_prgrs_stts_cd = '01') AS reqCnt       -- 등록
+             , COUNT(*) FILTER (WHERE pblnt_prgrs_stts_cd = '02') AS progressCnt  -- 진행중
+             , COUNT(*) FILTER (WHERE pblnt_prgrs_stts_cd = '03') AS closeCnt     -- 마감
+          FROM kids_own.tb_cm_m_uld_pblnt
+         WHERE (del_yn IS NULL OR del_yn = 'N')
+    </select>
+
+    <!-- 연구과제현황 정보 -->
+    <select id="selectAsmtStatusStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectTbCmMAsmt */
+               COUNT(*) AS totalCnt -- 총계
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '01' THEN 1 ELSE 0 END), 0) AS reqCnt -- 등록(참여요청)
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '02' THEN 1 ELSE 0 END), 0) AS progressCnt -- 진행중
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '03' THEN 1 ELSE 0 END), 0) AS reviewCnt -- 검토중
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '04' THEN 1 ELSE 0 END), 0) AS closeCnt -- 마감
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '05' THEN 1 ELSE 0 END), 0) AS cancelCnt -- 취소
+          FROM kids_own.tb_cm_m_asmt A
+         WHERE A.del_yn = 'N'
+    </select>
+
+    <!-- 기관별 CDM 데이터 정보 조회 -->
+    <select id="selectInstUldStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        WITH LATEST_PBLNT AS (
+                               SELECT MAX(pblnt_sn) AS pblnt_sn
+                                 FROM kids_own.tb_cm_m_uld_pblnt
+                                WHERE del_yn = 'N'
+                             )
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstUldStats */
+               I.inst_nm AS instName
+             , COALESCE(SUM(H.uld_nocs), 0) AS uldNocs
+             , ROUND(SUM(COALESCE(H.err_rt, 0) / 100.0 * COALESCE(H.uld_nocs, 0))) AS errNocs
+             , ROUND(SUM(COALESCE(H.err_rt, 0) * COALESCE(H.uld_nocs, 0)) / NULLIF(SUM(H.uld_nocs), 0), 2) AS errRt
+             , MAX(P.last_updt_ymd) AS lastUpdtYmd
+          FROM kids_own.tb_cm_m_uld_prst P
+          JOIN LATEST_PBLNT L
+            ON P.pblnt_sn = L.pblnt_sn
+          JOIN kids_own.tb_pp_m_inst I
+            ON I.brno = P.inst_id
+           AND I.del_yn = 'N'
+          LEFT JOIN kids_own.tb_cm_e_tbl_uld_stats_hist H
+            ON H.ptcp_inst_sn = P.ptcp_inst_sn
+           AND H.pblnt_sn = L.pblnt_sn
+           AND H.del_yn = 'N'
+         WHERE P.del_yn = 'N'
+         GROUP BY I.inst_nm
+        HAVING COALESCE(SUM(H.uld_nocs), 0) > 0
+         ORDER BY I.inst_nm
+    </select>
+
+    <!-- 기관별 CDM 보유량 조회 -->
+    <select id="selectInstUldNocs" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstUldNocs */
+               P.inst_id AS instId
+             , I.inst_nm AS instName
+             , COALESCE(SUM(H.uld_nocs), 0) AS uldNocs
+             , MAX(P.last_updt_ymd) AS lastUpdtYmd
+          FROM (
+                 -- 기관별 최신 공시 1건만 추출 (tb_cm_m_uld_pblnt 기준)
+                 SELECT DISTINCT ON (P.inst_id)
+                        P.ptcp_inst_sn
+                      , P.pblnt_sn
+                      , P.inst_id
+                      , P.last_updt_ymd
+                   FROM kids_own.tb_cm_m_uld_prst P
+                   JOIN kids_own.tb_cm_m_uld_pblnt PB
+                     ON PB.pblnt_sn = P.pblnt_sn
+                    AND PB.del_yn = 'N'
+                  WHERE P.del_yn = 'N'
+                  ORDER BY P.inst_id, P.pblnt_sn DESC
+               ) P
+		  JOIN kids_own.tb_pp_m_inst I
+		    ON P.inst_id = I.brno
+		   AND I.del_yn = 'N'
+		  LEFT JOIN kids_own.tb_cm_e_tbl_uld_stats_hist H
+		    ON H.ptcp_inst_sn = P.ptcp_inst_sn
+           AND H.pblnt_sn = P.pblnt_sn
+           AND H.del_yn = 'N'
+         GROUP BY P.inst_id, I.inst_nm
+         ORDER BY P.inst_id
+    </select>
+
+    <!-- 기관별 CDM 오류율 조회 -->
+    <select id="selectInstErrRate" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        WITH LATEST_PBLNT AS (
+                               SELECT P.inst_id
+                                    , MAX(PB.pblnt_sn) AS pblnt_sn
+                                 FROM kids_own.tb_cm_m_uld_pblnt PB
+                                 JOIN kids_own.tb_cm_m_uld_prst P
+                                   ON P.pblnt_sn = PB.pblnt_sn
+                                  AND P.del_yn = 'N'
+                                WHERE PB.del_yn = 'N'
+                                GROUP BY P.inst_id
+                             )
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstErrRate */
+               P.inst_id AS instId
+             , I.inst_nm AS instName
+             , ROUND(SUM(COALESCE(H.err_rt, 0) / 100.0 * COALESCE(H.uld_nocs, 0))) AS errNocs
+             , ROUND(SUM(COALESCE(H.err_rt, 0) * COALESCE(H.uld_nocs, 0)) / NULLIF(SUM(H.uld_nocs), 0), 2) AS errRt
+          FROM kids_own.tb_cm_m_uld_prst P
+          JOIN LATEST_PBLNT L
+            ON P.inst_id = L.inst_id
+           AND P.pblnt_sn = L.pblnt_sn
+          JOIN kids_own.tb_pp_m_inst I
+            ON P.inst_id = I.brno
+           AND I.del_yn = 'N'
+          LEFT JOIN kids_own.tb_cm_e_tbl_uld_stats_hist H
+            ON P.ptcp_inst_sn = H.ptcp_inst_sn
+           AND H.pblnt_sn = L.pblnt_sn
+           AND H.del_yn = 'N'
+         WHERE P.del_yn = 'N'
+         GROUP BY P.inst_id, I.inst_nm
+         ORDER BY errRt DESC
+    </select>
+
+    <!-- 참여 과제 현황 (기관별) -->
+    <select id="selectInstAsmtPrtcpStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstAsmtPrtcpStats */
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd NOT IN ('02', '12')) AS totalCnt,
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd = '01') AS reqCnt,
+
+          -- 기관분석
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd = '04') AS instProgressCnt,
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd = '05') AS instReviewReqCnt,
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd IN ('06', '07', '08')) AS instReviewCompleteCnt,
+
+          -- 메타분석
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd = '09') AS metaReviewReqCnt,
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd IN ('10', '13')) AS metaReviewCompleteCnt,
+
+          -- 마감
+          COUNT(*) FILTER (WHERE ptcp_prgrs_stts_cd = '11') AS closeCnt
+        FROM kids_own.tb_cm_m_asmt_prcp
+        WHERE del_yn = 'N'
+          AND inst_id = #{instId}
+    </select>
+
+    <!-- 연구과제현황 정보 (기관별) -->
+    <select id="selectTbCmMAsmtByInst" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectTbCmMAsmtByInst */
+               COUNT(*) AS totalCnt -- 총계
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '01' THEN 1 ELSE 0 END), 0) AS reqCnt -- 등록(참여요청)
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '02' THEN 1 ELSE 0 END), 0) AS progressCnt -- 진행중
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '03' THEN 1 ELSE 0 END), 0) AS reviewCnt -- 검토중
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '04' THEN 1 ELSE 0 END), 0) AS closeCnt -- 마감
+             , COALESCE(SUM(CASE WHEN A.asmt_prgrs_stts_cd = '05' THEN 1 ELSE 0 END), 0) AS cancelCnt -- 취소
+          FROM kids_own.tb_cm_m_asmt A
+         WHERE A.del_yn = 'N'
+           AND A.inst_id = #{instId}
+    </select>
+
+    <!-- 테이블별 CDM 보유량 조회 (기관별) -->
+    <select id="selectTblUldStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectTblUldStats */
+               CASE WHEN T.trsf_se_cd = '01' THEN 'Sentinel'
+                    WHEN T.trsf_se_cd = '02' THEN 'OMOP'
+                    ELSE 'ETC'
+                END AS modelType
+             , T.err_tbl_nm AS tableName
+             , COALESCE(T.uld_nocs, 0) AS uldNocs
+             , COALESCE(T.err_rt, 0) AS errRt
+          FROM kids_own.tb_cm_m_uld_pblnt pblnt
+         INNER JOIN kids_own.tb_cm_m_uld_prst prst
+            ON pblnt.pblnt_sn = prst.pblnt_sn
+           AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+           AND prst.inst_id IS NOT NULL
+           AND TRIM(prst.inst_id) != ''
+           AND LPAD(TRIM(prst.inst_id), 10, '0') = LPAD(TRIM(#{instId}), 10, '0')
+           AND prst.pblnt_sn = (
+                                 SELECT MAX(pblnt_sn)
+                                   FROM kids_own.tb_cm_m_uld_prst
+                                  WHERE LPAD(TRIM(inst_id), 10, '0') = LPAD(TRIM(#{instId}), 10, '0')
+                                    AND (del_yn IS NULL OR del_yn = 'N')
+                               )
+         INNER JOIN kids_own.tb_cm_e_tbl_uld_stats_hist T
+            ON T.pblnt_sn = prst.pblnt_sn
+           AND T.ptcp_inst_sn = prst.ptcp_inst_sn
+           AND T.del_yn = 'N'
+         WHERE (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+         ORDER BY T.trsf_se_cd, T.err_tbl_nm
+    </select>
+
+    <!-- 기관별 테이블 보유량 (Sentinel / OMOP 선택) -->
+    <select id="selectInstTblUldNocsByModel"
+            parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstTblUldNocsByModel */
+               T.err_tbl_nm AS tableName
+             , COALESCE(SUM(T.uld_nocs), 0) AS uldNocs
+          FROM kids_own.tb_cm_e_tbl_uld_stats_hist T
+          JOIN kids_own.tb_cm_m_uld_prst P
+            ON T.pblnt_sn = P.pblnt_sn
+           AND T.ptcp_inst_sn = P.ptcp_inst_sn
+         WHERE T.del_yn = 'N'
+           AND P.del_yn = 'N'
+           AND P.ptcp_inst_sn = #{ptcpInstSn}
+           AND T.trsf_se_cd = #{trsfSeCd}  <!-- 01: Sentinel, 02: OMOP -->
+         GROUP BY T.err_tbl_nm
+         ORDER BY uldNocs DESC
+    </select>
+
+    <!-- 기관별 CDM 현황 (데이터 기간 + CDM 등록 정보) -->
+    <select id="selectInstCdmOverview" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstCdmOverview */
+               D.tbl_se_cd AS tableType
+             , COALESCE(SUM(D.tnocs), 0) AS totalNocs
+             , MIN(D.bgng_ymd) AS minDate
+             , MAX(D.end_ymd) AS maxDate
+             , M.ver_info_nm AS cdmVersion
+             , M.updt_cycle_cnt AS updateCycle
+             , MIN(M.ptcp_reg_dt) AS regDt
+             , MAX(M.last_updt_ymd) AS lastUpdtYmd
+          FROM kids_own.tb_cm_d_uld_prd_scl D
+          JOIN kids_own.tb_cm_m_uld_prst M
+            ON D.ptcp_inst_sn = M.ptcp_inst_sn
+           AND D.pblnt_sn = M.pblnt_sn
+         WHERE D.del_yn = 'N'
+           AND M.del_yn = 'N'
+           AND D.ptcp_inst_sn = #{ptcpInstSn}
+           AND D.pblnt_sn = (
+                              SELECT MAX(pblnt_sn)
+                                FROM kids_own.tb_cm_m_uld_prst
+                               WHERE ptcp_inst_sn = #{ptcpInstSn}
+                                 AND del_yn = 'N'
+                            )
+         GROUP BY D.tbl_se_cd
+                , M.ver_info_nm
+                , M.updt_cycle_cnt
+         ORDER BY D.tbl_se_cd
+    </select>
+
+    <!-- 기관별 CDM 오류 통계 (테이블별 보유량과 동일한 기준으로 합산) -->
+    <select id="selectInstErrorSummary" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstErrorSummary */
+               COALESCE(SUM(T.uld_nocs), 0) AS uldNocs
+             , ROUND(SUM(COALESCE(T.err_rt, 0) * COALESCE(T.uld_nocs, 0)) / NULLIF(SUM(T.uld_nocs), 0), 2) AS errRt
+             , MAX(prst.last_updt_ymd) AS lastUldDt
+          FROM kids_own.tb_cm_m_uld_pblnt pblnt
+         INNER JOIN kids_own.tb_cm_m_uld_prst prst
+            ON pblnt.pblnt_sn = prst.pblnt_sn
+           AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+           AND prst.inst_id IS NOT NULL
+           AND TRIM(prst.inst_id) != ''
+           AND LPAD(TRIM(prst.inst_id), 10, '0') = LPAD(TRIM(#{instId}), 10, '0')
+           AND prst.pblnt_sn = (
+                                 SELECT MAX(pblnt_sn)
+                                   FROM kids_own.tb_cm_m_uld_prst
+                                  WHERE LPAD(TRIM(inst_id), 10, '0') = LPAD(TRIM(#{instId}), 10, '0')
+                                    AND (del_yn IS NULL OR del_yn = 'N')
+                               )
+         INNER JOIN kids_own.tb_cm_e_tbl_uld_stats_hist T
+            ON T.pblnt_sn = prst.pblnt_sn
+           AND T.ptcp_inst_sn = prst.ptcp_inst_sn
+           AND T.del_yn = 'N'
+         WHERE (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+    </select>
+
+    <!-- 업로드 진행 현황 (기관별) -->
+    <select id="selectInstUldPrgrStats" parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectInstUldPrgrStats */
+               COUNT(*) AS totalCnt
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '01') AS reqCnt       -- 참여요청
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '02') AS progressCnt  -- 진행중
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '03') AS completeCnt  -- 완료
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '04') AS cancelCnt    -- 참여취소
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '05') AS regCnt       -- 등록
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '06') AS reReqCnt     -- 참여재요청
+             , COUNT(*) FILTER (WHERE prst.uld_inst_prgrs_stts_cd = '07') AS reRegCnt     -- 등록재요청
+          FROM kids_own.tb_cm_m_uld_prst prst
+          JOIN kids_own.tb_cm_m_uld_pblnt pblnt
+            ON prst.pblnt_sn = pblnt.pblnt_sn
+         WHERE prst.del_yn = 'N'
+           AND pblnt.del_yn = 'N'
+           AND prst.inst_id = #{instId}
+    </select>
+
+    <select id="selectDashboardInstUploadList"
+            parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectDashboardInstUploadList */
+               i.brno AS instId
+             , i.inst_nm AS instName
+             , u.ptcp_inst_sn AS ptcpInstSn
+             , u.pblnt_sn AS pblntSn
+             , u.last_updt_ymd AS lastUpdtYmd
+             , u.updt_cycle_cnt AS updateCycle
+             , u.ver_info_nm AS cdmVersion
+          FROM (
+                 -- 기관별 최신 공시 1건만 추출 (selectTblUldStats와 동일 기준)
+                 SELECT DISTINCT ON (inst_id)
+                        ptcp_inst_sn
+                      , pblnt_sn
+                      , inst_id
+                      , last_updt_ymd
+                      , updt_cycle_cnt
+                      , ver_info_nm
+                   FROM kids_own.tb_cm_m_uld_prst
+                  WHERE del_yn = 'N'
+                  ORDER BY inst_id, pblnt_sn DESC, last_updt_ymd DESC
+               ) u
+          JOIN kids_own.tb_pp_m_inst i
+            ON i.brno = u.inst_id
+           AND i.del_yn = 'N'
+         ORDER BY i.inst_nm;
+    </select>
+
+    <select id="selectDashboardUploadNotice"
+            parameterType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiInVO"
+            resultType="kr.or.kids.domain.cm.community.dashboard.vo.DashBoardApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.dashboard.mapper.selectDashboardUploadNotice */
+               p.pblnt_sn AS pblntSn
+             , p.pblnt_se_cd AS pblntSeCd -- pblnt_dvcd → pblnt_se_cd
+             , p.ttl_nm AS ttlNm
+             , p.pblnt_cn AS pblntCn
+             , p.pblnt_bgng_ymd AS pblntBgngYmd
+             , p.pblnt_end_ymd AS pblntEndYmd
+             , p.pblnt_prgrs_stts_cd AS pblntPrgrsSttscd -- pblnt_stcd → pblnt_prgrs_stts_cd
+             , COALESCE(A.part_cnt, 0) AS partCnt -- 참여기관수
+             , COALESCE(B.total_cnt, 0) AS totalCnt -- 전체 대상기관수
+          FROM kids_own.tb_cm_m_uld_pblnt P
+          -- 참여기관 수
+          LEFT JOIN (
+                      SELECT pblnt_sn
+                           , COUNT(DISTINCT inst_id) AS part_cnt
+                        FROM kids_own.tb_cm_m_uld_prst -- tm_cm_m_uld_prst → tb_cm_m_uld_prst
+                       WHERE del_yn = 'N'
+                         AND uld_inst_prgrs_stts_cd IN ('01','02','03','05','06','07')
+                       GROUP BY pblnt_sn
+                    ) A ON P.pblnt_sn = A.pblnt_sn
+          -- 전체 대상기관 수
+          LEFT JOIN (
+                      SELECT pblnt_sn
+                           , COUNT(DISTINCT inst_id) AS total_cnt
+                        FROM kids_own.tb_cm_m_uld_prst
+                       WHERE del_yn = 'N'
+                       GROUP BY pblnt_sn
+                    ) B ON P.pblnt_sn = B.pblnt_sn
+         WHERE (P.del_yn IS NULL OR P.del_yn = 'N')
+        <if test="pblntSeCd != null and pblntSeCd != ''">  <!-- pblntDvcd → pblntSeCd -->
+           AND P.pblnt_se_cd = #{pblntSeCd}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND P.ttl_nm LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'content'">
+                    AND P.pblnt_cn LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (P.ttl_nm LIKE CONCAT('%', #{keyword}, '%')
+                    OR P.pblnt_cn LIKE CONCAT('%', #{keyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+
+        <if test="pblntBgngYmd != null and pblntBgngYmd != ''">
+            AND P.pblnt_bgng_ymd &gt;= #{pblntBgngYmd}
+        </if>
+        <if test="pblntEndYmd != null and pblntEndYmd != ''">
+            AND P.pblnt_end_ymd &lt;= #{pblntEndYmd}
+        </if>
+
+        ORDER BY P.reg_dt DESC
+        LIMIT 10
+    </select>
+</mapper>

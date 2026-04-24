@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+@import "@/assets/css/admin/index.css";
+@import "@/assets/css/font.css";
+
+:root {
+  font-family:
+    Pretendard GOV,
+    system-ui,
+    Avenir,
+    Helvetica,
+    Arial,
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 500;
+  font-size: 14px;
+
+  color-scheme: light dark;
+  color: var(--main-font-color);
+  background-color: #fff;
+
+  font-synthesis: none !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}

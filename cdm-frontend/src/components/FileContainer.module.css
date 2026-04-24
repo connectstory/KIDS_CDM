@@ -1,0 +1,59 @@
+.file_container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.file_item {
+  display: flex;
+  align-items: center;
+  padding: 2px 0px 2px 0px;
+  cursor: pointer;
+}
+.file_item:hover {
+  border-color: var(--color_01);
+}
+.file_item.uploaded {
+  padding: 6px 15px;
+  border-radius: 0.375rem;
+  border: 1px solid #9ca3af;
+}
+
+.file_item_content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+
+.file_item_content > i {
+  margin-right: 0.5rem;
+  color: var(--color_01);
+}
+
+.file_item_name {
+  flex: 1;
+  text-decoration: underline;
+}
+
+.file_item_info {
+  min-width: 8rem;
+  margin-left: 0.2rem;
+  padding: 0 0.25rem;
+  flex-shrink: 0;
+}
+
+.file_item_delete_button {
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0.22rem;
+  border: 1px solid #666 !important;
+  border-radius: 100% !important;
+}
+
+.file_item_delete_button > i {
+  font-size: 1rem;
+}

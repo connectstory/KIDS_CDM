@@ -1,0 +1,15 @@
+.message_wrapper {
+  width: 100%;
+  min-width: 300px;
+  padding: 1rem;
+  white-space: pre-line;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.message_line {
+  display: block;
+  width: 100%;
+  line-height: 1.1;
+}

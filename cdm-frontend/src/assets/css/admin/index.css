@@ -1,0 +1,11 @@
+@import "./cdm.css";
+@import "./aggrid.css";
+@import "./aggridguard.css";
+@import "./layout.css";
+@import "./content.css";
+@import "./common.css";
+@import "./community.css";
+@import "./ckeditor.css";
+
+/* main.en.scss and main.ko.scss are imported from main.tsx so Vite compiles them with Sass;
+   the Tailwind plugin does not understand @include / @use and would fail on them here. */

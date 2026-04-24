@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.rule.RuleAccuracyMapper">
+
+  <select id="findByTableAndRule" resultType="kr.or.kids.domain.cm.upload.model.RuleAccuracyRow">
+    SELECT
+      vrfc_sn        AS ruleId,
+      levl_seq       AS level,
+      vrfc_tbl_nm    AS srcTable,
+      vrfc_col_nm    AS field,
+      vrfc_rul_nm    AS rule,
+      rfrnc_nm       AS ref,
+      rfrnc_tbl_nm   AS refTable,
+      fk_nm          AS refKey,
+      rfrnc_col_nm   AS refField,
+      std_trm_id     AS vocabularyId,
+      std_trm_id     AS vacabularyId,
+      rul_aplcn_nm   AS fieldValue,
+      unit_nm        AS unit,
+      scp_seq_nm     AS rangeorder,
+      prm_crtr_nm    AS threashold,
+      vrbl_cn        AS note1,
+      vrbl_rslt_cn   AS note3,
+      vrbl_dtl_cn    AS not2
+    FROM kids_own.tb_cm_m_vrfc
+    WHERE std_se_cd = '01'
+      AND vrfc_tbl_nm = #{table}
+      AND vrfc_rul_nm = #{rule}
+    ORDER BY vrfc_sn
+  </select>
+
+</mapper>
+

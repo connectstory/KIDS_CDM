@@ -1,0 +1,127 @@
+server:
+  address: 0.0.0.0
+  port: 8080
+  servlet:
+    context-path: /api/cm
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  error:
+    include-message: always
+    include-exception: true
+    include-stacktrace: always
+    include-binding-errors: never
+    path: /error
+    whitelabel:
+      enabled: false
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 200KB
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+  # 대용량 multipart 업로드 시 톰캣 단에서도 차단되지 않도록 상향
+  tomcat:
+    max-http-form-post-size: 1024MB
+    max-swallow-size: 1024MB
+  thymeleaf:
+    cache: false
+  mvc:
+    view:
+      prefix: /views
+      suffix: .jsp
+  jmx:
+    enabled: false
+  datasource:
+    #  내부용 (로컬은 log4jdbc 미사용)
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://34.47.107.166:5432/postgres?tcpKeepAlive=true&connectTimeout=10&socketTimeout=600
+    username: postgres
+    password: "!Testcm123"
+    hikari:
+      connection-timeout: 5000
+      validation-timeout: 1000
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-test-query: SELECT 1
+  path:
+    fileUploadDir: /inusquare/upload
+    urlFilePath: /
+    evdnDocFileUploadDir: /resources/doc
+  web:
+    resources:
+      add-mappings: true
+mail:
+  api-url: http://kids-ca-be-service.kids-dev-ca:8080 # mail-be 서버 주소 (메일 발송 API)
+  uex-front-url: http://localhost:8080 # uex 프론트 주소 (섭외요청 승인/거부 팝업 URL) - dev 환경에 맞게 수정 필요
+
+ca:
+  api-url: http://kids-ca-be-service.kids-dev-ca:8080 # 파드 주소
+
+decrypt:
+  api-url: http://kids-ca-auth-service.kids-dev-ca:8080 # 파드 주소
+  path: /api/ca/auth/crypto/decrypto
+
+encrypt:
+  path: /api/ca/auth/crypto/encrypto
+
+jwt:
+  secret-key: ZGQtaW90LXBjd2ViLWFwaS1hZG1pbi1zZWNyZXRrZXk=
+  # local: 백엔드에서 JWT 서명/만료 직접 검증
+  # remote: 외부 sessionCheck API 호출로 검증(강제로그아웃/잠금 즉시 반영 등에 유리)
+  verify-mode: remote
+  remote:
+    # verify-mode=remote 일 때만 사용
+    session-check-url: http://localhost:3000/api/pp/adminSessionCheck
+    # X-App-Target=cm → PP(adminSessionCheck), X-App-Target=ucm → CA(isLoggedIn)
+    pp-session-check-url: http://localhost:3000/api/pp/adminSessionCheck
+    ca-is-logged-in-url: http://localhost:3000/api/ca/auth/isLoggedIn
+
+springdoc:
+  swagger-ui:
+    #    doc-expansion: full           # API 목록 접힘 (선택)
+    default-model-expand-depth: 5
+    default-models-expand-depth: 5
+
+# CDM chunked 업로드·검증 공통 루트 (runValidation CSV 경로와 동일)
+app:
+  upload:
+    root: ./upload
+    csv-tmp: ./upload/cm
+
+file:
+  storePath: ./upload
+  url: /files
+  # 임시용
+  upload:
+    path: ./upload
+logging:
+  level:
+    kr.or.kids: DEBUG
+    jdbc.sqltiming: INFO
+    jdbc.resultsettable: INFO
+
+mybatis:
+  #type-aliases-package: kr.or.kids
+  #mapper-locations: mybatis/postgresql/mapper/**/*.xml
+  type-aliases-package: com.cm.back
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    auto-mapping-behavior: partial
+    auto-mapping-unknown-column-behavior: WARNING
+    default-executor-type: simple
+    default-statement-timeout: 30
+    default-fetch-size: 100
+    safe-row-bounds-enabled: false
+    map-underscore-to-camel-case: true # snake_case를 camelCase로 자동 변환
+    local-cache-scope: session
+    jdbc-type-for-null: NULL
+    variables:
+      db_encrypt_key: "123456789"

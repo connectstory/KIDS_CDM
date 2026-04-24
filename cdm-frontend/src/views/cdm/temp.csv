@@ -1,0 +1,3 @@
+CDM,table_name,column_name,data_type,nullable,PK,FK
+Sentinel,Demographic,PatId,integer,0,1,1
+OMOP,person,person_id,integer,0,0,1

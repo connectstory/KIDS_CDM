@@ -1,0 +1,43 @@
+/* 
+  AG-Grid autoHeight + refetch 시 클릭 보호용 CSS
+  - AG-Grid overlay/viewport가 클릭을 가로채는 문제 방지
+  - domLayout="autoHeight" 사용 시 필수
+*/
+
+/* 페이지 전반 클릭 보호 */
+.aggridguard-page {
+  position: relative;
+}
+
+/* Grid 내부 hit-area 정상화 */
+.aggridguard .ag-root,
+.aggridguard .ag-body-viewport,
+.aggridguard .ag-center-cols-viewport {
+  pointer-events: auto;
+}
+
+/* Overlay가 남아있어도 클릭을 가로채지 못하게 */
+.aggridguard .ag-overlay,
+.aggridguard .ag-overlay-loading-center,
+.aggridguard .ag-overlay-no-rows-center {
+  pointer-events: none;
+}
+
+/* 하단 버튼 영역 보호 (레이아웃 겹침 방어) */
+.aggridguard-footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* 로딩 UI 스타일 (선택사항) */
+.grid-loading,
+.grid-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.grid-loading {
+  color: #1976d2;
+}

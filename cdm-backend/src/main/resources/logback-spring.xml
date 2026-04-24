@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    
+    <!-- 콘솔 출력 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %replace(%msg){'[\r\n\t]','_'}%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- P6Spy SQL 로깅 -->
+    <logger name="p6spy" level="INFO"/>
+    <logger name="com.p6spy" level="INFO"/>
+    <logger name="com.p6spy.engine" level="INFO"/>
+    
+    <!-- MyBatis SQL 로깅 활성화 (쿼리와 파라미터 확인) -->
+    <logger name="org.mybatis" level="DEBUG"/>
+    <logger name="org.apache.ibatis" level="DEBUG"/>
+    <logger name="org.mybatis.spring" level="DEBUG"/>
+
+
+    <!-- JDBC -->
+    <logger name="java.sql" level="DEBUG"/>
+
+
+    <!-- Mapper 패키지 로깅 활성화 -->
+    <logger name="kr.or.kids.domain.cm.upload.mapper" level="DEBUG"/>
+    <logger name="kr.or.kids.domain.cm.research.mapper" level="DEBUG"/>
+    <logger name="kr.or.kids.anyid.mapper" level="DEBUG"/>
+    
+    <!-- JDBC 로깅 (필요시만 활성화) -->
+    <!-- <logger name="jdbc.sqlonly" level="DEBUG"/> -->
+    <!-- <logger name="jdbc.sqltiming" level="DEBUG"/> -->
+    <!-- <logger name="jdbc.resultsettable" level="DEBUG"/> -->
+    
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

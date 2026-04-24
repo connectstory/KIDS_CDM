@@ -1,0 +1,413 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.community.qna.mapper.QnaApiMapper">
+
+    <resultMap id="QnaDetailMap" type="kr.or.kids.domain.cm.community.qna.vo.QnaApiOutVO">
+        <id property="qstnSn" column="qstnSn"/>
+
+        <result property="pstTtl" column="pstTtl"/>
+        <result property="qstnrNm" column="qstnrNm"/>
+        <result property="rlsYn" column="rlsYn"/>
+        <result property="pstCn" column="pstCn"/>
+        <result property="pstInqCnt" column="pstInqCnt"/>
+        <result property="atchFileId" column="atchFileId"/>
+        <result property="thmbId" column="thmbId"/>
+        <result property="delYn" column="delYn"/>
+        <result property="rgtrId" column="rgtrId"/>
+        <result property="regDt" column="regDt"/>
+        <result property="mdfrId" column="mdfrId"/>
+        <result property="mdfcnDt" column="mdfcnDt"/>
+        <result property="qstnPrgrsSttsCd" column="qstnPrgrsSttsCd"/>
+
+        <!-- 첨부파일 리스트 -->
+        <collection property="fileList" javaType="java.util.ArrayList"
+                    ofType="kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo">
+            <id property="atchFileId" column="fileId"/>
+            <result property="fileNm" column="fileNm"/>
+            <result property="fileExtnNm" column="fileExtnNm"/>
+            <result property="fileSz" column="fileSz"/>
+            <result property="fileStrgPathDsctn" column="filePath"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="QnaAnswerDetailMap" type="kr.or.kids.domain.cm.community.qna.vo.QnaAnsApiOutVO">
+        <id property="ansSn" column="ansSn"/>
+
+        <result property="qstnSn" column="qstnSn"/>
+        <result property="ansCn" column="ansCn"/>
+        <result property="ansId" column="ansId"/>
+        <result property="ansNm" column="ansNm"/>
+        <result property="useYn" column="useYn"/>
+        <result property="rgtrId" column="rgtrId"/>
+        <result property="regDt" column="regDt"/>
+        <result property="mdfrId" column="mdfrId"/>
+        <result property="mdfcnDt" column="mdfcnDt"/>
+
+        <!-- 첨부파일 리스트 -->
+        <collection property="fileList" javaType="java.util.ArrayList"
+                    ofType="kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo">
+            <id property="atchFileId" column="fileId"/>
+            <result property="fileNm" column="fileNm"/>
+            <result property="fileExtnNm" column="fileExtnNm"/>
+            <result property="fileSz" column="fileSz"/>
+            <result property="fileStrgPathDsctn" column="filePath"/>
+        </collection>
+    </resultMap>
+
+    <!-- Q&A 목록 조회 -->
+    <select id="selectQnaList" parameterType="kr.or.kids.domain.cm.community.qna.vo.QnaApiInVO"
+            resultType="kr.or.kids.domain.cm.community.qna.vo.QnaApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.qna.mapper.selectQnaList */
+               A.qstn_sn AS qstnSn
+             , A.pst_ttl AS pstTtl
+             , A.qstnr_nm AS qstnrNm
+             , A.rls_yn AS rlsYn
+             , A.pst_cn AS pstCn
+             , A.pst_inq_cnt AS pstInqCnt
+             , A.atch_file_id AS atchFileId
+             , A.thmb_id AS thmbId
+             , A.del_yn AS delYn
+             , A.rgtr_id AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD') AS regDt
+             , A.mdfr_id AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD') AS mdfcnDt
+             , A.qstn_prgrs_stts_cd AS qstnPrgrsSttsCd
+             , CASE WHEN EXISTS (
+                                  SELECT 1
+                                    FROM kids_own.tb_cm_m_file_uld U
+                                   INNER JOIN kids_own.tb_ca_e_file_trsm F
+                                      ON U.atch_file_id = F.atch_file_group_id
+                                   WHERE U.pst_sn = A.qstn_sn
+                                     AND U.del_yn = 'N'
+                                     AND U.uld_task_se_cd = '06'
+                                     AND U.file_se_cd = '10'
+                                ) THEN 'Y'
+                    ELSE 'N'
+                END AS hasFile
+         FROM kids_own.tb_cm_m_qna A
+        WHERE 1=1
+          AND A.del_yn = 'N'
+          AND A.bbs_id = #{bbsId}
+        <if test="!searchAll and loginId != null and loginId != ''">
+          AND A.rgtr_id = #{loginId}
+        </if>
+        <if test="qstnPrgrsSttsCd != null and qstnPrgrsSttsCd != ''">
+          AND A.qstn_prgrs_stts_cd = #{qstnPrgrsSttsCd}
+        </if>
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND A.pst_ttl LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'content'">
+                    AND A.pst_cn LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'writer'">
+                    <choose>
+                        <when test="encryptedWriterKeyword != null and encryptedWriterKeyword != ''">
+                            <!-- 암호화된 성명 완전일치로 tb_pp_m_mbr_info.encpt_mbr_flnm 검색 -->
+                            AND A.rgtr_id IN (
+                                SELECT m.mbr_no
+                                  FROM kids_own.tb_pp_m_mbr_info m
+                                 WHERE m.encpt_mbr_flnm = #{encryptedWriterKeyword}
+                            )
+                        </when>
+                        <otherwise>
+                            AND A.qstnr_nm LIKE '%' || #{searchKeyword} || '%'
+                        </otherwise>
+                    </choose>
+                </when>
+                <when test="searchType == 'inst'">
+                    AND EXISTS (
+                                 SELECT 1
+                                   FROM kids_own.tb_pp_m_exprt_info ei
+                                   JOIN kids_own.tb_pp_m_inst i ON i.brno = ei.brno
+                                  WHERE ei.mbr_no = A.rgtr_id
+                                    AND i.inst_nm LIKE '%' || #{searchKeyword} || '%'
+                    )
+                </when>
+            </choose>
+        </if>
+        ORDER BY A.qstn_sn DESC
+        LIMIT #{pageSize}
+        OFFSET (#{page} - 1) * #{pageSize}
+    </select>
+
+    <select id="selectQnaListCount" parameterType="kr.or.kids.domain.cm.community.qna.vo.QnaApiInVO" resultType="int">
+        SELECT /* kr.or.kids.domain.cm.community.qna.mapper.selectQnaListCount */
+               COUNT(*)
+          FROM kids_own.tb_cm_m_qna A
+         WHERE 1=1
+           AND A.del_yn = 'N'
+           AND A.bbs_id = #{bbsId}
+        <if test="!searchAll and loginId != null and loginId != ''">
+           AND A.rgtr_id = #{loginId}
+        </if>
+        <if test="qstnPrgrsSttsCd != null and qstnPrgrsSttsCd != ''">
+           AND A.qstn_prgrs_stts_cd = #{qstnPrgrsSttsCd}
+        </if>
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND A.pst_ttl LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'content'">
+                    AND A.pst_cn LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'writer'">
+                    <choose>
+                        <when test="encryptedWriterKeyword != null and encryptedWriterKeyword != ''">
+                            <!-- 암호화된 성명 완전일치로 tb_pp_m_mbr_info.encpt_mbr_flnm 검색 -->
+                            AND A.rgtr_id IN (
+                                SELECT m.mbr_no
+                                  FROM kids_own.tb_pp_m_mbr_info m
+                                 WHERE m.encpt_mbr_flnm = #{encryptedWriterKeyword}
+                            )
+                        </when>
+                        <otherwise>
+                            AND A.qstnr_nm LIKE '%' || #{searchKeyword} || '%'
+                        </otherwise>
+                    </choose>
+                </when>
+                <when test="searchType == 'inst'">
+                    AND EXISTS (
+                                 SELECT 1
+                                   FROM kids_own.tb_pp_m_exprt_info ei
+                                   JOIN kids_own.tb_pp_m_inst i ON i.brno = ei.brno
+                                  WHERE ei.mbr_no = A.rgtr_id
+                                    AND i.inst_nm LIKE '%' || #{searchKeyword} || '%'
+                    )
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- Q&A 상세 조회 (파일 목록은 서비스 레이어에서 별도 조회) -->
+    <select id="selectQnaDetail"
+            parameterType="kr.or.kids.domain.cm.community.qna.vo.QnaApiInVO"
+            resultType="kr.or.kids.domain.cm.community.qna.vo.QnaApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.qna.mapper.selectQnaDetail */
+               A.qstn_sn AS qstnSn
+             , A.pst_ttl AS pstTtl
+             , A.qstnr_nm AS qstnrNm
+             , A.rls_yn AS rlsYn
+             , A.pst_cn AS pstCn
+             , A.pst_inq_cnt AS pstInqCnt
+             , A.atch_file_id AS atchFileId
+             , A.thmb_id AS thmbId
+             , A.del_yn AS delYn
+             , A.rgtr_id AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD') AS regDt
+             , A.mdfr_id AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD') AS mdfcnDt
+             , A.qstn_prgrs_stts_cd AS qstnPrgrsSttsCd
+          FROM kids_own.tb_cm_m_qna A
+         WHERE A.qstn_sn = #{qstnSn}
+           AND A.del_yn = 'N'
+           AND A.bbs_id = #{bbsId}
+    </select>
+
+    <!-- Q&A 답변 조회 (파일 목록은 서비스 레이어에서 별도 조회) -->
+    <select id="selectQnaAnswer" parameterType="long" resultType="kr.or.kids.domain.cm.community.qna.vo.QnaAnsApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.qna.mapper.selectQnaAnswer */
+               A.ans_sn AS ansSn
+             , A.qstn_sn AS qstnSn
+             , A.ans_cn AS ansCn
+             , A.ans_id AS ansId
+             , A.ans_nm AS ansNm
+             , A.use_yn AS useYn
+             , A.rgtr_id AS rgtrId
+             , A.reg_dt AS regDt
+             , A.mdfr_id AS mdfrId
+             , A.mdfcn_dt AS mdfcnDt
+          FROM kids_own.tb_cm_m_qna_ans A
+          LEFT JOIN kids_own.tb_pp_m_mngr_info M
+            ON M.emp_no = A.ans_id
+          LEFT JOIN kids_own.tb_pp_m_emp_info E
+            ON E.emp_no = M.emp_no
+         WHERE A.qstn_sn = #{qstnSn}
+           AND A.use_yn = 'Y'
+    </select>
+
+    <!-- Q&A 등록 -->
+    <insert id="insertQna" parameterType="kr.or.kids.domain.cm.community.qna.vo.TbPpMQnaVo">
+        <selectKey keyProperty="qstnSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_qstn_sn')
+        </selectKey>
+        /* kr.or.kids.domain.cm.community.qna.mapper.insertQna */
+        INSERT INTO kids_own.tb_cm_m_qna (
+               qstn_sn
+             , pst_ttl
+             , qstnr_nm
+             , rls_yn
+             , pst_cn
+             , pst_inq_cnt
+             , atch_file_id
+             , thmb_id
+             , del_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+             , qstn_prgrs_stts_cd
+             , bbs_id
+        ) VALUES (
+               #{qstnSn}
+             , #{pstTtl}
+             , COALESCE(#{rgtrId}, '사용자')
+             , COALESCE(#{rlsYn}, 'N')
+             , #{pstCn}
+             , 0
+             , #{atchFileId}
+             , #{thmbId}
+             , 'N'
+             , COALESCE(#{rgtrId}, '사용자')
+             , NOW()
+             , COALESCE(#{mdfrId}, '사용자')
+             , NOW()
+             , COALESCE(#{qstnPrgrsSttsCd}, '01')
+             , #{bbsId}
+        )
+    </insert>
+
+    <!-- Q&A 답변 등록 -->
+    <insert id="insertQnaAnswer" parameterType="kr.or.kids.domain.cm.community.qna.vo.TbPpMQnaAnsVo">
+        <selectKey keyProperty="ansSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_ans_sn_1')
+        </selectKey>
+        /* kr.or.kids.domain.cm.community.qna.mapper.insertQnaAnswer */
+        INSERT INTO kids_own.tb_cm_m_qna_ans (
+               ans_sn
+             , qstn_sn
+             , ans_cn
+             , ans_id
+             , ans_nm
+             , use_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+        ) VALUES (
+               #{ansSn}
+             , #{qstnSn}
+             , #{ansCn}
+             , COALESCE(#{rgtrId}, '-')
+             , COALESCE(#{rgtrId}, '-')
+             , 'Y'
+             , COALESCE(#{rgtrId}, '-')
+             , NOW()
+             , COALESCE(#{rgtrId}, '-')
+             , NOW()
+        )
+    </insert>
+
+    <!-- Q&A 수정 -->
+    <update id="updateQna" parameterType="kr.or.kids.domain.cm.community.qna.vo.TbPpMQnaVo">
+        /* kr.or.kids.domain.cm.community.qna.mapper.updateQna */
+        UPDATE kids_own.tb_cm_m_qna
+        <set>
+            <if test="pstTtl != null and pstTtl != ''">
+                pst_ttl = #{pstTtl},
+            </if>
+
+            <if test="pstCn != null and pstCn != ''">
+                pst_cn = #{pstCn},
+            </if>
+
+            <if test="rlsYn != null and rlsYn != ''">
+                rls_yn = #{rlsYn},
+            </if>
+
+            <if test="atchFileId != null and atchFileId != ''">
+                atch_file_id = #{atchFileId},
+            </if>
+
+            <if test="thmbId != null and thmbId != ''">
+                thmb_id = #{thmbId},
+            </if>
+
+            <if test="mdfrId != null and mdfrId != ''">
+                mdfr_id = #{mdfrId},
+            </if>
+
+            <if test="qstnPrgrsSttsCd != null and qstnPrgrsSttsCd != ''">
+                qstn_prgrs_stts_cd = #{qstnPrgrsSttsCd},
+            </if>
+
+            mdfcn_dt = NOW()
+        </set>
+        WHERE qstn_sn = #{qstnSn}
+    </update>
+
+    <!-- Q&A 답변 수정 -->
+    <update id="updateQnaAnswer" parameterType="kr.or.kids.domain.cm.community.qna.vo.TbPpMQnaAnsVo">
+        /* kr.or.kids.domain.cm.community.qna.mapper.updateQnaAnswer */
+        UPDATE kids_own.tb_cm_m_qna_ans
+        <set>
+            <if test="ansCn != null and ansCn != ''">
+                ans_cn = #{ansCn},
+            </if>
+
+            <if test="mdfrId != null and mdfrId != ''">
+                mdfr_id = #{mdfrId},
+            </if>
+
+            mdfcn_dt = NOW()
+        </set>
+        WHERE ans_sn = #{ansSn}
+    </update>
+
+    <update id="updateQnaStatusAnswered" parameterType="long">
+        /* kr.or.kids.domain.cm.community.qna.mapper.updateQnaStatusAnswered */
+        UPDATE kids_own.tb_cm_m_qna
+           SET qstn_prgrs_stts_cd = '02'
+             , mdfcn_dt = NOW()
+         WHERE qstn_sn = #{qstnSn}
+    </update>
+
+    <update id="updateQnaStatusWaiting" parameterType="long">
+        /* kr.or.kids.domain.cm.community.qna.mapper.updateQnaStatusWaiting */
+        UPDATE kids_own.tb_cm_m_qna
+           SET qstn_prgrs_stts_cd = '01'
+             , mdfcn_dt = NOW()
+         WHERE qstn_sn = #{qstnSn}
+    </update>
+
+    <!-- Q&A 삭제 (논리삭제) -->
+    <update id="deleteQna" parameterType="map">
+        /* kr.or.kids.domain.cm.community.qna.mapper.deleteQna */
+        UPDATE kids_own.tb_cm_m_qna
+           SET del_yn = 'Y'
+             , mdfcn_dt = NOW()
+         WHERE qstn_sn = #{qstnSn}
+    </update>
+
+    <!-- Q&A 답변 삭제 -->
+    <update id="deleteQnaAnswer" parameterType="kr.or.kids.domain.cm.community.qna.vo.TbPpMQnaAnsVo">
+        /* kr.or.kids.domain.cm.community.qna.mapper.deleteQnaAnswer */
+        UPDATE kids_own.tb_cm_m_qna_ans
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+         WHERE ans_sn = #{ansSn}
+    </update>
+
+    <update id="deleteAnswerByQstnSn" parameterType="long">
+        /* kr.or.kids.domain.cm.community.qna.mapper.deleteAnswerByQstnSn */
+        UPDATE kids_own.tb_cm_m_qna_ans
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+         WHERE qstn_sn = #{qstnSn}
+    </update>
+
+    <!-- Q&A 조회수 증가 -->
+    <update id="updateQnaViewCount" parameterType="long">
+        /* kr.or.kids.domain.cm.community.qna.mapper.updateQnaViewCount */
+        UPDATE kids_own.tb_cm_m_qna
+           SET pst_inq_cnt = COALESCE(pst_inq_cnt, 0) + 1
+             , mdfcn_dt = NOW()
+         WHERE qstn_sn = #{qstnSn}
+           AND del_yn = 'N'
+    </update>
+</mapper>

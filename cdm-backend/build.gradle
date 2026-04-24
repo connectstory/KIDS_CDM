@@ -1,0 +1,122 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.7.18'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.sonarqube' version '7.2.3.7755'
+}
+
+group = 'com.ca'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // ======================================
+    // Core
+    // ======================================
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+
+    implementation 'com.opencsv:opencsv:5.9'
+    implementation 'org.apache.poi:poi-ooxml:5.5.1'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.7'
+    testImplementation 'org.testcontainers:postgresql:1.19.7'
+    // ======================================
+    // OAuth2 / JWT / Mail
+    // ======================================
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // JAXB (Java 17)
+    implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'
+
+    // ======================================
+    // Database
+    // ======================================
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2'
+
+    // PostgreSQL JDBC
+    implementation 'org.postgresql:postgresql'
+
+    // Log4jdbc (SQL 로깅용 — net.sf.log4jdbc.sql.jdbcapi.DriverSpy 제공)
+    implementation 'com.googlecode.log4jdbc:log4jdbc:1.2'
+
+    // ======================================
+    // Cloud / MSA
+    // ======================================
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // Resilience4j → WebMVC용 (reactor X)
+//    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // ======================================
+    // Redis
+    // ======================================
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'io.netty:netty-all:4.1.94.Final'
+
+    // ======================================
+    // Swagger / SpringDoc
+    // ======================================
+    implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
+
+    // ======================================
+    // PDF (Apache PDFBox) 
+    // ======================================
+    // implementation 'org.apache.pdfbox:pdfbox:2.0.30'
+    implementation "org.apache.pdfbox:pdfbox:3.0.6"
+
+    // ======================================
+    // Tools
+    // ======================================
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // ======================================
+    // Test
+    // ======================================
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    // ======================================
+    // anyid
+    // ======================================
+    implementation files('libs/anyid-sso-adaptor-core-2.3.0.jar')
+    implementation files('libs/anyid-sso-adaptor-javax-2.3.0.jar')
+    implementation files('libs/anyid-auth-sdk-1.0.19.jar')
+    implementation files('libs/anyid-auth-util-sdk-1.0.15.jar')
+    implementation files('libs/OneAccess-OAuth-Cmvp-1.0.0.002.241213.jar')
+    implementation files('libs/OneAccess-OAuth-Jwt-1.0.004250417.jar')
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2021.0.8"
+    }
+}

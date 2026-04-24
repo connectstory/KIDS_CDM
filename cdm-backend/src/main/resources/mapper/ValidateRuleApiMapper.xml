@@ -1,0 +1,239 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.validaterule.mapper.ValidateRuleApiMapper">
+
+    <select id="selectValidateRuleList"
+            parameterType="kr.or.kids.domain.cm.validaterule.vo.ValidateRuleApiInVO"
+            resultType="kr.or.kids.domain.cm.validaterule.vo.ValidateRuleApiOutVO">
+        SELECT A.vrfc_sn        AS vrfcSn
+             , A.std_se_cd      AS stdSeCd
+             , A.levl_seq       AS levlSeq
+             , A.vrfc_tbl_nm    AS vrfcTblNm
+             , A.vrfc_col_nm    AS vrfcColNm
+             , A.vrfc_rul_nm    AS vrfcRulNm
+             , A.rfrnc_nm       AS rfrncNm
+             , A.rfrnc_dtl_nm   AS rfrncDtlNm
+             , A.esntl_yn       AS esntlYn
+             , A.rfrnc_tbl_nm   AS rfrncTblNm
+             , A.fk_nm          AS fkNm
+             , A.rfrnc_col_nm   AS rfrncColNm
+             , A.std_trm_id     AS stdTrmId
+             , A.rul_aplcn_nm   AS rulAplcnNm
+             , A.unit_nm        AS unitNm
+             , A.scp_seq_nm     AS scpSeqNm
+             , A.prm_crtr_nm    AS prmCrtrNm
+             , A.vrbl_cn        AS vrblCn
+             , A.vrbl_dtl_cn    AS vrblDtlCn
+             , A.vrbl_rslt_cn   AS vrblRsltCn
+             , COALESCE(E.emp_nm, A.rgtr_id) AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YY.MM.DD') AS regDt
+          FROM kids_own.tb_cm_m_vrfc A
+          LEFT JOIN kids_own.tb_pp_m_mngr_info M  ON M.emp_no  = A.rgtr_id
+          LEFT JOIN kids_own.tb_pp_m_emp_info  E  ON E.emp_no  = M.emp_no
+         WHERE 1=1
+        <if test="stdSeCd != null and stdSeCd != ''">
+           AND A.std_se_cd = #{stdSeCd}
+        </if>
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'tableName'">
+                    AND A.vrfc_tbl_nm LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'columnName'">
+                    AND A.vrfc_col_nm LIKE '%' || #{searchKeyword} || '%'
+                </when>
+            </choose>
+        </if>
+         ORDER BY A.vrfc_sn DESC
+         LIMIT #{pageSize}
+        OFFSET (#{page} - 1) * #{pageSize}
+    </select>
+
+    <select id="selectValidateRuleListCount"
+            parameterType="kr.or.kids.domain.cm.validaterule.vo.ValidateRuleApiInVO"
+            resultType="int">
+        SELECT COUNT(*)
+          FROM kids_own.tb_cm_m_vrfc A
+         WHERE 1=1
+        <if test="stdSeCd != null and stdSeCd != ''">
+            AND A.std_se_cd = #{stdSeCd}
+        </if>
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'tableName'">
+                    AND A.vrfc_tbl_nm LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'columnName'">
+                    AND A.vrfc_col_nm LIKE '%' || #{searchKeyword} || '%'
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="selectValidateRuleDetail" parameterType="long"
+            resultType="kr.or.kids.domain.cm.validaterule.vo.ValidateRuleApiOutVO">
+        SELECT A.vrfc_sn        AS vrfcSn
+             , A.std_se_cd      AS stdSeCd
+             , A.levl_seq       AS levlSeq
+             , A.vrfc_tbl_nm    AS vrfcTblNm
+             , A.vrfc_col_nm    AS vrfcColNm
+             , A.vrfc_rul_nm    AS vrfcRulNm
+             , A.rfrnc_nm       AS rfrncNm
+             , A.rfrnc_dtl_nm   AS rfrncDtlNm
+             , A.esntl_yn       AS esntlYn
+             , A.rfrnc_tbl_nm   AS rfrncTblNm
+             , A.fk_nm          AS fkNm
+             , A.rfrnc_col_nm   AS rfrncColNm
+             , A.std_trm_id     AS stdTrmId
+             , A.rul_aplcn_nm   AS rulAplcnNm
+             , A.unit_nm        AS unitNm
+             , A.scp_seq_nm     AS scpSeqNm
+             , A.prm_crtr_nm    AS prmCrtrNm
+             , A.vrbl_cn        AS vrblCn
+             , A.vrbl_dtl_cn    AS vrblDtlCn
+             , A.vrbl_rslt_cn   AS vrblRsltCn
+             , COALESCE(E.emp_nm, A.rgtr_id) AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD HH24:MI:SS') AS regDt
+             , A.mdfr_id        AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD HH24:MI:SS') AS mdfcnDt
+          FROM kids_own.tb_cm_m_vrfc A
+          LEFT JOIN kids_own.tb_pp_m_mngr_info M  ON M.emp_no  = A.rgtr_id
+          LEFT JOIN kids_own.tb_pp_m_emp_info  E  ON E.emp_no  = M.emp_no
+         WHERE A.vrfc_sn = #{vrfcSn}
+    </select>
+
+    <insert id="insertValidateRule"
+            parameterType="kr.or.kids.domain.cm.validaterule.vo.TbCmMVrfcVo">
+        <selectKey keyProperty="vrfcSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_vrfc_sn')
+        </selectKey>
+        INSERT INTO kids_own.tb_cm_m_vrfc (
+               vrfc_sn
+             , std_se_cd
+             , levl_seq
+             , vrfc_tbl_nm
+             , vrfc_col_nm
+             , vrfc_rul_nm
+             , rfrnc_nm
+             , rfrnc_dtl_nm
+             , esntl_yn
+             , rfrnc_tbl_nm
+             , fk_nm
+             , rfrnc_col_nm
+             , std_trm_id
+             , rul_aplcn_nm
+             , unit_nm
+             , scp_seq_nm
+             , prm_crtr_nm
+             , vrbl_cn
+             , vrbl_dtl_cn
+             , vrbl_rslt_cn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+        ) VALUES (
+               #{vrfcSn}
+             , #{stdSeCd}
+             , #{levlSeq}
+             , #{vrfcTblNm}
+             , #{vrfcColNm}
+             , #{vrfcRulNm}
+             , #{rfrncNm}
+             , #{rfrncDtlNm}
+             , COALESCE(#{esntlYn}, 'N')
+             , #{rfrncTblNm}
+             , #{fkNm}
+             , #{rfrncColNm}
+             , #{stdTrmId}
+             , #{rulAplcnNm}
+             , #{unitNm}
+             , #{scpSeqNm}
+             , #{prmCrtrNm}
+             , #{vrblCn}
+             , #{vrblDtlCn}
+             , #{vrblRsltCn}
+             , COALESCE(#{rgtrId}, '관리자')
+             , NOW()
+             , COALESCE(#{mdfrId}, '관리자')
+             , NOW()
+        )
+    </insert>
+
+    <update id="updateValidateRule"
+            parameterType="kr.or.kids.domain.cm.validaterule.vo.TbCmMVrfcVo">
+        UPDATE kids_own.tb_cm_m_vrfc
+        <set>
+            <if test="stdSeCd != null and stdSeCd != ''">
+                std_se_cd    = #{stdSeCd},
+            </if>
+            <if test="levlSeq != null">
+                levl_seq     = #{levlSeq},
+            </if>
+            <if test="vrfcTblNm != null and vrfcTblNm != ''">
+                vrfc_tbl_nm = #{vrfcTblNm},
+            </if>
+            <if test="vrfcColNm != null and vrfcColNm != ''">
+                vrfc_col_nm = #{vrfcColNm},
+            </if>
+            <if test="vrfcRulNm != null">
+                vrfc_rul_nm  = #{vrfcRulNm},
+            </if>
+            <if test="rfrncNm != null">
+                rfrnc_nm     = #{rfrncNm},
+            </if>
+            <if test="rfrncDtlNm != null">
+                rfrnc_dtl_nm = #{rfrncDtlNm},
+            </if>
+            <if test="esntlYn != null and esntlYn != ''">
+                esntl_yn     = #{esntlYn},
+            </if>
+            <if test="rfrncTblNm != null">
+                rfrnc_tbl_nm = #{rfrncTblNm},
+            </if>
+            <if test="fkNm != null">
+                fk_nm        = #{fkNm},
+            </if>
+            <if test="rfrncColNm != null">
+                rfrnc_col_nm = #{rfrncColNm},
+            </if>
+            <if test="stdTrmId != null">
+                std_trm_id   = #{stdTrmId},
+            </if>
+            <if test="rulAplcnNm != null">
+                rul_aplcn_nm = #{rulAplcnNm},
+            </if>
+            <if test="unitNm != null">
+                unit_nm      = #{unitNm},
+            </if>
+            <if test="scpSeqNm != null">
+                scp_seq_nm   = #{scpSeqNm},
+            </if>
+            <if test="prmCrtrNm != null">
+                prm_crtr_nm  = #{prmCrtrNm},
+            </if>
+            <if test="vrblCn != null">
+                vrbl_cn      = #{vrblCn},
+            </if>
+            <if test="vrblDtlCn != null">
+                vrbl_dtl_cn  = #{vrblDtlCn},
+            </if>
+            <if test="vrblRsltCn != null">
+                vrbl_rslt_cn = #{vrblRsltCn},
+            </if>
+            <if test="mdfrId != null and mdfrId != ''">
+                mdfr_id      = #{mdfrId},
+            </if>
+                mdfcn_dt = NOW()
+        </set>
+        WHERE vrfc_sn = #{vrfcSn}
+    </update>
+
+    <delete id="deleteValidateRule" parameterType="long">
+        DELETE FROM kids_own.tb_cm_m_vrfc
+         WHERE vrfc_sn = #{vrfcSn}
+    </delete>
+
+</mapper>

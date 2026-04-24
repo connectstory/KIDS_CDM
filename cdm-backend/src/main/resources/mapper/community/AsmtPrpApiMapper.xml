@@ -1,0 +1,443 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.community.asmtprp.mapper.AsmtPrpApiMapper">
+
+    <resultMap id="AsmtPrpDetailMap" type="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpApiOutVO">
+
+        <id property="asmtPrpSn" column="asmtPrpSn"/>
+
+        <result property="rlsYn" column="rlsYn"/>
+        <result property="asmtPrpsrNm" column="asmtPrpsrNm"/>
+        <result property="asmtPrpsrOgdpNm" column="asmtPrpsrOgdpNm"/>
+        <result property="tpcTtlNm" column="tpcTtlNm"/>
+        <result property="asmtPrpCn" column="asmtPrpCn"/>
+        <result property="asmtExptEfctCn" column="asmtExptEfctCn"/>
+        <result property="asmtEtcExplnCn" column="asmtEtcExplnCn"/>
+        <result property="asmtCutnMttrCn" column="asmtCutnMttrCn"/>
+        <result property="atchFileId" column="atchFileId"/>
+        <result property="delYn" column="delYn"/>
+        <result property="rgtrId" column="rgtrId"/>
+        <result property="regDt" column="regDt"/>
+        <result property="mdfrId" column="mdfrId"/>
+        <result property="mdfcnDt" column="mdfcnDt"/>
+        <result property="pstInqCnt" column="pstInqCnt"/>
+        <result property="asmtPrpAnsSttsCd" column="asmtPrpAnsSttsCd"/>
+
+        <!-- 첨부파일 리스트 -->
+        <collection property="fileList"
+                    javaType="java.util.ArrayList"
+                    ofType="kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo">
+            <id     property="atchFileId" column="fileId"/>
+            <result property="fileNm" column="fileNm"/>
+            <result property="fileExtnNm" column="fileExtnNm"/>
+            <result property="fileSz" column="fileSz"/>
+            <result property="fileStrgPathDsctn" column="filePath"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="AsmtPrpAnswerDetailMap" type="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpAnsApiOutVO">
+
+        <id property="ansSn" column="ansSn"/>
+
+        <result property="asmtPrpSn" column="asmtPrpSn"/>
+        <result property="ansCn" column="ansCn"/>
+        <result property="ansId" column="ansId"/>
+        <result property="ansNm" column="ansNm"/>
+        <result property="useYn" column="useYn"/>
+        <result property="rgtrId" column="rgtrId"/>
+        <result property="regDt" column="regDt"/>
+        <result property="mdfrId" column="mdfrId"/>
+        <result property="mdfcnDt" column="mdfcnDt"/>
+
+        <!-- 첨부파일 리스트 -->
+        <collection property="fileList"
+                    javaType="java.util.ArrayList"
+                    ofType="kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo">
+            <id     property="atchFileId" column="fileId"/>
+            <result property="fileNm" column="fileNm"/>
+            <result property="fileExtnNm" column="fileExtnNm"/>
+            <result property="fileSz" column="fileSz"/>
+            <result property="fileStrgPathDsctn" column="filePath"/>
+        </collection>
+    </resultMap>
+
+    <!-- 과제제안 목록 조회 -->
+    <select id="selectAsmtPrpList" parameterType="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpApiInVO" resultType="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.asmtprp.mapper.selectAsmtPrpList */
+               A.asmt_prp_sn        AS asmtPrpSn
+             , A.asmt_prpsr_nm      AS asmtPrpsrNm
+             , A.asmt_prpsr_ogdp_nm AS asmtPrpsrOgdpNm
+             , A.tpc_ttl_nm         AS tpcTtlNm
+             , A.asmt_prp_cn        AS asmtPrpCn
+             , A.asmt_expt_efct_cn  AS asmtExptEfctCn
+             , A.asmt_etc_expln_cn  AS asmtEtcExplnCn
+             , A.asmt_cutn_mttr_cn  AS asmtCutnMttrCn
+             , A.atch_file_id       AS atchFileId
+             , A.rls_yn             AS rlsYn
+             , A.del_yn             AS delYn
+             , A.rgtr_id            AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD')   AS regDt
+             , A.mdfr_id            AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD') AS mdfcnDt
+             , A.pst_inq_cnt        AS pstInqCnt
+             , A.asmt_prp_ans_stts_cd AS asmtPrpAnsSttsCd
+             , CASE WHEN EXISTS (
+                                  SELECT 1
+                                    FROM kids_own.tb_cm_m_file_uld U
+                                   INNER JOIN kids_own.tb_ca_e_file_trsm F
+                                      ON U.atch_file_id = F.atch_file_group_id
+                                   WHERE U.pst_sn = A.asmt_prp_sn
+                                     AND U.del_yn = 'N'
+                                     AND U.uld_task_se_cd = '06'
+                                     AND U.file_se_cd = '12'
+                                ) THEN 'Y'
+                    ELSE 'N'
+                END AS hasFile
+          FROM kids_own.tb_cm_m_asmt_prp A
+         WHERE 1=1
+           AND A.del_yn = 'N'
+        <if test="!searchAll and loginId != null and loginId != ''">
+           AND (A.rls_yn = 'Y' OR A.rgtr_id = #{loginId})
+        </if>
+        <if test="asmtPrpAnsSttsCd != null and asmtPrpAnsSttsCd != ''">
+           AND A.asmt_prp_ans_stts_cd = #{asmtPrpAnsSttsCd}
+        </if>
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND A.tpc_ttl_nm LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'content'">
+                    AND A.asmt_prp_cn LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'writer'">
+                    <choose>
+                        <when test="encryptedWriterKeyword != null and encryptedWriterKeyword != ''">
+                            <!-- 암호화된 성명 완전일치로 tb_pp_m_mbr_info.encpt_mbr_flnm 검색 -->
+                            AND A.rgtr_id IN (
+                                SELECT m.mbr_no
+                                  FROM kids_own.tb_pp_m_mbr_info m
+                                 WHERE m.encpt_mbr_flnm = #{encryptedWriterKeyword}
+                            )
+                        </when>
+                        <otherwise>
+                            AND A.asmt_prpsr_nm LIKE '%' || #{searchKeyword} || '%'
+                        </otherwise>
+                    </choose>
+                </when>
+                <when test="searchType == 'inst'">
+                    AND EXISTS (
+                                 SELECT 1
+                                   FROM kids_own.tb_pp_m_exprt_info ei
+                                   JOIN kids_own.tb_pp_m_inst i ON i.brno = ei.brno
+                                  WHERE ei.mbr_no = A.rgtr_id
+                                    AND i.inst_nm LIKE '%' || #{searchKeyword} || '%'
+                    )
+                </when>
+            </choose>
+        </if>
+        ORDER BY A.asmt_prp_sn DESC
+        LIMIT #{pageSize}
+       OFFSET (#{page} - 1) * #{pageSize}
+    </select>
+
+    <select id="selectAsmtPrpListCount" parameterType="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpApiInVO" resultType="int">
+        SELECT /* kr.or.kids.domain.cm.community.asmtprp.mapper.selectAsmtPrpListCount */
+               COUNT(*)
+          FROM kids_own.tb_cm_m_asmt_prp A
+         WHERE 1=1
+           AND A.del_yn = 'N'
+        <if test="!searchAll and loginId != null and loginId != ''">
+           AND (A.rls_yn = 'Y' OR A.rgtr_id = #{loginId})
+        </if>
+        <if test="asmtPrpAnsSttsCd != null and asmtPrpAnsSttsCd != ''">
+           AND A.asmt_prp_ans_stts_cd = #{asmtPrpAnsSttsCd}
+        </if>
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND A.tpc_ttl_nm LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'content'">
+                    AND A.asmt_prp_cn LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'writer'">
+                    <choose>
+                        <when test="encryptedWriterKeyword != null and encryptedWriterKeyword != ''">
+                            <!-- 암호화된 성명 완전일치로 tb_pp_m_mbr_info.encpt_mbr_flnm 검색 -->
+                            AND A.rgtr_id IN (
+                                SELECT m.mbr_no
+                                  FROM kids_own.tb_pp_m_mbr_info m
+                                 WHERE m.encpt_mbr_flnm = #{encryptedWriterKeyword}
+                            )
+                        </when>
+                        <otherwise>
+                            AND A.asmt_prpsr_nm LIKE '%' || #{searchKeyword} || '%'
+                        </otherwise>
+                    </choose>
+                </when>
+                <when test="searchType == 'inst'">
+                    AND EXISTS (
+                                 SELECT 1
+                                   FROM kids_own.tb_pp_m_exprt_info ei
+                                   JOIN kids_own.tb_pp_m_inst i ON i.brno = ei.brno
+                                  WHERE ei.mbr_no = A.rgtr_id
+                                    AND i.inst_nm LIKE '%' || #{searchKeyword} || '%'
+                    )
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- 과제제안 상세 조회 (파일 목록은 서비스 레이어에서 별도 조회) -->
+    <select id="selectAsmtPrpDetail" parameterType="long" resultType="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.asmtprp.mapper.selectAsmtPrpDetail */
+               A.asmt_prp_sn                     AS asmtPrpSn
+             , A.rls_yn                          AS rlsYn
+             , A.asmt_prpsr_nm                   AS asmtPrpsrNm
+             , A.asmt_prpsr_ogdp_nm              AS asmtPrpsrOgdpNm
+             , A.tpc_ttl_nm                      AS tpcTtlNm
+             , A.asmt_prp_cn                     AS asmtPrpCn
+             , A.asmt_expt_efct_cn               AS asmtExptEfctCn
+             , A.asmt_etc_expln_cn               AS asmtEtcExplnCn
+             , A.asmt_cutn_mttr_cn               AS asmtCutnMttrCn
+             , A.atch_file_id                    AS atchFileId
+             , A.del_yn                          AS delYn
+             , A.rgtr_id                         AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD')   AS regDt
+             , A.mdfr_id                         AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD') AS mdfcnDt
+             , A.pst_inq_cnt                     AS pstInqCnt
+             , A.asmt_prp_ans_stts_cd            AS asmtPrpAnsSttsCd
+          FROM kids_own.tb_cm_m_asmt_prp A
+         WHERE A.asmt_prp_sn = #{asmtPrpSn}
+           AND A.del_yn = 'N'
+    </select>
+
+    <!-- 과제제안 답변 조회 (파일 목록은 서비스 레이어에서 별도 조회) -->
+    <select id="selectAsmtPrpAnswer" parameterType="long" resultType="kr.or.kids.domain.cm.community.asmtprp.vo.AsmtPrpAnsApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.asmtprp.mapper.selectAsmtPrpAnswer */
+               A.ans_sn               AS ansSn
+             , A.asmt_prp_sn          AS asmtPrpSn
+             , A.ans_cn               AS ansCn
+             , A.ans_id               AS ansId
+             , A.ans_nm               AS ansNm
+             , A.use_yn               AS useYn
+             , A.rgtr_id              AS rgtrId
+             , A.reg_dt               AS regDt
+             , A.mdfr_id              AS mdfrId
+             , A.mdfcn_dt             AS mdfcnDt
+          FROM kids_own.tb_cm_m_asmt_prp_ans A
+         WHERE A.asmt_prp_sn = #{asmtPrpSn}
+           AND A.use_yn = 'Y'
+    </select>
+
+    <select id="selectAsmtPrpSnByAnsSn" parameterType="long" resultType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.selectAsmtPrpSnByAnsSn */
+        SELECT asmt_prp_sn
+          FROM kids_own.tb_cm_m_asmt_prp_ans
+         WHERE ans_sn = #{ansSn}
+    </select>
+
+    <!-- 과제제안 등록 -->
+    <insert id="insertAsmtPrp" parameterType="kr.or.kids.domain.cm.community.asmtprp.vo.TbPpMAsmtPrpVo">
+        <selectKey keyProperty="asmtPrpSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_asmt_prp_sn')
+        </selectKey>
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.insertAsmtPrp */
+        INSERT INTO kids_own.tb_cm_m_asmt_prp (
+               asmt_prp_sn
+             , rls_yn
+             , asmt_prpsr_nm
+             , asmt_prpsr_ogdp_nm
+             , tpc_ttl_nm
+             , asmt_prp_cn
+             , asmt_expt_efct_cn
+             , asmt_etc_expln_cn
+             , asmt_cutn_mttr_cn
+             , atch_file_id
+             , del_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+             , pst_inq_cnt
+             , asmt_prp_ans_stts_cd
+        ) VALUES (
+               #{asmtPrpSn}
+             , COALESCE(#{rlsYn}, 'Y')
+             , COALESCE(#{rgtrId}, '사용자')
+             , #{asmtPrpsrOgdpNm}
+             , #{tpcTtlNm}
+             , #{asmtPrpCn}
+             , #{asmtExptEfctCn}
+             , #{asmtEtcExplnCn}
+             , #{asmtCutnMttrCn}
+             , #{atchFileId}
+             , 'N'
+             , COALESCE(#{rgtrId}, '사용자')
+             , NOW()
+             , COALESCE(#{rgtrId}, '사용자')
+             , NOW()
+             , 0
+             , COALESCE(#{asmtPrpAnsSttsCd}, '01')
+        )
+    </insert>
+
+    <!-- 과제제안 답변 등록 -->
+    <insert id="insertAsmtPrpAnswer" parameterType="kr.or.kids.domain.cm.community.asmtprp.vo.TbPpMAsmtPrpAnsVo">
+        <selectKey keyProperty="ansSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_ans_sn_2')
+        </selectKey>
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.insertAsmtPrpAnswer */
+        INSERT INTO kids_own.tb_cm_m_asmt_prp_ans (
+               ans_sn
+             , asmt_prp_sn
+             , ans_cn
+             , ans_id
+             , ans_nm
+             , use_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+        ) VALUES (
+               #{ansSn}
+             , #{asmtPrpSn}
+             , #{ansCn}
+             , COALESCE(#{rgtrId}, '-')
+             , COALESCE(#{rgtrId}, '-')
+             , 'Y'
+             , COALESCE(#{rgtrId}, '-')
+             , NOW()
+             , COALESCE(#{rgtrId}, '-')
+             , NOW()
+        )
+    </insert>
+
+    <!-- 과제제안 수정 -->
+    <update id="updateAsmtPrp" parameterType="kr.or.kids.domain.cm.community.asmtprp.vo.TbPpMAsmtPrpVo">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.updateAsmtPrp */
+        UPDATE kids_own.tb_cm_m_asmt_prp
+        <set>
+            <if test="rlsYn != null and rlsYn != ''">
+                rls_yn = #{rlsYn},
+            </if>
+
+            <if test="asmtPrpsrNm != null and asmtPrpsrNm != ''">
+                asmt_prpsr_nm = #{asmtPrpsrNm},
+            </if>
+
+            <if test="asmtPrpsrOgdpNm != null and asmtPrpsrOgdpNm != ''">
+                asmt_prpsr_ogdp_nm = #{asmtPrpsrOgdpNm},
+            </if>
+
+            <if test="tpcTtlNm != null and tpcTtlNm != ''">
+                tpc_ttl_nm = #{tpcTtlNm},
+            </if>
+
+            <if test="asmtPrpCn != null and asmtPrpCn != ''">
+                asmt_prp_cn = #{asmtPrpCn},
+            </if>
+
+            <if test="asmtExptEfctCn != null and asmtExptEfctCn != ''">
+                asmt_expt_efct_cn = #{asmtExptEfctCn},
+            </if>
+
+            <if test="asmtEtcExplnCn != null and asmtEtcExplnCn != ''">
+                asmt_etc_expln_cn = #{asmtEtcExplnCn},
+            </if>
+
+            <if test="asmtCutnMttrCn != null and asmtCutnMttrCn != ''">
+                asmt_cutn_mttr_cn = #{asmtCutnMttrCn},
+            </if>
+
+            <if test="atchFileId != null and atchFileId != ''">
+                atch_file_id = #{atchFileId},
+            </if>
+
+            <if test="mdfrId != null and mdfrId != ''">
+                mdfr_id = #{mdfrId},
+            </if>
+
+            <if test="asmtPrpAnsSttsCd != null and asmtPrpAnsSttsCd != ''">
+                asmt_prp_ans_stts_cd = #{asmtPrpAnsSttsCd},
+            </if>
+
+            mdfcn_dt = NOW()
+        </set>
+        WHERE asmt_prp_sn = #{asmtPrpSn}
+    </update>
+
+    <!-- 과제제안 답변 수정 -->
+    <update id="updateAsmtPrpAnswer" parameterType="kr.or.kids.domain.cm.community.asmtprp.vo.TbPpMAsmtPrpAnsVo">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.updateAsmtPrpAnswer */
+        UPDATE kids_own.tb_cm_m_asmt_prp_ans
+        <set>
+            <if test="ansCn != null and ansCn != ''">
+                ans_cn = #{ansCn},
+            </if>
+
+            <if test="mdfrId != null and mdfrId != ''">
+                mdfr_id = #{mdfrId},
+            </if>
+
+            mdfcn_dt = NOW()
+        </set>
+        WHERE ans_sn = #{ansSn}
+    </update>
+
+    <!-- 과제제안 삭제 (논리 삭제) -->
+    <update id="deleteAsmtPrp" parameterType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.deleteAsmtPrp */
+        UPDATE kids_own.tb_cm_m_asmt_prp
+           SET del_yn = 'Y'
+         WHERE asmt_prp_sn = #{asmtPrpSn}
+    </update>
+
+    <!-- 과제제안 답변 삭제 -->
+    <update id="deleteAsmtPrpAnswer" parameterType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.deleteAsmtPrpAnswer */
+        UPDATE kids_own.tb_cm_m_asmt_prp_ans
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+         WHERE ans_sn = #{ansSn}
+    </update>
+
+    <!-- 과제제안 글 삭제 시 답변 일괄 비활성 -->
+    <update id="deleteAnswerByAsmtPrpSn" parameterType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.deleteAnswerByAsmtPrpSn */
+        UPDATE kids_own.tb_cm_m_asmt_prp_ans
+           SET use_yn = 'N'
+             , mdfcn_dt = NOW()
+         WHERE asmt_prp_sn = #{asmtPrpSn}
+    </update>
+
+    <update id="updateAsmtPrpStatusAnswered" parameterType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.updateAsmtPrpStatusAnswered */
+        UPDATE kids_own.tb_cm_m_asmt_prp
+           SET asmt_prp_ans_stts_cd = '02'
+             , mdfcn_dt = NOW()
+         WHERE asmt_prp_sn = #{asmtPrpSn}
+    </update>
+
+    <update id="updateAsmtPrpStatusWaiting" parameterType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.updateAsmtPrpStatusWaiting */
+        UPDATE kids_own.tb_cm_m_asmt_prp
+        SET asmt_prp_ans_stts_cd = '01'
+        , mdfcn_dt = NOW()
+        WHERE asmt_prp_sn = #{asmtPrpSn}
+    </update>
+
+    <!-- 과제제안 조회수 증가 -->
+    <update id="updateAsmtPrpViewCount" parameterType="long">
+        /* kr.or.kids.domain.cm.community.asmtprp.mapper.updateAsmtPrpViewCount */
+        UPDATE kids_own.tb_cm_m_asmt_prp
+           SET pst_inq_cnt = COALESCE(pst_inq_cnt, 0) + 1
+             , mdfcn_dt = NOW()
+         WHERE asmt_prp_sn = #{asmtPrpSn}
+           AND del_yn = 'N'
+    </update>
+</mapper>

@@ -1,0 +1,298 @@
+import { useEffect, useMemo, useState } from "react";
+import { Button, MenuItem, Select, Stack } from "@mui/material";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { AllCommunityModule, type ColDef, ModuleRegistry } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CONTENT_GAP } from "@/constants/types";
+import type { FaqItem } from "@/interfaces/communityInterface.ts";
+import { fetchFaqList } from "@/api/communityApi";
+import { fetchCommonCodes } from "@/api/commonApi";
+import { useCmRoutes } from "@/hooks/useCmRoutes";
+import CdmPagination from "@/components/CdmPagination";
+import CdmPaginationMove from "@/components/CdmPaginationMove";
+import { SearchArea } from "@/components/SearchArea";
+import { SpaceBox } from "@/components/SpaceBox";
+import { Helmet } from "react-helmet";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const Q = {
+  PAGE: "page",
+  LENGTH: "length",
+  SEARCH_TYPE: "searchType",
+  SEARCH_KEYWORD: "searchKeyword",
+  CATEGORY: "category",
+} as const;
+
+type SearchState = {
+  viewCount: string;
+  currentPage: number;
+  searchType: string;
+  searchKeyword: string;
+  category: string;
+};
+
+const defaultSearchState: SearchState = {
+  viewCount: "10",
+  currentPage: 1,
+  searchType: "title",
+  searchKeyword: "",
+  category: "ALL",
+};
+
+function parseSearchParamsFromURL(searchParams: URLSearchParams): SearchState {
+  const page = searchParams.get(Q.PAGE);
+  const viewCount = searchParams.get(Q.LENGTH);
+  const searchType = searchParams.get(Q.SEARCH_TYPE);
+  const searchKeyword = searchParams.get(Q.SEARCH_KEYWORD);
+  const category = searchParams.get(Q.CATEGORY);
+
+  return {
+    viewCount: viewCount ?? defaultSearchState.viewCount,
+    currentPage: page ? Math.max(1, Number.parseInt(page, 10) || 1) : defaultSearchState.currentPage,
+    searchType: searchType ?? defaultSearchState.searchType,
+    searchKeyword: searchKeyword ?? defaultSearchState.searchKeyword,
+    category: category ?? defaultSearchState.category,
+  };
+}
+
+function buildURLSearchParams(state: SearchState, pageOverride?: number): Record<string, string> {
+  const page = pageOverride ?? state.currentPage;
+  const params: Record<string, string> = {
+    [Q.PAGE]: String(page),
+    [Q.LENGTH]: state.viewCount,
+    [Q.SEARCH_TYPE]: state.searchType,
+    [Q.CATEGORY]: state.category,
+  };
+  if (state.searchKeyword.trim()) params[Q.SEARCH_KEYWORD] = state.searchKeyword.trim();
+  return params;
+}
+
+export default function AdminFaqListView() {
+  const routes = useCmRoutes();
+  const navigate = useNavigate();
+
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
+
+  const appliedState = useMemo(() => parseSearchParamsFromURL(urlSearchParams), [urlSearchParams]);
+
+  const [formState, setFormState] = useState<SearchState>(() => parseSearchParamsFromURL(new URLSearchParams(urlSearchParams)));
+  const [searchKeywordError, setSearchKeywordError] = useState(false);
+
+  useEffect(() => {
+    setFormState(parseSearchParamsFromURL(urlSearchParams));
+  }, [urlSearchParams]);
+
+  const { viewCount, searchKeyword, searchType, category } = formState;
+
+  const applySearchParams = (state: SearchState, pageOverride?: number) => {
+    setUrlSearchParams(buildURLSearchParams(state, pageOverride), { replace: false });
+  };
+
+  const handlePageChange = (page: number) => {
+    const nextState: SearchState = { ...appliedState, currentPage: page };
+    setFormState(nextState);
+    applySearchParams(nextState);
+  };
+
+  const { data: commonCodes = [] } = useQuery({
+    queryKey: ["commonCodes", "CMCMM00005"],
+    queryFn: () => fetchCommonCodes("CMCMM00005"),
+    staleTime: Infinity,
+  });
+
+  const categoryOptions = useMemo(() => [
+    { value: "ALL", label: "전체" },
+    ...commonCodes.map((c) => ({ value: c.code, label: c.name })),
+  ], [commonCodes]);
+
+  const { data } = useQuery({
+    queryKey: [
+      "faqList",
+      appliedState.category,
+      appliedState.currentPage,
+      appliedState.viewCount,
+      appliedState.searchType,
+      appliedState.searchKeyword,
+    ],
+    queryFn: () =>
+      fetchFaqList({
+        page: appliedState.currentPage,
+        pageSize: appliedState.viewCount,
+        faqSeCd: appliedState.category === "ALL" ? undefined : appliedState.category,
+        searchType: appliedState.searchType,
+        searchKeyword: appliedState.searchKeyword,
+      }),
+    placeholderData: keepPreviousData,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
+  const faqData: FaqItem[] = data?.list ?? [];
+  const totalCount: number = data?.totalCount ?? 0;
+
+  const colDefs: ColDef<FaqItem>[] = [
+    {
+      headerName: "번호",
+      width: 80,
+      headerClass: "ag-header-center",
+      cellStyle: { textAlign: "center" },
+      valueGetter: (params) => {
+        const pageSize = Number(appliedState.viewCount);
+        const rowIndex = params.node?.rowIndex ?? 0;
+        return (appliedState.currentPage - 1) * pageSize + rowIndex + 1;
+      },
+    },
+    {
+      headerName: "구분",
+      field: "faqSeNm",
+      width: 200,
+      headerClass: "ag-header-center",
+      cellStyle: { textAlign: "center" },
+    },
+    {
+      headerName: "제목",
+      field: "faqTtl",
+      minWidth: 320,
+      flex: 1,
+      headerClass: "ag-header-center",
+      cellStyle: { textAlign: "left" },
+    },
+    {
+      headerName: "등록일",
+      field: "regDt",
+      width: 160,
+      headerClass: "ag-header-center",
+      cellStyle: { textAlign: "center" },
+    },
+    {
+      headerName: "작성자",
+      field: "rgtrId",
+      width: 128,
+      headerClass: "ag-header-center",
+      cellStyle: { textAlign: "center" },
+    },
+    {
+      headerName: "조회수",
+      field: "pstInqCnt",
+      width: 96,
+      headerClass: "ag-header-center",
+      cellStyle: { textAlign: "center" },
+    },
+  ];
+
+  const handleSearch = () => {
+    const keyword = searchKeyword.trim();
+    const valid = keyword.length === 0 || keyword.length >= 2;
+    setSearchKeywordError(keyword.length > 0 && !valid);
+    const stateToApply: SearchState = {
+      ...formState,
+      searchKeyword: valid ? keyword : "",
+      searchType,
+      category,
+      currentPage: 1,
+    };
+    setFormState(stateToApply);
+    applySearchParams(stateToApply, 1);
+  };
+
+  const handleResetFilter = () => {
+    setSearchKeywordError(false);
+    setFormState(defaultSearchState);
+    applySearchParams(defaultSearchState, 1);
+  };
+
+  return (
+    <div className="aggridguard-page">
+      <Helmet>
+        <title>CDM - FAQ</title>
+      </Helmet>
+      <div className="h-5" />
+
+      <SearchArea
+        showCategoryFilter
+        categoryValue={category}
+        onCategoryChange={(v) => setFormState((s) => ({ ...s, category: v }))}
+        categoryOptions={categoryOptions}
+        categoryLabel="분류"
+        searchType={searchType}
+        onSearchTypeChange={(v) => setFormState((s) => ({ ...s, searchType: v }))}
+        searchKeyword={searchKeyword}
+        onSearchKeywordChange={(v) => {
+          setFormState((s) => ({ ...s, searchKeyword: v }));
+          setSearchKeywordError(false);
+        }}
+        searchKeywordError={searchKeywordError}
+        searchKeywordHelperText={searchKeywordError ? "두자 이상 입력해주세요" : undefined}
+        onSearch={handleSearch}
+        onReset={handleResetFilter}
+      />
+
+      <SpaceBox gap={CONTENT_GAP.SMALL} />
+
+      <div className="tbl_info">
+        <div className="total">
+          <p className="cases">
+            전체<span className="count">{totalCount}</span>건
+          </p>
+        </div>
+        <div className="view_count">
+          <label htmlFor="viewCountSelect">조회건수</label>
+          <Select
+            id="viewCountSelect"
+            value={viewCount}
+            onChange={(e) => {
+              const nextViewCount = e.target.value;
+              const nextState: SearchState = { ...appliedState, viewCount: nextViewCount, currentPage: 1 };
+              setFormState(nextState);
+              applySearchParams(nextState, 1);
+            }}
+          >
+            <MenuItem value="10">10개씩</MenuItem>
+            <MenuItem value="30">30개씩</MenuItem>
+            <MenuItem value="50">50개씩</MenuItem>
+          </Select>
+        </div>
+        <div className="tbl_controller">
+          <Button variant="contained" size="medium" onClick={() => navigate(routes.COMMUNITY.FAQ.ADMIN_WRITE)}>
+            등록
+          </Button>
+        </div>
+      </div>
+
+      <div className="ag-theme-cdm w-full aggridguard">
+        <AgGridReact
+          rowData={faqData}
+          columnDefs={colDefs}
+          domLayout="autoHeight"
+          loading={false}
+          overlayNoRowsTemplate="<span style='padding: 20px; display: block;'>게시물이 존재하지 않습니다.</span>"
+          rowStyle={{ cursor: "pointer" }}
+          onRowClicked={(e) => {
+            const data = e.data;
+            if (!data?.faqSn) return;
+            navigate(`${routes.COMMUNITY.FAQ.ADMIN_DETAIL}/${data.faqSn}`);
+          }}
+        />
+      </div>
+
+      <SpaceBox gap={CONTENT_GAP.MEDIUM} />
+
+      <Stack direction="row" className="paging_wrap">
+        <CdmPagination
+          page={appliedState.currentPage}
+          totalPages={Math.ceil(totalCount / Number(appliedState.viewCount))}
+          onChange={handlePageChange}
+        />
+        <CdmPaginationMove
+          currentPage={appliedState.currentPage}
+          totalPages={Math.ceil(totalCount / Number(appliedState.viewCount))}
+          onPageChange={handlePageChange}
+        />
+      </Stack>
+
+      <div className="h-10" />
+    </div>
+  );
+}

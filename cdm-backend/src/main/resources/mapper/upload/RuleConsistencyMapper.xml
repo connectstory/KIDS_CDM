@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.rule.RuleConsistencyMapper">
+
+  <select id="findByTableAndRule" resultType="kr.or.kids.domain.cm.upload.model.RuleConsistencyRow">
+    SELECT
+      vrfc_sn      AS ruleId,
+      levl_seq     AS level,
+      vrfc_tbl_nm  AS srcTable,
+      vrfc_col_nm  AS field,
+      vrfc_rul_nm  AS rule,
+      rfrnc_nm     AS ref,
+      rfrnc_dtl_nm AS refDetail,
+      CASE WHEN esntl_yn = 'Y' THEN true ELSE false END AS required
+    FROM kids_own.tb_cm_m_vrfc
+    WHERE std_se_cd = '04'
+      AND lower(trim(vrfc_tbl_nm)) = lower(trim(#{table}))
+      AND vrfc_rul_nm = #{rule}
+    ORDER BY vrfc_sn
+  </select>
+
+  <select id="findByTableAndRuleAndRequired" resultType="kr.or.kids.domain.cm.upload.model.RuleConsistencyRow">
+    SELECT
+      vrfc_sn      AS ruleId,
+      levl_seq     AS level,
+      vrfc_tbl_nm  AS srcTable,
+      vrfc_col_nm  AS field,
+      vrfc_rul_nm  AS rule,
+      rfrnc_nm     AS ref,
+      rfrnc_dtl_nm AS refDetail,
+      CASE WHEN esntl_yn = 'Y' THEN true ELSE false END AS required
+    FROM kids_own.tb_cm_m_vrfc
+    WHERE std_se_cd = '04'
+      AND lower(trim(vrfc_tbl_nm)) = lower(trim(#{table}))
+      AND vrfc_rul_nm = #{rule}
+      <choose>
+        <when test="required">AND esntl_yn = 'Y'</when>
+        <otherwise>AND esntl_yn = 'N'</otherwise>
+      </choose>
+    ORDER BY vrfc_sn
+  </select>
+
+</mapper>
+

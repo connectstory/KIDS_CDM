@@ -1,0 +1,41 @@
+spring:
+  profiles:
+    active: local
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# 서버 동적 워터마크 설정 (PDF 페이지 이미지 등)
+watermark:
+  enabled: true
+  text: "한국의약품안전원"
+  alpha: 0.1
+  font-size: 48
+  rotate-degrees: -30
+  tiled: true
+  tile-gap: 180
+
+app:
+  schema: kids_link_own
+  stats-schema: kids_own # tb_cm_e_tbl_uld_stats_hist, sq_cm_tbl_uld_stats_sn 사용 스키마 (테스트 시 kids_own2 등으로 변경 가능)
+  # 보카(Vocabulary) 테이블 참조 설정 (concept, concept_ancestor 등)
+  vocabulary-schema: kids_link_own # 보카 스키마 (비워두면 app.schema 사용)
+  vocabulary-table-prefix: "" # 보카 테이블 접두사 (예: voca_ → voca_concept, voca_concept_ancestor)
+  upload:
+    allowed-slots: demographic,enrollment,dispensing,encounter,diagnosis,laboratory_result,vital_signs,person,observation_period,drug_exposure,measurement,procedure_occurrence,procedure,condition_occurrence,visit_occurrence,death,observation,device_exposure,episode,note
+    # 임시 CSV 멀티파트 저장소 (POST /disclosures/files/csv-tmp)
+    csv-tmp: /data/tmp/csv
+  

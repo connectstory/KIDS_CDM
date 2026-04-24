@@ -1,0 +1,899 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.DisclosureMapper">
+
+  <resultMap id="TbCmMUldPblntVOMap" type="kr.or.kids.domain.cm.upload.vo.TbCmMUldPblntVO">
+    <id property="pblntSn" column="pblnt_sn"/>
+    <result property="pblntSeCd" column="pblnt_se_cd"/>
+    <result property="ttlNm" column="ttl_nm"/>
+    <result property="pblntCn" column="pblnt_cn"/>
+    <result property="pblntBgngYmd" column="pblnt_bgng_ymd"/>
+    <result property="pblntEndYmd" column="pblnt_end_ymd"/>
+    <result property="pblntPrgrsSttsCd" column="pblnt_prgrs_stts_cd"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="rgtrNm" column="rgtrNm"/>
+    <result property="regYmd" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+  </resultMap>
+
+  <select id="search" parameterType="kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest" resultMap="TbCmMUldPblntVOMap">
+    SELECT DISTINCT
+      pblnt.pblnt_sn, pblnt.pblnt_se_cd, pblnt.ttl_nm, pblnt.pblnt_cn,
+      pblnt.pblnt_bgng_ymd, pblnt.pblnt_end_ymd, pblnt.pblnt_prgrs_stts_cd,
+      pblnt.del_yn, pblnt.rgtr_id, pblnt.reg_dt, pblnt.mdfr_id, pblnt.mdfcn_dt,
+      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), pblnt.rgtr_id) AS "rgtrNm"
+    FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
+    <if test="instIdList != null and instIdList.size() > 0">
+      INNER JOIN kids_own.TB_CM_M_ULD_PRST prst
+        ON pblnt.pblnt_sn = prst.pblnt_sn
+        AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+        AND (
+          (
+            prst.inst_id IS NOT NULL
+            AND TRIM(prst.inst_id) != ''
+            AND LPAD(TRIM(prst.inst_id), 10, '0') IN
+            <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+              LPAD(TRIM(#{instId}), 10, '0')
+            </foreach>
+          )
+          OR (
+            prst.brno IS NOT NULL
+            AND TRIM(prst.brno) != ''
+            AND LPAD(TRIM(prst.brno), 10, '0') IN
+            <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+              LPAD(TRIM(#{instId}), 10, '0')
+            </foreach>
+          )
+        )
+    </if>
+    <where>
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+      
+      <!-- 공시구분코드 조건 -->
+      <if test="pblntSeCd != null and pblntSeCd != ''">
+        AND pblnt.pblnt_se_cd = #{pblntSeCd}
+      </if>
+
+      <!-- 공시진행상태코드 조건 -->
+      <if test="pblntPrgrsSttsCd != null and pblntPrgrsSttsCd != ''">
+        AND pblnt.pblnt_prgrs_stts_cd = #{pblntPrgrsSttsCd}
+      </if>
+
+      <!-- 업로드기관진행상태코드 조건 -->
+      <if test="uldPrgrSttsCd != null and uldPrgrSttsCd != ''">
+        AND EXISTS (
+          SELECT 1 FROM kids_own.TB_CM_M_ULD_PRST prst_f
+          WHERE prst_f.pblnt_sn = pblnt.pblnt_sn
+            AND (prst_f.del_yn IS NULL OR prst_f.del_yn = 'N')
+            AND TRIM(COALESCE(prst_f.uld_inst_prgrs_stts_cd, '')) = #{uldPrgrSttsCd}
+            <if test="instIdList != null and instIdList.size() > 0">
+              AND (
+                (
+                  prst_f.inst_id IS NOT NULL AND TRIM(prst_f.inst_id) != ''
+                  AND LPAD(TRIM(prst_f.inst_id), 10, '0') IN
+                  <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+                    LPAD(TRIM(#{instId}), 10, '0')
+                  </foreach>
+                )
+                OR (
+                  prst_f.brno IS NOT NULL AND TRIM(prst_f.brno) != ''
+                  AND LPAD(TRIM(prst_f.brno), 10, '0') IN
+                  <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+                    LPAD(TRIM(#{instId}), 10, '0')
+                  </foreach>
+                )
+              )
+            </if>
+        )
+      </if>
+
+      <!-- 검색어 조건: keyword와 searchType에 따라 제목 또는 내용 검색 -->
+      <if test="keyword != null and keyword != ''">
+        <choose>
+          <when test="searchType == 'title'">
+            AND pblnt.ttl_nm LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test="searchType == 'content'">
+            AND pblnt.pblnt_cn LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test="searchType == 'both' or searchType == null or searchType == ''">
+            AND (pblnt.ttl_nm LIKE CONCAT('%', #{keyword}, '%') OR pblnt.pblnt_cn LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+
+      <!-- 공시기간 조건 -->
+      <if test="pblntBgngYmd != null and pblntBgngYmd != ''">
+        AND pblnt.pblnt_bgng_ymd &gt;= #{pblntBgngYmd}
+      </if>
+      <if test="pblntEndYmd != null and pblntEndYmd != ''">
+        AND pblnt.pblnt_end_ymd &lt;= #{pblntEndYmd}
+      </if>
+    </where>
+    ORDER BY pblnt.reg_dt DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="count" parameterType="kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest" resultType="int">
+    SELECT COUNT(DISTINCT pblnt.pblnt_sn)
+    FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
+    <if test="instIdList != null and instIdList.size() > 0">
+      INNER JOIN kids_own.TB_CM_M_ULD_PRST prst
+        ON pblnt.pblnt_sn = prst.pblnt_sn
+        AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+        AND (
+          (
+            prst.inst_id IS NOT NULL
+            AND TRIM(prst.inst_id) != ''
+            AND LPAD(TRIM(prst.inst_id), 10, '0') IN
+            <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+              LPAD(TRIM(#{instId}), 10, '0')
+            </foreach>
+          )
+          OR (
+            prst.brno IS NOT NULL
+            AND TRIM(prst.brno) != ''
+            AND LPAD(TRIM(prst.brno), 10, '0') IN
+            <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+              LPAD(TRIM(#{instId}), 10, '0')
+            </foreach>
+          )
+        )
+    </if>
+    <where>
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+      
+      <!-- 공시구분코드 조건 -->
+      <if test="pblntSeCd != null and pblntSeCd != ''">
+        AND pblnt.pblnt_se_cd = #{pblntSeCd}
+      </if>
+
+      <!-- 공시진행상태코드 조건 -->
+      <if test="pblntPrgrsSttsCd != null and pblntPrgrsSttsCd != ''">
+        AND pblnt.pblnt_prgrs_stts_cd = #{pblntPrgrsSttsCd}
+      </if>
+
+      <!-- 업로드기관진행상태코드 조건 -->
+      <if test="uldPrgrSttsCd != null and uldPrgrSttsCd != ''">
+        AND EXISTS (
+          SELECT 1 FROM kids_own.TB_CM_M_ULD_PRST prst_f
+          WHERE prst_f.pblnt_sn = pblnt.pblnt_sn
+            AND (prst_f.del_yn IS NULL OR prst_f.del_yn = 'N')
+            AND TRIM(COALESCE(prst_f.uld_inst_prgrs_stts_cd, '')) = #{uldPrgrSttsCd}
+            <if test="instIdList != null and instIdList.size() > 0">
+              AND (
+                (
+                  prst_f.inst_id IS NOT NULL AND TRIM(prst_f.inst_id) != ''
+                  AND LPAD(TRIM(prst_f.inst_id), 10, '0') IN
+                  <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+                    LPAD(TRIM(#{instId}), 10, '0')
+                  </foreach>
+                )
+                OR (
+                  prst_f.brno IS NOT NULL AND TRIM(prst_f.brno) != ''
+                  AND LPAD(TRIM(prst_f.brno), 10, '0') IN
+                  <foreach collection="instIdList" item="instId" open="(" separator="," close=")">
+                    LPAD(TRIM(#{instId}), 10, '0')
+                  </foreach>
+                )
+              )
+            </if>
+        )
+      </if>
+
+      <!-- 검색어 조건: keyword와 searchType에 따라 제목 또는 내용 검색 -->
+      <if test="keyword != null and keyword != ''">
+        <choose>
+          <when test="searchType == 'title'">
+            AND pblnt.ttl_nm LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test="searchType == 'content'">
+            AND pblnt.pblnt_cn LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test="searchType == 'both' or searchType == null or searchType == ''">
+            AND (pblnt.ttl_nm LIKE CONCAT('%', #{keyword}, '%') OR pblnt.pblnt_cn LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+
+      <!-- 공시기간 조건 -->
+      <if test="pblntBgngYmd != null and pblntBgngYmd != ''">
+        AND pblnt.pblnt_bgng_ymd &gt;= #{pblntBgngYmd}
+      </if>
+      <if test="pblntEndYmd != null and pblntEndYmd != ''">
+        AND pblnt.pblnt_end_ymd &lt;= #{pblntEndYmd}
+      </if>
+    </where>
+  </select>
+
+  <select id="findById" parameterType="long" resultMap="TbCmMUldPblntVOMap">
+    SELECT
+      pblnt.pblnt_sn, pblnt.pblnt_se_cd, pblnt.ttl_nm, pblnt.pblnt_cn,
+      pblnt.pblnt_bgng_ymd, pblnt.pblnt_end_ymd, pblnt.pblnt_prgrs_stts_cd,
+      pblnt.del_yn, pblnt.rgtr_id, pblnt.reg_dt, pblnt.mdfr_id, pblnt.mdfcn_dt,
+      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), pblnt.rgtr_id) AS "rgtrNm"
+    FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
+    WHERE pblnt.pblnt_sn = #{pblntSn}
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+  </select>
+
+  <!-- 공시 상태 조회 -->
+  <select id="findStatus" parameterType="long" resultType="string">
+    SELECT pblnt_prgrs_stts_cd /* 공시진행상태코드 */
+    FROM kids_own.TB_CM_M_ULD_PBLNT
+    WHERE pblnt_sn = #{pblntSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </select>
+
+  <insert id="insert" parameterType="kr.or.kids.domain.cm.upload.vo.TbCmMUldPblntVO">
+    <selectKey keyProperty="pblntSn" resultType="long" order="BEFORE">
+      SELECT nextval('kids_own.sq_cm_pblnt_sn')
+    </selectKey>
+    INSERT INTO kids_own.TB_CM_M_ULD_PBLNT(
+      pblnt_sn, /* 공시일련번호 */
+      pblnt_se_cd, /* 공시구분코드 */
+      ttl_nm, /* 공시제목 */
+      pblnt_cn, /* 공시내용 */
+      pblnt_bgng_ymd, /* 공시시작일 */
+      pblnt_end_ymd, /* 공시종료일 */
+      pblnt_prgrs_stts_cd, /* 공시진행상태코드 */
+      del_yn, /* 삭제여부 */
+      rgtr_id, /* 등록자아이디 */
+      reg_dt, /* 등록일시 */
+      mdfr_id, /* 수정자아이디 */
+      mdfcn_dt /* 수정일시 */
+    )
+    VALUES (
+      #{pblntSn},
+      #{pblntSeCd}, 
+      #{ttlNm}, 
+      #{pblntCn}, 
+      #{pblntBgngYmd}, 
+      #{pblntEndYmd}, 
+      #{pblntPrgrsSttsCd}, 
+      #{delYn}, 
+      #{rgtrId}, 
+      #{regYmd}, 
+      #{mdfrId}, 
+      #{mdfcnDt}
+    )
+  </insert>
+
+  <update id="update" parameterType="kr.or.kids.domain.cm.upload.vo.TbCmMUldPblntVO">
+    UPDATE kids_own.TB_CM_M_ULD_PBLNT
+    SET pblnt_se_cd = #{pblntSeCd}, /* 공시구분코드 */
+        ttl_nm = #{ttlNm}, /* 공시제목 */
+        pblnt_cn = #{pblntCn}, /* 공시내용 */
+        pblnt_bgng_ymd = #{pblntBgngYmd}, /* 공시시작일 */
+        pblnt_end_ymd = #{pblntEndYmd}, /* 공시종료일 */
+        pblnt_prgrs_stts_cd = #{pblntPrgrsSttsCd}, /* 공시진행상태코드 */
+        mdfr_id = #{mdfrId}, /* 수정자아이디 */
+        mdfcn_dt = #{mdfcnDt} /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+  </update>
+
+  <!-- 공시 상태 변경 -->
+  <update id="updateStatus">
+    UPDATE kids_own.TB_CM_M_ULD_PBLNT
+    SET pblnt_prgrs_stts_cd = #{pblntPrgrsSttsCd}, /* 공시진행상태코드 */
+        mdfr_id = #{mdfrId}, /* 수정자아이디 */
+        mdfcn_dt = #{mdfcnDt} /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <update id="delete" parameterType="long">
+    UPDATE kids_own.TB_CM_M_ULD_PBLNT
+    SET del_yn = 'Y', /* 삭제여부 */
+        mdfcn_dt = CURRENT_TIMESTAMP /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+  </update>
+
+  <!-- 파일 그룹 저장 (커뮤니티와 동일: kids_own.tb_ca_e_file_group_trsm) -->
+  <insert id="insertFileGroup" parameterType="kr.or.kids.domain.cm.common.vo.TbCaEFileGroupTrsmVo">
+    INSERT INTO kids_own.tb_ca_e_file_group_trsm (
+      atch_file_group_id,
+      task_se_cd,
+      task_se_trgt_id,
+      use_yn,
+      reg_dt,
+      rgtr_id,
+      mdfcn_dt,
+      mdfr_id
+    ) VALUES (
+      #{atchFileGroupId},
+      #{taskSeCd},
+      #{taskSeTrgtId},
+      'Y',
+      CURRENT_TIMESTAMP,
+      COALESCE(#{rgtrId}, 'SYSTEM'),
+      CURRENT_TIMESTAMP,
+      COALESCE(#{rgtrId}, 'SYSTEM')
+    )
+  </insert>
+
+  <!-- 파일 정보 저장 (ptcp_inst_sn: 참여기관별 파일 구분, 목록 조회 시 본인 것만 노출) -->
+  <insert id="insertFile" parameterType="kr.or.kids.domain.cm.common.vo.TbCmMFileUldVO">
+    INSERT INTO kids_own.TB_CM_M_FILE_ULD(
+      pst_sn,
+      atch_file_id,
+      uld_task_se_cd,
+      file_se_cd,
+      ptcp_inst_sn,
+      del_yn,
+      rgtr_id,
+      reg_dt,
+      mdfr_id,
+      mdfcn_dt
+    )
+    VALUES (
+      #{pstSn},
+      #{atchFileSn},
+      #{uldTaskSeCd},
+      #{fileSeCd},
+      #{ptcpInstSn},
+      COALESCE(#{delYn}, 'N'),
+      #{rgtrId},
+      COALESCE(#{regDt}, CURRENT_TIMESTAMP),
+      #{rgtrId},
+      CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <!-- 공시에 업로드된 파일 목록 조회 (FILE_ULD.atch_file_sn=groupId로 trsm JOIN) -->
+  <!-- 본인(기관) 업로드만 표시: ptcpInstSn 있으면 해당 기관 + 레거시(NULL), null이면 레거시(NULL)만 (다른 협력사 파일 노출 방지) -->
+  <!-- 주의: PostgreSQL은 쌍따옴표 없는 alias를 소문자로 변환하므로, camelCase alias에 반드시 쌍따옴표 사용 -->
+  <select id="findFilesByPblntSn" resultType="map">
+    SELECT
+      U.pst_sn           AS "pstSn",
+      U.atch_file_id     AS "atchFileGroupId",
+      U.ptcp_inst_sn     AS "ptcpInstSn",
+      F.atch_file_id     AS "atchFileId",
+      F.file_nm          AS "strgFileNm",
+      F.file_cn          AS "atchFileSn",
+      F.file_strg_path_dsctn AS "fileStrgPathDsctn",
+      F.file_extn_nm     AS "fileExtnNm",
+      F.file_sz          AS "fileSz",
+      F.file_seq         AS "fileSeq",
+      U.uld_task_se_cd   AS "uldTaskSeCd",
+      U.file_se_cd       AS "fileSeCd",
+      U.reg_dt           AS "regDt",
+      U.rgtr_id          AS "rgtrId"
+    FROM kids_own.TB_CM_M_FILE_ULD U
+    LEFT JOIN kids_own.tb_ca_e_file_trsm F
+      ON U.atch_file_id = F.atch_file_group_id AND (F.use_yn IS NULL OR F.use_yn = 'Y')
+    WHERE U.pst_sn = #{pblntSn}
+      AND (U.del_yn IS NULL OR U.del_yn = 'N')
+      <if test="ptcpInstSn != null">
+      AND (U.ptcp_inst_sn = #{ptcpInstSn} OR U.ptcp_inst_sn IS NULL)
+      </if>
+      <if test="ptcpInstSn == null">
+      AND U.ptcp_inst_sn IS NULL
+      </if>
+    ORDER BY U.reg_dt DESC, F.file_seq
+  </select>
+
+  <!-- 단일 파일 삭제 (tb_ca_e_file_trsm use_yn='N', 커뮤니티 deleteFileById와 동일) -->
+  <update id="deleteFileById">
+    UPDATE kids_own.tb_ca_e_file_trsm
+    SET use_yn = 'N',
+        mdfcn_dt = CURRENT_TIMESTAMP,
+        mdfr_id = COALESCE(#{mdfrId}, 'SYSTEM')
+    WHERE atch_file_id = #{atchFileId}
+  </update>
+
+  <!-- atch_file_id로 파일 1건 조회 (삭제 시 경로/그룹ID 확인용) -->
+  <select id="selectFileByAtchFileId" resultType="map">
+    SELECT atch_file_id           AS "atchFileId",
+           atch_file_group_id     AS "atchFileGroupId",
+           file_nm                AS "strgFileNm",
+           file_strg_path_dsctn   AS "fileStrgPathDsctn"
+    FROM kids_own.tb_ca_e_file_trsm
+    WHERE atch_file_id = #{atchFileId} AND (use_yn IS NULL OR use_yn = 'Y')
+  </select>
+
+  <!-- 그룹 내 사용 중인 파일 건수 -->
+  <select id="countFilesInGroup" resultType="int">
+    SELECT COUNT(*)
+    FROM kids_own.tb_ca_e_file_trsm
+    WHERE atch_file_group_id = #{atchFileGroupId} AND (use_yn IS NULL OR use_yn = 'Y')
+  </select>
+
+  <!-- 파일 그룹 use_yn='N' (그룹 내 파일 전부 삭제 시) -->
+  <update id="updateFileGroupUseYn">
+    UPDATE kids_own.tb_ca_e_file_group_trsm
+    SET use_yn = 'N',
+        mdfcn_dt = CURRENT_TIMESTAMP,
+        mdfr_id = COALESCE(#{mdfrId}, 'SYSTEM')
+    WHERE atch_file_group_id = #{atchFileGroupId}
+  </update>
+
+  <!-- FILE_ULD 삭제 표시 (del_yn='Y', 그룹 무효화 시) -->
+  <update id="updateFileUldDelYn">
+    UPDATE kids_own.TB_CM_M_FILE_ULD
+    SET del_yn = 'Y',
+        mdfr_id = 'SYSTEM',
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pst_sn = #{pblntSn} AND atch_file_id = #{atchFileSn} AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 파일 정보 삭제 (del_yn을 'Y'로 업데이트, 그룹 단위 삭제 시 사용) -->
+  <update id="deleteFile">
+    UPDATE kids_own.TB_CM_M_FILE_ULD
+    SET del_yn = 'Y',
+        mdfr_id = 'SYSTEM',
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pst_sn = #{pblntSn}
+      AND atch_file_id = #{atchFileSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 1차 업로드 통계 저장 (tb_cm_e_uld_stats_hist, DDL: uld_cpct 포함) -->
+  <insert id="insertUldStatsHist">
+    INSERT INTO kids_own.TB_CM_E_ULD_STATS_HIST (
+      uld_stats_sn, /* 업로드통계일련번호 */
+      pblnt_sn, /* 공시일련번호 */
+      ptcp_inst_sn, /* 참여기관일련번호 */
+      uld_nocs, /* 업로드건수 */
+      uld_cpct, /* 업로드용량 (NULL 가능) */
+      err_nocs, /* 오류건수 */
+      err_rt, /* 오류율 */
+      rgtr_id, /* 등록자아이디 */
+      reg_dt, /* 등록일시 */
+      mdfr_id, /* 수정자아이디 */
+      mdfcn_dt /* 수정일시 */
+    ) VALUES (
+      #{uldStatsSn},
+      #{pblntSn},
+      #{ptcpInstSn},
+      #{uldNocs},
+      #{uldCpct},
+      #{errNocs},
+      #{errRt},
+      #{rgtrId},
+      #{regDt},
+      #{rgtrId},
+      CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <!-- 2차 업로드 통계 저장 (tb_cm_e_tbl_uld_stats_hist) - 업로드 결과정보 단일 테이블. statsSchema: kids_own 등 (설정값) -->
+  <insert id="insertTblUldStatsHist">
+    INSERT INTO kids_own.TB_CM_E_TBL_ULD_STATS_HIST (
+      tbl_uld_stats_sn,
+      pblnt_sn,
+      ptcp_inst_sn,
+      err_tbl_nm,
+      trsf_se_cd,
+      uld_nocs,
+      err_nocs,
+      vrfc_fnl_err_nocs,
+      vrfc_unq_err_nocs,
+      vrfc_vld_err_nocs,
+      vrfc_nml_err_nocs,
+      err_rt,
+      uld_vrfc_sn,
+      uld_rul_sn,
+      uld_rul_type_nm,
+      vrfc_rul_err_nocs,
+      del_yn,
+      rgtr_id,
+      reg_dt,
+      mdfr_id,
+      mdfcn_dt
+    ) VALUES (
+      #{tblUldStatsSn},
+      #{pblntSn},
+      #{ptcpInstSn},
+      #{errTblNm},
+      #{trsfSeCd},
+      #{uldNocs},
+      #{errNocs},
+      #{vrfcFnlErrNocs},
+      #{vrfcUnqErrNocs},
+      #{vrfcVldErrNocs},
+      #{vrfcNmlErrNocs},
+      #{errRt},
+      #{uldVrfcGrpSn},
+      #{vrfcRuleId},
+      #{vrfcRuleTpCd},
+      #{vrfcRuleErrNocs},
+      'N',
+      #{rgtrId},
+      #{regDt},
+      #{rgtrId},
+      CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <!-- 업로드 상태 변경 내역 저장 (tb_cm_e_uld_stts_chg) -->
+  <insert id="insertUldSttsChg">
+    INSERT INTO kids_own.TB_CM_E_ULD_STTS_CHG (
+      uld_stts_chg_sn, /* 업로드상태변경일련번호 */
+      ptcp_inst_sn, /* 참여기관일련번호 */
+      pblnt_sn, /* 공시일련번호 */
+      uld_inst_prgrs_stts_cd, /* 업로드진행상태코드 */
+      ptcp_cmptn_dt, /* 참여완료일시 */
+      chg_rsn_info_cn, /* 변경사유내용 */
+      del_yn, /* 삭제여부 */
+      rgtr_id, /* 등록자아이디 */
+      reg_dt, /* 등록일시 */
+      mdfr_id, /* 수정자아이디 */
+      mdfcn_dt /* 수정일시 */
+    ) VALUES (
+      #{uldSttsChgSn},
+      #{ptcpInstSn},
+      #{pblntSn},
+      #{uldInstPrgrsSttsCd},
+      #{ptcpCmptnDt},
+      #{chgRsnInfoCn},
+      'N',
+      #{rgtrId},
+      #{regDt},
+      #{rgtrId},
+      CURRENT_TIMESTAMP
+    )
+  </insert>
+
+  <!-- 업로드 통계 수정 정보 업데이트 (tb_cm_e_uld_stats_hist) -->
+  <update id="updateUldStatsHist">
+    UPDATE kids_own.TB_CM_E_ULD_STATS_HIST
+    SET mdfr_id = #{mdfrId}, /* 수정자아이디 */
+        mdfcn_dt = #{mdfcnDt} /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+      AND (ptcp_inst_sn = #{ptcpInstSn} OR (#{ptcpInstSn} IS NULL AND ptcp_inst_sn IS NULL)) /* 참여기관일련번호 */
+      AND uld_stats_sn = (
+        SELECT uld_stats_sn
+        FROM kids_own.TB_CM_E_ULD_STATS_HIST
+        WHERE pblnt_sn = #{pblntSn}
+          AND (ptcp_inst_sn = #{ptcpInstSn} OR (#{ptcpInstSn} IS NULL AND ptcp_inst_sn IS NULL)) /* 참여기관일련번호 */
+        ORDER BY reg_dt DESC
+        LIMIT 1
+      )
+  </update>
+
+  <!-- 1차 업로드 통계 조회 (tb_cm_e_uld_stats_hist): 공시번호(pblnt_sn) 필수, 협력기관 화면에서는 ptcp_inst_sn 전달로 해당 기관만 조회 -->
+  <select id="findUldStatsHist" resultType="map">
+    SELECT 
+      uld_stats_sn   AS "uldStatsSn",   /* 업로드통계일련번호 */
+      pblnt_sn       AS "pblntSn",       /* 공시일련번호 */
+      ptcp_inst_sn   AS "ptcpInstSn",    /* 참여기관일련번호 */
+      uld_nocs       AS "uldNocs",       /* 업로드건수 */
+      uld_cpct       AS "uldCpct",       /* 업로드용량 */
+      err_nocs       AS "errNocs",       /* 오류건수 */
+      err_rt         AS "errRt",         /* 오류율 */
+      rgtr_id        AS "rgtrId",        /* 등록자아이디 */
+      reg_dt         AS "regDt"          /* 등록일시 */
+    FROM kids_own.TB_CM_E_ULD_STATS_HIST
+    WHERE pblnt_sn = #{pblntSn}  /* 공시번호 필터 (다른 공시 데이터 제외) */
+      <if test="ptcpInstSn != null">
+        AND ptcp_inst_sn = #{ptcpInstSn}  /* 협력기관 화면: 기관일련번호 필터 (다른 기관 데이터 제외) */
+      </if>
+    ORDER BY reg_dt DESC
+    LIMIT 1
+  </select>
+
+  <!-- 1차 업로드 통계 이력 전체 조회 (기관 CDM 업로드 이력 팝업용) -->
+  <select id="findUldStatsHistList" resultType="map">
+    SELECT
+      h.uld_stats_sn   AS "uldStatsSn",
+      h.pblnt_sn       AS "pblntSn",
+      h.ptcp_inst_sn   AS "ptcpInstSn",
+      h.uld_nocs       AS "uldNocs",
+      h.uld_cpct       AS "uldCpct",
+      h.err_nocs       AS "errNocs",
+      h.err_rt         AS "errRt",
+      h.rgtr_id        AS "rgtrId",
+      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), h.rgtr_id) AS "rgtrNm",
+      h.reg_dt         AS "regDt"
+    FROM kids_own.TB_CM_E_ULD_STATS_HIST h
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
+    WHERE h.pblnt_sn = #{pblntSn}
+      <if test="ptcpInstSn != null">
+      AND h.ptcp_inst_sn = #{ptcpInstSn}
+      </if>
+    ORDER BY h.reg_dt DESC
+  </select>
+
+  <!-- 기관별 업로드 통계 이력 전체 조회 (참여기관 기준, 모든 공시 포함·삭제된 공시 포함) -->
+  <select id="findUldStatsHistListByPtcpInstSn" resultType="map">
+    SELECT
+      h.uld_stats_sn   AS "uldStatsSn",
+      h.pblnt_sn       AS "pblntSn",
+      h.ptcp_inst_sn   AS "ptcpInstSn",
+      pblnt.ttl_nm     AS "pblntTtlNm",
+      h.uld_nocs       AS "uldNocs",
+      h.uld_cpct       AS "uldCpct",
+      h.err_nocs       AS "errNocs",
+      h.err_rt         AS "errRt",
+      h.rgtr_id        AS "rgtrId",
+      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), h.rgtr_id) AS "rgtrNm",
+      h.reg_dt         AS "regDt"
+    FROM kids_own.TB_CM_E_ULD_STATS_HIST h
+    LEFT JOIN kids_own.TB_CM_M_ULD_PBLNT pblnt ON pblnt.pblnt_sn = h.pblnt_sn
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
+    WHERE h.ptcp_inst_sn = #{ptcpInstSn}
+    ORDER BY h.reg_dt DESC
+  </select>
+
+  <!-- 2차 업로드 통계 조회 (tb_cm_e_tbl_uld_stats_hist): 공시번호 필수, 협력기관 화면에서는 ptcp_inst_sn 전달로 해당 기관만 조회 -->
+  <select id="findTblUldStatsHist" resultType="map">
+    SELECT 
+      h.tbl_uld_stats_sn    AS "tblUldStatsSn",    /* 테이블업로드통계일련번호 */
+      h.pblnt_sn            AS "pblntSn",           /* 공시일련번호 */
+      h.ptcp_inst_sn        AS "ptcpInstSn",        /* 참여기관일련번호 */
+      h.trsf_se_cd          AS "trsfSeCd",          /* 변환구분코드 (01: Sentinel, 02: OMOP) */
+      h.err_tbl_nm          AS "errTblNm",          /* 오류테이블명 */
+      h.uld_nocs            AS "uldNocs",           /* 업로드건수 */
+      h.err_nocs            AS "errNocs",           /* 오류건수 */
+      h.vrfc_fnl_err_nocs   AS "vrfcFnlErrNocs",   /* 검증최종오류건수 */
+      h.vrfc_unq_err_nocs   AS "vrfcUnqErrNocs",   /* 검증유일성오류건수 */
+      h.vrfc_vld_err_nocs   AS "vrfcVldErrNocs",   /* 검증유효성오류건수 */
+      h.vrfc_nml_err_nocs   AS "vrfcNmlErrNocs",   /* 검증정합성오류건수 */
+      h.err_rt              AS "errRt",             /* 오류율 */
+      h.uld_vrfc_sn         AS "uldVrfcGrpSn",     /* 검증 실행 그룹 */
+      h.uld_rul_sn          AS "vrfcRuleId",       /* 룰 ID(요약 행 NULL) */
+      h.uld_rul_type_nm     AS "vrfcRuleTpCd",
+      h.vrfc_rul_err_nocs   AS "vrfcRuleErrNocs",
+      h.rgtr_id             AS "rgtrId",            /* 등록자아이디 */
+      h.reg_dt              AS "regDt",              /* 등록일시 */
+      m.levl_seq            AS "levlSeq",
+      m.vrfc_tbl_nm         AS "vrfcTblNm",
+      m.vrfc_col_nm         AS "vrfcColNm",
+      m.vrfc_rul_nm         AS "vrfcRulNm",
+      m.rfrnc_nm            AS "rfrncNm",
+      m.rfrnc_dtl_nm        AS "rfrncDtlNm",
+      m.esntl_yn            AS "esntlYn",
+      m.rfrnc_tbl_nm        AS "rfrncTblNm",
+      m.rfrnc_col_nm        AS "rfrncColNm",
+      m.fk_nm               AS "fkNm",
+      m.std_trm_id          AS "stdTrmId",
+      m.rul_aplcn_nm        AS "rulAplcnNm",
+      m.unit_nm             AS "unitNm",
+      m.scp_seq_nm          AS "scpSeqNm",
+      m.prm_crtr_nm         AS "prmCrtrNm",
+      m.vrbl_cn             AS "vrblCn",
+      m.vrbl_dtl_cn         AS "vrblDtlCn",
+      m.vrbl_rslt_cn        AS "vrblRsltCn"
+    FROM kids_own.TB_CM_E_TBL_ULD_STATS_HIST h
+    LEFT JOIN kids_own.tb_cm_m_vrfc m ON m.vrfc_sn = h.uld_rul_sn
+    WHERE h.pblnt_sn = #{pblntSn}  /* 공시번호 필터 (다른 공시 데이터 제외) */
+      <if test="ptcpInstSn != null">
+        AND h.ptcp_inst_sn = #{ptcpInstSn}  /* 협력기관 화면: 기관일련번호 필터 (다른 기관 데이터 제외) */
+      </if>
+      AND (h.del_yn IS NULL OR h.del_yn = 'N')
+    ORDER BY h.reg_dt DESC
+  </select>
+
+  <!-- 업로드 참여기관 기본 정보 업데이트 (tb_cm_m_uld_prst) -->
+  <update id="updateUldPrst">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET uld_inst_prgrs_stts_cd = #{uldInstPrgrsSttsStcd}, /* 업로드진행상태코드 */
+        <if test="uldTypeCd != null">
+        uld_type_cd = #{uldTypeCd}, /* 업로드유형코드 */
+        </if>
+        <!-- 상태가 "05" (등록)일 때 ptcp_reg_dt 업데이트 -->
+        <if test="uldInstPrgrsSttsStcd == '05'">
+        ptcp_reg_dt = #{ptcpCmptnDt}, /* 참여등록일시 (05: 등록) */
+        </if>
+        ptcp_cmptn_dt = #{ptcpCmptnDt}, /* 참여완료일시 */
+        uld_dt = #{uldDt}, /* 업로드일시 */
+        <if test="lastUpdtYmd != null">
+        last_updt_ymd = #{lastUpdtYmd}, /* 최종업데이트일 (YYYYMMDD) */
+        </if>
+        <if test="updtCycleCnt != null">
+        updt_cycle_cnt = #{updtCycleCnt}, /* 업데이트주기횟수 */
+        </if>
+        mdfr_id = #{mdfrId}, /* 수정자아이디 */
+        mdfcn_dt = #{mdfcnDt} /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+      AND ptcp_inst_sn = #{ptcpInstSn} /* 참여기관일련번호 */
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!--
+    CDM 검증 후 tb_cm_e_tbl_uld_stats_hist 저장 시, 참여기관의 uld_type_cd 가 비어 있으면 '01'(데이터/CDM 업로드)로 채움.
+    이미 '02'(현황정보) 등 값이 있으면 변경하지 않음 (NULL/공백일 때만).
+  -->
+  <update id="setUldTypeCdForDataUploadIfBlank">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET uld_type_cd = '01',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+      AND (uld_type_cd IS NULL OR TRIM(uld_type_cd) = '')
+  </update>
+
+  <!-- 파일 전송 테이블 저장 (tb_ca_e_file_trsm, DDL 컬럼 기준 — CommonFileMapper insertFileBatch와 컬럼 맞춤) -->
+  <insert id="insertFileTrsm">
+    INSERT INTO kids_own.tb_ca_e_file_trsm (
+      atch_file_id,
+      atch_file_group_id,
+      file_seq,
+      file_strg_path_dsctn,
+      prvc_incl_yn,
+      file_nm,
+      file_extn_nm,
+      file_cn,
+      file_sz,
+      crt_dt,
+      use_yn,
+      reg_dt,
+      rgtr_id,
+      mdfcn_dt,
+      mdfr_id
+    ) VALUES (
+      #{atchFileId},
+      #{atchFileGroupId},
+      #{fileSeq},
+      #{fileStrgPathDsctn},
+      COALESCE(#{prvcInclYn}, 'N'),
+      #{fileNm},
+      #{fileExtnNm},
+      #{fileCn},
+      CAST(NULLIF(TRIM(#{fileSz}), '') AS NUMERIC),
+      TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS'),
+      COALESCE(#{useYn}, 'Y'),
+      CURRENT_TIMESTAMP,
+      COALESCE(#{rgtrId}, 'SYSTEM'),
+      CURRENT_TIMESTAMP,
+      COALESCE(#{rgtrId}, 'SYSTEM')
+    )
+  </insert>
+
+  <!-- 파일 전송 테이블의 file_seq 최대값 조회 (tb_ca_e_file_trsm) -->
+  <select id="selectMaxFileTrsmDtlSn" resultType="int">
+    SELECT COALESCE(MAX(file_seq), 0)
+    FROM kids_own.tb_ca_e_file_trsm
+    WHERE atch_file_group_id = #{atchFileGroupId}
+  </select>
+
+  <!-- 업로드 카탈로그 조회 (tb_cm_m_uld_ctlg) -->
+  <select id="findCatalog" resultType="map">
+    SELECT
+      uld_list_sn    AS "uldListSn",    /* 업로드목록일련번호 */
+      pblnt_sn       AS "pblntSn",      /* 공시일련번호 */
+      ptcp_inst_sn   AS "ptcpInstSn",   /* 참여기관번호 */
+      tbl_se_cd      AS "tblSeCd",      /* 테이블구분코드 */
+      col_nm         AS "colNm",        /* 컬럼명 */
+      data_type_nm   AS "dataTypeNm",   /* 자료유형명 */
+      nul_yn         AS "nulYn",        /* 널여부 */
+      pk_yn          AS "pkYn",         /* 기본키여부 */
+      fk_yn          AS "fkYn",         /* 외래키여부 */
+      ROW_NUMBER() OVER (PARTITION BY tbl_se_cd ORDER BY uld_list_sn) AS "rowNumber" /* 행번호 */
+    FROM kids_own.TB_CM_M_ULD_CTLG
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+      <choose>
+        <when test="ptcpInstSn != null">
+          AND ptcp_inst_sn = #{ptcpInstSn} /* 참여기관번호: 전달된 값과 일치하는 경우 */
+        </when>
+        <otherwise>
+          AND (ptcp_inst_sn IS NULL OR ptcp_inst_sn = 1) /* 참여기관번호가 전달되지 않은 경우: NULL이거나 1인 데이터 조회 */
+        </otherwise>
+      </choose>
+      <if test="tblSeCd != null and tblSeCd != ''">
+      AND tbl_se_cd = #{tblSeCd} /* 테이블구분코드 */
+      </if>
+      AND (del_yn IS NULL OR del_yn = 'N') /* 삭제여부 */
+    ORDER BY tbl_se_cd, uld_list_sn
+  </select>
+
+  <!-- ═══ 재업로드: 업로드 내역 초기화 ═══ -->
+
+  <!-- 파일 전송 상세 비활성화 (tb_ca_e_file_trsm use_yn='N') -->
+  <update id="softDeleteFileTrsmByPblntSn">
+    UPDATE kids_own.tb_ca_e_file_trsm
+    SET use_yn = 'N'
+    WHERE atch_file_group_id IN (
+      SELECT DISTINCT atch_file_id
+      FROM kids_own.tb_cm_m_file_uld
+      WHERE pst_sn = #{pblntSn}
+        AND (del_yn IS NULL OR del_yn = 'N')
+    )
+      AND use_yn = 'Y'
+  </update>
+
+  <!-- 파일 그룹 비활성화 (tb_ca_e_file_group_trsm use_yn='N') -->
+  <update id="softDeleteFileGroupByPblntSn">
+    UPDATE kids_own.tb_ca_e_file_group_trsm
+    SET use_yn = 'N',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE atch_file_group_id IN (
+      SELECT DISTINCT atch_file_id
+      FROM kids_own.tb_cm_m_file_uld
+      WHERE pst_sn = #{pblntSn}
+        AND (del_yn IS NULL OR del_yn = 'N')
+    )
+      AND use_yn = 'Y'
+  </update>
+
+  <!-- 파일 업로드 목록 삭제 (tb_cm_m_file_uld del_yn='Y') -->
+  <update id="softDeleteFileUldByPblntSn">
+    UPDATE kids_own.tb_cm_m_file_uld
+    SET del_yn = 'Y',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pst_sn = #{pblntSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 2차 테이블별 통계 삭제 (tb_cm_e_tbl_uld_stats_hist del_yn='Y') -->
+  <update id="softDeleteTblUldStatsHist">
+    UPDATE kids_own.tb_cm_e_tbl_uld_stats_hist
+    SET del_yn = 'Y',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 2차 테이블별 통계: 이번 검증 대상 테이블만 soft delete (여러 건 업로드 시 기존 테이블 통계 유지) -->
+  <update id="softDeleteTblUldStatsHistByTableNames">
+    UPDATE kids_own.tb_cm_e_tbl_uld_stats_hist
+    SET del_yn = 'Y',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+      <!--
+        IN + foreach 는 #{nm} 로도 PreparedStatement 바인딩이지만, 일부 보안점검기에서 동적 SQL로 오탐됨.
+        List<String> 을 JDBC text[] 단일 파라미터로 바인딩 (= ANY (?)) 하여 동일 의미를 유지한다.
+      -->
+      <if test="errTblNmList != null and errTblNmList.size() > 0">
+      AND err_tbl_nm = ANY(#{errTblNmList, jdbcType=ARRAY, typeHandler=kr.or.kids.global.config.typehandler.StringListToPgTextArrayTypeHandler})
+      </if>
+  </update>
+
+  <!-- 2차 테이블별 통계: 동일 (pblntSn, ptcpInstSn, err_tbl_nm) 기존 행 물리 삭제 — 재업로드 시 한 테이블당 1건만 유지(덮어쓰기). INSERT와 동일 스키마 사용 -->
+  <delete id="deleteTblUldStatsHistByPblntSnAndErrTblNm">
+    DELETE FROM kids_own.TB_CM_E_TBL_ULD_STATS_HIST
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND err_tbl_nm = #{errTblNm}
+  </delete>
+
+  <!-- 1차 업로드 통계 합계값 갱신 (전체 2차 합산 반영) -->
+  <update id="updateUldStatsHistTotals">
+    UPDATE kids_own.TB_CM_E_ULD_STATS_HIST
+    SET uld_nocs = #{uldNocs},
+        <if test="uldCpct != null">uld_cpct = #{uldCpct},</if>
+        err_nocs = #{errNocs},
+        err_rt = #{errRt},
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = #{mdfcnDt}
+    WHERE pblnt_sn = #{pblntSn}
+      AND (ptcp_inst_sn = #{ptcpInstSn} OR (#{ptcpInstSn} IS NULL AND ptcp_inst_sn IS NULL))
+      AND uld_stats_sn = (
+        SELECT uld_stats_sn
+        FROM kids_own.TB_CM_E_ULD_STATS_HIST sub
+        WHERE sub.pblnt_sn = #{pblntSn}
+          AND (sub.ptcp_inst_sn = #{ptcpInstSn} OR (#{ptcpInstSn} IS NULL AND sub.ptcp_inst_sn IS NULL))
+        ORDER BY sub.reg_dt DESC
+        LIMIT 1
+      )
+  </update>
+
+  <!-- 1차 통계 삭제 (tb_cm_e_uld_stats_hist, del_yn 없으므로 물리 삭제) -->
+  <delete id="deleteUldStatsHistByPblntSn">
+    DELETE FROM kids_own.tb_cm_e_uld_stats_hist
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+  </delete>
+
+</mapper>

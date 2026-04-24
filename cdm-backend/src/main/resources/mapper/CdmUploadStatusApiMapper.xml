@@ -1,0 +1,308 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.prstInfo.mapper.CdmUploadStatusApiMapper">
+
+    <!-- ====================================================== -->
+    <!-- 1. CDM 현황정보 (tb_cm_m_uld_prst)                     -->
+    <!-- - 초안: updateCdmCurrentInfo / 전송(확정): confirmCdmCurrentInfo -->
+    <!-- ====================================================== -->
+
+    <select id="selectCdmUploadStatusDetail"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.CdmUploadStatusApiInVO"
+            resultType="kr.or.kids.domain.cm.prstInfo.vo.CdmUploadStatusApiOutVO">
+        SELECT A.ptcp_inst_sn              AS ptcpInstSn
+        , A.pblnt_sn                  AS pblntSn
+        , A.inst_id                   AS instId
+        , A.brno                      AS brno
+        , A.uld_inst_prgrs_stts_cd  AS uldInstPrgrsSttsStcd
+        , TO_CHAR(A.ptcp_dmnd_dt,  'YYYY-MM-DD HH24:MI:SS') AS ptcpDmndDt
+        , TO_CHAR(A.ptcp_cfmtn_dt, 'YYYY-MM-DD HH24:MI:SS') AS ptcpCfmtnDt
+        , TO_CHAR(A.ptcp_rtrcn_dt, 'YYYY-MM-DD HH24:MI:SS') AS ptcpRtrcnDt
+        , TO_CHAR(A.ptcp_reg_dt,   'YYYY-MM-DD HH24:MI:SS') AS ptcpRegDt
+        , TO_CHAR(A.ptcp_cmptn_dt, 'YYYY-MM-DD HH24:MI:SS') AS ptcpCmptnDt
+        , TO_CHAR(A.ptcp_rdmnd_dt, 'YYYY-MM-DD HH24:MI:SS') AS ptcpRdmndDt
+        , A.uld_type_cd               AS uldTypeCd
+        , TO_CHAR(A.uld_dt, 'YYYY-MM-DD HH24:MI:SS')        AS uldDt
+        , A.ver_info_nm               AS verInfoNm
+        , A.last_updt_ymd             AS lastUpdtYmd
+        , A.updt_cycle_cnt            AS updtCycleCnt
+        , A.del_yn                    AS delYn
+        , A.rgtr_id                   AS rgtrId
+        , TO_CHAR(A.reg_dt,   'YYYY-MM-DD HH24:MI:SS') AS regDt
+        , A.mdfr_id                   AS mdfrId
+        , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD HH24:MI:SS') AS mdfcnDt
+        FROM kids_own.tb_cm_m_uld_prst A
+        WHERE A.ptcp_inst_sn = #{ptcpInstSn}
+        AND A.pblnt_sn     = #{pblntSn}
+        AND (A.del_yn IS NULL OR A.del_yn = 'N')
+        /* 동일 키 중복 시: 내용이 채워진 행 우선(재등록요청 등으로 최신 행만 비어 있는 경우 방지) */
+        ORDER BY CASE WHEN NULLIF(TRIM(COALESCE(A.ver_info_nm, '')), '') IS NULL THEN 1 ELSE 0 END ASC,
+                 A.mdfcn_dt DESC NULLS LAST, A.reg_dt DESC NULLS LAST
+        LIMIT 1
+    </select>
+
+    <!-- 초안 저장: 버전·날짜·주기·수정자만 갱신 (uld_type_cd / 진행상태 / 완료일 변경 없음) -->
+    <update id="updateCdmCurrentInfo"
+            parameterType="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO">
+        UPDATE kids_own.tb_cm_m_uld_prst
+        SET ver_info_nm    = #{verInfoNm}
+        , last_updt_ymd  = #{lastUpdtYmd}
+        , updt_cycle_cnt = #{updtCycleCnt}
+        , mdfr_id        = #{mdfrId}
+        , mdfcn_dt       = NOW()
+        WHERE ptcp_inst_sn = #{ptcpInstSn}
+        AND pblnt_sn     = #{pblntSn}
+        AND (del_yn IS NULL OR del_yn = 'N')
+    </update>
+
+    <!-- 전송(확정): 업로드유형·진행상태·참여완료일시 반영 + 현황 필드 -->
+    <update id="confirmCdmCurrentInfo"
+            parameterType="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO">
+        UPDATE kids_own.tb_cm_m_uld_prst
+        SET ver_info_nm    = #{verInfoNm}
+        , uld_type_cd     = '02'
+        , uld_inst_prgrs_stts_cd = CASE
+            WHEN uld_inst_prgrs_stts_cd IN ('03','04') THEN uld_inst_prgrs_stts_cd
+            ELSE '03'
+          END
+        , ptcp_cmptn_dt = CASE
+            WHEN uld_inst_prgrs_stts_cd IN ('03','04') THEN ptcp_cmptn_dt
+            ELSE NOW()
+          END
+        , last_updt_ymd  = #{lastUpdtYmd}
+        , updt_cycle_cnt = #{updtCycleCnt}
+        , mdfr_id        = #{mdfrId}
+        , mdfcn_dt       = NOW()
+        WHERE ptcp_inst_sn = #{ptcpInstSn}
+        AND pblnt_sn     = #{pblntSn}
+        AND (del_yn IS NULL OR del_yn = 'N')
+    </update>
+
+    <!-- 행이 없을 때 초안 INSERT (uld_type_cd=02 현황등록, 진행중, 완료일시 없음) — 01은 파일/CDM 업로드 경로 전용 -->
+    <insert id="insertCdmCurrentInfoDraftMinimal"
+            parameterType="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO">
+        INSERT INTO kids_own.tb_cm_m_uld_prst (
+            ptcp_inst_sn, pblnt_sn,
+            uld_type_cd,
+            uld_inst_prgrs_stts_cd,
+            ptcp_cmptn_dt,
+            ver_info_nm, last_updt_ymd, updt_cycle_cnt,
+            del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt
+        ) VALUES (
+            #{ptcpInstSn}, #{pblntSn},
+            '02',
+            '02',
+            NULL,
+            #{verInfoNm}, #{lastUpdtYmd}, #{updtCycleCnt},
+            COALESCE(#{delYn}, 'N'),
+            COALESCE(#{mdfrId}, '관리자'), NOW(),
+            COALESCE(#{mdfrId}, '관리자'), NOW()
+        )
+    </insert>
+
+    <!-- 행이 없을 때 확정 INSERT (전용: 전송 API에서 UPDATE 0건일 때) -->
+    <insert id="insertCdmCurrentInfoMinimal"
+            parameterType="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO">
+        INSERT INTO kids_own.tb_cm_m_uld_prst (
+            ptcp_inst_sn, pblnt_sn,
+            uld_type_cd,
+            uld_inst_prgrs_stts_cd,
+            ptcp_cmptn_dt,
+            ver_info_nm, last_updt_ymd, updt_cycle_cnt,
+            del_yn, rgtr_id, reg_dt, mdfr_id, mdfcn_dt
+        ) VALUES (
+            #{ptcpInstSn}, #{pblntSn},
+            '02',
+            '03',
+            NOW(),
+            #{verInfoNm}, #{lastUpdtYmd}, #{updtCycleCnt},
+            COALESCE(#{delYn}, 'N'),
+            COALESCE(#{mdfrId}, '관리자'), NOW(),
+            COALESCE(#{mdfrId}, '관리자'), NOW()
+        )
+    </insert>
+
+
+    <!-- ====================================================== -->
+    <!-- 2. CDM 테이블별 기간&규모 (tb_cm_d_uld_prd_scl)        -->
+    <!-- ====================================================== -->
+
+    <select id="selectCdmUploadPeriodScaleList"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.CdmUploadPeriodScaleApiInVO"
+            resultType="kr.or.kids.domain.cm.prstInfo.vo.CdmUploadPeriodScaleApiOutVO">
+        SELECT A.uld_prd_sn    AS uldPrdSn
+        , A.pblnt_sn      AS pblntSn
+        , A.ptcp_inst_sn  AS ptcpInstSn
+        , A.trsf_se_cd    AS trsfSeCd
+        , A.tbl_se_cd     AS tblSeCd
+        , A.tnocs         AS tnocs
+        , A.bgng_ymd      AS bgngYmd
+        , A.end_ymd       AS endYmd
+        , A.del_yn        AS delYn
+        , A.rgtr_id       AS rgtrId
+        , TO_CHAR(A.reg_dt,   'YYYY-MM-DD HH24:MI:SS') AS regDt
+        , A.mdfr_id       AS mdfrId
+        , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD HH24:MI:SS') AS mdfcnDt
+        FROM kids_own.tb_cm_d_uld_prd_scl A
+        WHERE (A.del_yn IS NULL OR A.del_yn = 'N')
+        <if test="pblntSn != null">
+            AND A.pblnt_sn = #{pblntSn}
+        </if>
+        <if test="ptcpInstSn != null">
+            AND A.ptcp_inst_sn = #{ptcpInstSn}
+        </if>
+        <if test="tblSeCd != null and tblSeCd != ''">
+            AND A.tbl_se_cd = #{tblSeCd}
+        </if>
+        <if test="trsfSeCd != null and trsfSeCd != ''">
+            AND A.trsf_se_cd = #{trsfSeCd}
+        </if>
+        ORDER BY A.uld_prd_sn ASC
+    </select>
+
+    <insert id="insertCdmUploadPeriodScale"
+            parameterType="kr.or.kids.domain.cm.upload.vo.TbCmDUldPrdSclVO">
+        <selectKey keyProperty="uldPrdSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_uld_prd_sn')
+        </selectKey>
+        INSERT INTO kids_own.tb_cm_d_uld_prd_scl (
+        uld_prd_sn, pblnt_sn, ptcp_inst_sn,
+        trsf_se_cd, tbl_se_cd, tnocs,
+        bgng_ymd, end_ymd, del_yn,
+        rgtr_id, reg_dt, mdfr_id, mdfcn_dt
+        ) VALUES (
+        #{uldPrdSn}, #{pblntSn}, #{ptcpInstSn},
+        #{trsfSeCd}, #{tblSeCd}, #{tnocs},
+        #{bgngYmd}, #{endYmd}, COALESCE(#{delYn}, 'N'),
+        COALESCE(#{rgtrId}, '관리자'), NOW(), COALESCE(#{mdfrId}, '관리자'), NOW()
+        )
+    </insert>
+
+    <update id="updateCdmUploadPeriodScale"
+            parameterType="kr.or.kids.domain.cm.upload.vo.TbCmDUldPrdSclVO">
+        UPDATE kids_own.tb_cm_d_uld_prd_scl
+        <set>
+            <if test="ptcpInstSn != null">                         ptcp_inst_sn  = #{ptcpInstSn},</if>
+            <if test="trsfSeCd != null and trsfSeCd != ''">        trsf_se_cd    = #{trsfSeCd},</if>
+            <if test="tblSeCd != null and tblSeCd != ''">          tbl_se_cd     = #{tblSeCd},</if>
+            <if test="tnocs != null">                               tnocs         = #{tnocs},</if>
+            <if test="bgngYmd != null and bgngYmd != ''">          bgng_ymd      = #{bgngYmd},</if>
+            <if test="endYmd != null and endYmd != ''">            end_ymd       = #{endYmd},</if>
+            <if test="mdfrId != null and mdfrId != ''">            mdfr_id       = #{mdfrId},</if>
+            mdfcn_dt = NOW()
+        </set>
+        WHERE uld_prd_sn = #{uldPrdSn}
+        AND pblnt_sn   = #{pblntSn}
+    </update>
+
+    <!-- 논리 삭제 -->
+    <update id="deleteCdmUploadPeriodScale"
+            parameterType="kr.or.kids.domain.cm.upload.vo.TbCmDUldPrdSclVO">
+        UPDATE kids_own.tb_cm_d_uld_prd_scl
+        SET del_yn   = 'Y'
+        , mdfr_id  = COALESCE(#{mdfrId}, '관리자')
+        , mdfcn_dt = NOW()
+        WHERE uld_prd_sn = #{uldPrdSn}
+        AND pblnt_sn   = #{pblntSn}
+    </update>
+
+
+    <!-- ====================================================== -->
+    <!-- 3. CDM 카탈로그 (tb_cm_m_uld_ctlg)                     -->
+    <!-- ====================================================== -->
+
+    <select id="selectCdmUploadCatalogList"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.CdmUploadCatalogApiInVO"
+            resultType="kr.or.kids.domain.cm.prstInfo.vo.CdmUploadCatalogApiOutVO">
+        SELECT A.uld_list_sn   AS uldListSn
+        , A.pblnt_sn      AS pblntSn
+        , A.ptcp_inst_sn  AS ptcpInstSn
+        , A.tbl_se_cd     AS tblSeCd
+        , A.col_nm        AS colNm
+        , A.data_type_nm  AS dataTypeNm
+        , A.nul_yn        AS nulYn
+        , A.pk_yn         AS pkYn
+        , A.fk_yn         AS fkYn
+        , A.del_yn        AS delYn
+        , A.rgtr_id       AS rgtrId
+        , TO_CHAR(A.reg_dt,   'YYYY-MM-DD HH24:MI:SS') AS regDt
+        , A.mdfr_id       AS mdfrId
+        , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD HH24:MI:SS') AS mdfcnDt
+        FROM kids_own.tb_cm_m_uld_ctlg A
+        WHERE (A.del_yn IS NULL OR A.del_yn = 'N')
+        <if test="pblntSn != null">
+            AND A.pblnt_sn = #{pblntSn}
+        </if>
+        <if test="ptcpInstSn != null">
+            AND A.ptcp_inst_sn = #{ptcpInstSn}
+        </if>
+        <if test="tblSeCd != null and tblSeCd != ''">
+            AND A.tbl_se_cd = #{tblSeCd}
+        </if>
+        ORDER BY A.uld_list_sn ASC
+    </select>
+
+    <!-- 행추가 버튼 (기능설명 1번) -->
+    <insert id="insertCdmUploadCatalog"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.TbCmMUldCtlgVO">
+        <selectKey keyProperty="uldListSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_uld_list_sn')
+        </selectKey>
+        INSERT INTO kids_own.tb_cm_m_uld_ctlg (
+        uld_list_sn, pblnt_sn, ptcp_inst_sn,
+        tbl_se_cd, col_nm, data_type_nm,
+        nul_yn, pk_yn, fk_yn, del_yn,
+        rgtr_id, reg_dt, mdfr_id, mdfcn_dt
+        ) VALUES (
+        #{uldListSn}, #{pblntSn}, #{ptcpInstSn},
+        #{tblSeCd}, #{colNm}, #{dataTypeNm},
+        COALESCE(#{nulYn}, 'N'), COALESCE(#{pkYn}, 'N'), COALESCE(#{fkYn}, 'N'),
+        COALESCE(#{delYn}, 'N'),
+        COALESCE(#{rgtrId}, '관리자'), NOW(), COALESCE(#{mdfrId}, '관리자'), NOW()
+        )
+    </insert>
+
+    <!-- 저장 버튼 (기능설명 3번) -->
+    <update id="updateCdmUploadCatalog"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.TbCmMUldCtlgVO">
+        UPDATE kids_own.tb_cm_m_uld_ctlg
+        <set>
+            <if test="tblSeCd != null and tblSeCd != ''">       tbl_se_cd    = #{tblSeCd},</if>
+            <if test="colNm != null and colNm != ''">            col_nm       = #{colNm},</if>
+            <if test="dataTypeNm != null and dataTypeNm != ''">  data_type_nm = #{dataTypeNm},</if>
+            <if test="nulYn != null and nulYn != ''">            nul_yn       = #{nulYn},</if>
+            <if test="pkYn != null and pkYn != ''">              pk_yn        = #{pkYn},</if>
+            <if test="fkYn != null and fkYn != ''">              fk_yn        = #{fkYn},</if>
+            <if test="mdfrId != null and mdfrId != ''">          mdfr_id      = #{mdfrId},</if>
+            mdfcn_dt = NOW()
+        </set>
+        WHERE uld_list_sn = #{uldListSn}
+        AND pblnt_sn    = #{pblntSn}
+    </update>
+
+    <!-- 삭제 버튼 (기능설명 2번) - 논리 삭제 -->
+    <update id="deleteCdmUploadCatalog"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.TbCmMUldCtlgVO">
+        UPDATE kids_own.tb_cm_m_uld_ctlg
+        SET del_yn   = 'Y'
+        , mdfr_id  = COALESCE(#{mdfrId}, '관리자')
+        , mdfcn_dt = NOW()
+        WHERE uld_list_sn = #{uldListSn}
+        AND pblnt_sn    = #{pblntSn}
+    </update>
+
+    <!-- tbl_se_cd 기준 일괄 논리 삭제 -->
+    <update id="deleteCdmUploadCatalogByTblSeCd"
+            parameterType="kr.or.kids.domain.cm.prstInfo.vo.TbCmMUldCtlgVO">
+        UPDATE kids_own.tb_cm_m_uld_ctlg
+        SET del_yn   = 'Y'
+        , mdfr_id  = COALESCE(#{mdfrId}, '관리자')
+        , mdfcn_dt = NOW()
+        WHERE pblnt_sn    = #{pblntSn}
+        AND ptcp_inst_sn = #{ptcpInstSn}
+        AND tbl_se_cd   = #{tblSeCd}
+    </update>
+
+</mapper>

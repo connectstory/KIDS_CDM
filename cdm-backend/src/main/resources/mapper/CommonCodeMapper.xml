@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.common.mapper.CommonCodeMapper">
+
+  <select id="selectByGroupCode" parameterType="String"
+          resultType="kr.or.kids.domain.cm.common.dto.CommonCodeItem">
+    SELECT /* CommonCodeMapper.selectByGroupCode */
+           com_dtl_cd    AS code
+         , com_dtl_cd_nm AS name
+      FROM kids_own.tb_ca_c_dtl_code
+     WHERE com_group_cd = #{groupCode}
+       AND use_yn = 'Y'
+     ORDER BY sort_seq ASC
+  </select>
+
+</mapper>

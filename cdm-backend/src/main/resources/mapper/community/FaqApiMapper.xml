@@ -1,0 +1,247 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.community.faq.mapper.FaqApiMapper">
+
+    <!-- FAQ 목록 조회 -->
+    <select id="selectFaqList" parameterType="kr.or.kids.domain.cm.community.faq.vo.FaqApiInVO" resultType="kr.or.kids.domain.cm.community.faq.vo.FaqApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.faq.mapper.selectFaqList */
+               A.faq_sn                          AS faqSn
+             , A.task_se_cd                      AS taskSeCd
+             , A.faq_clsf_nm                     AS faqClsfNm
+             , A.faq_ttl                         AS faqTtl
+             , A.faq_seq                         AS faqSeq
+             , A.use_yn                          AS useYn
+             , A.lang_se_cd                      AS langSeId
+             , A.faq_ans_cn                      AS faqAnsCn
+             , A.atch_file_id                    AS atchFileId
+             , A.wrtr_dept_nm                    AS wrtrDeptNm
+             , A.mdfr_dept_nm                    AS mdfrDeptNm
+             , COALESCE(E.emp_nm, A.rgtr_id)     AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD')   AS regDt
+             , A.mdfr_id                         AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD') AS mdfcnDt
+             , COALESCE(A.pst_inq_cnt, 0)        AS pstInqCnt
+             , A.faq_se_cd                       AS faqSeCd
+             , C.com_dtl_cd_nm                   AS faqSeNm
+          FROM kids_own.tb_cm_m_faq A
+          LEFT JOIN kids_own.tb_pp_m_mngr_info M
+            ON M.emp_no = A.rgtr_id
+          LEFT JOIN kids_own.tb_pp_m_emp_info E
+            ON E.emp_no = M.emp_no
+          LEFT JOIN kids_own.tb_ca_c_dtl_code C
+            ON C.com_dtl_cd = A.faq_se_cd
+           AND C.com_group_cd = 'CMCMM00005'
+         WHERE 1=1
+        <if test="taskSeCd != null and taskSeCd != ''">
+           AND A.task_se_cd = #{taskSeCd}
+        </if>
+        <if test="langSeId != null and langSeId != ''">
+           AND A.lang_se_cd = #{langSeId}
+        </if>
+        <if test="faqSeCd != null and faqSeCd != ''">
+           AND A.faq_se_cd = #{faqSeCd}
+        </if>
+        <if test="useYn != null and useYn != ''">
+           AND A.use_yn = #{useYn}
+        </if>
+
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND A.faq_ttl LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'writer'">
+                    <!-- 내부 게시판: emp_nm으로 tb_pp_m_emp_info 검색 -->
+                    AND A.rgtr_id IN (
+                                       SELECT ei.emp_no
+                                         FROM kids_own.tb_pp_m_emp_info ei
+                                        WHERE ei.emp_nm LIKE '%' || #{searchKeyword} || '%'
+                                     )
+                </when>
+                <when test="searchType == 'content'">
+                    AND A.faq_ans_cn LIKE '%' || #{searchKeyword} || '%'
+                </when>
+            </choose>
+        </if>
+
+        ORDER BY A.faq_seq ASC, A.faq_sn DESC
+        LIMIT #{pageSize}
+        OFFSET (#{page} - 1) * #{pageSize}
+    </select>
+
+    <select id="selectFaqListCount" parameterType="kr.or.kids.domain.cm.community.faq.vo.FaqApiInVO" resultType="int">
+        SELECT /* kr.or.kids.domain.cm.community.faq.mapper.selectFaqListCount */
+               COUNT(*)
+          FROM kids_own.tb_cm_m_faq A
+         WHERE 1=1
+        <if test="taskSeCd != null and taskSeCd != ''">
+           AND A.task_se_cd = #{taskSeCd}
+        </if>
+        <if test="langSeId != null and langSeId != ''">
+           AND A.lang_se_cd = #{langSeId}
+        </if>
+        <if test="faqSeCd != null and faqSeCd != ''">
+           AND A.faq_se_cd = #{faqSeCd}
+        </if>
+        <if test="useYn != null and useYn != ''">
+           AND A.use_yn = #{useYn}
+        </if>
+
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND A.faq_ttl LIKE '%' || #{searchKeyword} || '%'
+                </when>
+                <when test="searchType == 'content'">
+                    AND A.faq_ans_cn LIKE '%' || #{searchKeyword} || '%'
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- FAQ 상세 조회 -->
+    <select id="selectFaqDetail" parameterType="long" resultType="kr.or.kids.domain.cm.community.faq.vo.FaqApiOutVO">
+        SELECT /* kr.or.kids.domain.cm.community.faq.mapper.selectFaqDetail */
+               A.faq_sn                          AS faqSn
+             , A.task_se_cd                      AS taskSeCd
+             , A.faq_clsf_nm                     AS faqClsfNm
+             , A.faq_ttl                         AS faqTtl
+             , A.faq_seq                         AS faqSeq
+             , A.use_yn                          AS useYn
+             , A.lang_se_cd                      AS langSeId
+             , A.faq_ans_cn                      AS faqAnsCn
+             , A.atch_file_id                    AS atchFileId
+             , A.wrtr_dept_nm                    AS wrtrDeptNm
+             , A.mdfr_dept_nm                    AS mdfrDeptNm
+             , COALESCE(E.emp_nm, A.rgtr_id)     AS rgtrId
+             , TO_CHAR(A.reg_dt, 'YYYY-MM-DD')   AS regDt
+             , A.mdfr_id                         AS mdfrId
+             , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD') AS mdfcnDt
+             , COALESCE(A.pst_inq_cnt, 0)        AS pstInqCnt
+             , A.faq_se_cd                      AS faqSeCd
+             , C.com_dtl_cd_nm                  AS faqSeNm
+          FROM kids_own.tb_cm_m_faq A
+          LEFT JOIN kids_own.tb_pp_m_mngr_info M
+            ON M.emp_no = A.rgtr_id
+          LEFT JOIN kids_own.tb_pp_m_emp_info E
+            ON E.emp_no = M.emp_no
+          LEFT JOIN kids_own.tb_ca_c_dtl_code C
+            ON C.com_dtl_cd = A.faq_se_cd
+           AND C.com_group_cd = 'CMCMM00005'
+         WHERE A.faq_sn = #{faqSn}
+    </select>
+
+    <!-- FAQ 등록 -->
+    <insert id="insertFaq" parameterType="kr.or.kids.domain.cm.community.faq.vo.TbPpMFaqVo">
+        <selectKey keyProperty="faqSn" resultType="long" order="BEFORE">
+            SELECT nextval('kids_own.sq_cm_faq_sn')
+        </selectKey>
+        /* kr.or.kids.domain.cm.community.faq.mapper.insertFaq */
+        INSERT INTO kids_own.tb_cm_m_faq (
+               faq_sn
+             , task_se_cd
+             , faq_clsf_nm
+             , faq_ttl
+             , faq_seq
+             , use_yn
+             , lang_se_cd
+             , faq_ans_cn
+             , atch_file_id
+             , pst_inq_cnt
+             , wrtr_dept_nm
+             , mdfr_dept_nm
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+             , faq_se_cd
+        ) VALUES (
+               #{faqSn}
+             , COALESCE(#{taskSeCd}, 'CDM')
+             , (SELECT com_dtl_cd_nm FROM kids_own.tb_ca_c_dtl_code WHERE com_dtl_cd = #{faqSeCd} AND com_group_cd = 'CMCMM00005')
+             , #{faqTtl}
+             , COALESCE(#{faqSeq}, (SELECT COALESCE(MAX(faq_seq), 0) + 1 FROM kids_own.tb_cm_m_faq))
+             , COALESCE(#{useYn}, 'Y')
+             , COALESCE(#{langSeId}, 'ko')
+             , #{faqAnsCn}
+             , #{atchFileId}
+             , COALESCE(#{pstInqCnt}, 0)
+             , #{wrtrDeptNm}
+             , #{mdfrDeptNm}
+             , COALESCE(#{rgtrId}, '관리자')
+             , NOW()
+             , COALESCE(#{mdfrId}, '관리자')
+             , NOW()
+             , #{faqSeCd}
+        )
+    </insert>
+
+    <!-- FAQ 수정 -->
+    <update id="updateFaq" parameterType="kr.or.kids.domain.cm.community.faq.vo.TbPpMFaqVo">
+        /* kr.or.kids.domain.cm.community.faq.mapper.updateFaq */
+        UPDATE kids_own.tb_cm_m_faq
+        <set>
+            <if test="faqSeCd != null and faqSeCd != ''">
+                faq_clsf_nm = (SELECT com_dtl_cd_nm FROM kids_own.tb_ca_c_dtl_code WHERE com_dtl_cd = #{faqSeCd} AND com_group_cd = 'CMCMM00005'),
+            </if>
+
+            <if test="faqTtl != null and faqTtl != ''">
+                faq_ttl = #{faqTtl},
+            </if>
+
+            <if test="faqSeq != null">
+                faq_seq = #{faqSeq},
+            </if>
+
+            <if test="useYn != null and useYn != ''">
+                use_yn = #{useYn},
+            </if>
+
+            <if test="langSeId != null and langSeId != ''">
+                lang_se_cd = #{langSeId},
+            </if>
+
+            <if test="faqAnsCn != null and faqAnsCn != ''">
+                faq_ans_cn = #{faqAnsCn},
+            </if>
+
+            <if test="atchFileId != null and atchFileId != ''">
+                atch_file_id = #{atchFileId},
+            </if>
+
+            <if test="mdfrDeptNm != null and mdfrDeptNm != ''">
+                mdfr_dept_nm = #{mdfrDeptNm},
+            </if>
+
+            <if test="mdfrId != null and mdfrId != ''">
+                mdfr_id = #{mdfrId},
+            </if>
+
+            <if test="faqSeCd != null">
+                faq_se_cd = #{faqSeCd},
+            </if>
+
+            mdfcn_dt = NOW()
+        </set>
+        WHERE faq_sn = #{faqSn}
+    </update>
+
+    <!-- FAQ 조회수 증가 -->
+    <update id="updateFaqViewCount" parameterType="long">
+        /* kr.or.kids.domain.cm.community.faq.mapper.updateFaqViewCount */
+        UPDATE kids_own.tb_cm_m_faq
+           SET pst_inq_cnt = COALESCE(pst_inq_cnt, 0) + 1
+             , mdfcn_dt = NOW()
+        WHERE faq_sn = #{faqSn}
+    </update>
+
+    <!-- FAQ 삭제 -->
+    <delete id="deleteFaq" parameterType="map">
+        /* kr.or.kids.domain.cm.community.faq.mapper.deleteFaq */
+        DELETE FROM kids_own.tb_cm_m_faq
+        WHERE faq_sn = #{faqSn}
+    </delete>
+
+</mapper>

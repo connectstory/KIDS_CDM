@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko" style="margin:0; padding:0; overflow:hidden; height:100%;">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Editor 2.0</title>
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
+    </style>
+</head>
+<body>
+    <textarea id="editor" style="width:100%; height:480px;"></textarea>
+  
+    <script src="./js/service/SE2M_Configuration.js"></script>
+    <script src="./js/service/HuskyEZCreator.js"></script>
+  
+    <script>
+      nhn.husky.SE2M_Configuration.SE2M_Toolbar = {
+        bUseToolbar: true,
+        bUseVerticalResizer: true,
+        bUseModeChanger: true,
+        aToolBarItem: [
+          ["fontName", "fontSize"], ["bold", "underline", "italic", "strike"],
+          ["fontColor", "hiliteColor"], ["justifyLeft", "justifyCenter", "justifyRight"],
+          ["insertOrderedList", "insertUnorderedList"], ["outdent", "indent"],
+          ["link", "unlink"], ["table", "image", "hr"], ["undo", "redo"]
+        ]
+      };
+  
+      var oEditors = [];
+      nhn.husky.EZCreator.createInIFrame({
+        oAppRef: oEditors,
+        elPlaceHolder: "editor",
+        sSkinURI: "./SmartEditor2Skin.html",
+        fCreator: "createSEditor2",
+        htParams: {
+            bUseToolbar: true,
+            bUseVerticalResizer: true,
+            bUseModeChanger: true,
+            nMinHeight: 480, // [중요] 최소 높이 800
+            nHeight: 480     // [중요] 초기 높이 800
+        },
+        fOnAppLoad: function() {
+            var sId = "editor";
+            var oEditor = oEditors.getById[sId];
+            
+            const el = document.getElementById('smart_editor2');
+            if (el) {
+                el.style.margin = '0';
+                el.style.height = '800px'; // [중요] 에디터 바깥 박스도 800
+            }
+
+            // 이미지 가로채기
+            oEditor.registerPlugin({
+                name: "ImageInterceptor",
+                $BeforeExecCommand: function(sCommand, aArgs) {
+                    if (sCommand === 'PHOTO_ATTACH') {
+                        window.parent.postMessage({ type: 'OPEN_IMAGE_UPLOADER' }, '*');
+                        return false;
+                    }
+                }
+            });
+
+            // 높이 동기화 (이 로직이 800px을 리액트에게 보고하게 됨)
+            var skinFrame = null;
+            for (var f of document.querySelectorAll('iframe')) {
+                if (f.style.width === '100%') { skinFrame = f; break; }
+            }
+            if (!skinFrame) return;
+
+            var sendHeight = function() {
+                var h = Number.parseInt(skinFrame.style.height, 10);
+                if (h > 0) window.parent.postMessage({ type: 'SE2_RESIZE', height: h }, '*');
+            };
+
+            sendHeight();
+            var debounce = null;
+            var obs = new MutationObserver(function() {
+                clearTimeout(debounce);
+                debounce = setTimeout(sendHeight, 50);
+            });
+            obs.observe(skinFrame, { attributes: true, attributeFilter: ['style'] });
+        }
+      });
+    </script>
+</body>
+</html>

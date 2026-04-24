@@ -1,0 +1,101 @@
+.filter_finder {
+  position: relative;
+  margin: 0 0 40px 0;
+  padding: 10px;
+  background: #f2f4f6;
+  border: 1px solid rgb(26 16 82 / 14%);
+  border-radius: var(--border-radius01);
+}
+.filter_finder .search_wrap {
+  position: relative;
+}
+.search_wrap_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.search_wrap_column {
+  display: flex;
+  align-items: start;
+  width: 100%;
+}
+.search_wrap_row_label {
+  position: relative;
+  min-width: 130px;
+  max-width: 130px;
+  padding: 5px 15px;
+  font-weight: 700;
+}
+.search_wrap_row_label > span {
+  display: flex;
+  align-items: center;
+  min-height: 35px;
+}
+.search_wrap_row_label::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  margin-top: -1px;
+  border-radius: 4px;
+  background-color: var(--color_01);
+}
+.search_wrap_row_content {
+  display: flex;
+  align-items: start;
+  width: 100%;
+  padding: 5px 15px;
+}
+.filter_finder .search_wrap .tbl_filter {
+  table-layout: fixed;
+  width: 100%;
+}
+.filter_finder .search_wrap .tbl_filter tbody th {
+  position: relative;
+  min-height: 40px;
+  padding: 5px 15px;
+  text-align: left;
+  font-weight: 600;
+  word-break: keep-all;
+}
+.filter_finder .search_wrap .tbl_filter tbody th::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  margin-top: -1px;
+  border-radius: 4px;
+  background-color: var(--color_01);
+}
+.filter_finder .search_wrap .tbl_filter tbody td {
+  min-height: 40px;
+  padding: 5px 15px;
+}
+.filter_finder .btn_area {
+  display: flex;
+  justify-content: center;
+  margin: 5px 0 0px 0;
+  padding: 10px 0 0 0;
+  border-top: 1px solid #e5e5e5;
+}
+.filter_finder .btn_area button {
+  width: 120px;
+}
+
+.modal .filter_finder {
+  padding: 5px;
+}
+.modal .filter_finder .search_wrap .tbl_filter tbody th,
+.modal .filter_finder .search_wrap .tbl_filter tbody td {
+  min-height: 35px;
+}
+.two_column {
+  width: 50%;
+}

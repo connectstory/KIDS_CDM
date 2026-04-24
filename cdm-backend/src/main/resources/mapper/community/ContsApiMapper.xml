@@ -1,0 +1,150 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.community.conts.mapper.ContsMapper">
+
+    <!-- 단건 조회 -->
+    <select id="selectContsDetail" parameterType="map"
+            resultType="kr.or.kids.domain.cm.community.conts.vo.TbCmMContsVO">
+        SELECT rvsn_no  AS rvsnNo
+             , bbs_id   AS bbsId
+             , rls_yn   AS rlsYn
+             , conts_cn AS contsCn
+             , del_yn   AS delYn
+             , rgtr_id  AS rgtrId
+             , reg_dt   AS regDt
+             , mdfr_id  AS mdfrId
+             , mdfcn_dt AS mdfcnDt
+          FROM kids_own.tb_cm_m_conts
+         WHERE rvsn_no = #{rvsnNo}
+           AND bbs_id  = #{bbsId}
+           AND del_yn  = 'N'
+    </select>
+
+    <!-- 목록 조회 -->
+    <select id="selectContsList" parameterType="kr.or.kids.domain.cm.community.conts.vo.ContsApiInVO"
+            resultType="kr.or.kids.domain.cm.community.conts.vo.TbCmMContsVO">
+        SELECT rvsn_no  AS rvsnNo
+             , bbs_id   AS bbsId
+             , rls_yn   AS rlsYn
+             , conts_cn AS contsCn
+             , del_yn   AS delYn
+             , rgtr_id  AS rgtrId
+             , reg_dt   AS regDt
+             , mdfr_id  AS mdfrId
+             , mdfcn_dt AS mdfcnDt
+          FROM kids_own.tb_cm_m_conts
+         WHERE del_yn = 'N'
+           AND bbs_id = #{bbsId}
+         ORDER BY reg_dt DESC
+         LIMIT #{pageSize}
+        OFFSET (#{page} - 1) * #{pageSize}
+    </select>
+
+    <select id="selectContsListCount" parameterType="kr.or.kids.domain.cm.community.conts.vo.ContsApiInVO" resultType="int">
+        SELECT /* kr.or.kids.domain.cm.community.conts.mapper.selectContsListCount */
+               COUNT(*)
+          FROM kids_own.tb_cm_m_conts
+         WHERE del_yn = 'N'
+           AND bbs_id = #{bbsId}
+    </select>
+
+    <!-- 리비전 히스토리 -->
+    <select id="selectRevisionHistory" parameterType="string"
+            resultType="kr.or.kids.domain.cm.community.conts.vo.TbCmMContsVO">
+        SELECT rvsn_no AS rvsnNo
+             , rls_yn  AS rlsYn
+             , rgtr_id AS rgtrId
+             , reg_dt  AS regDt
+          FROM kids_own.tb_cm_m_conts
+         WHERE del_yn = 'N'
+           AND bbs_id = #{bbsId}
+         ORDER BY reg_dt DESC
+    </select>
+
+    <!-- 현재 공개 컨텐츠 -->
+    <select id="selectPublishedConts" parameterType="string"
+            resultType="kr.or.kids.domain.cm.community.conts.vo.TbCmMContsVO">
+        SELECT rvsn_no  AS rvsnNo
+             , conts_cn AS contsCn
+             , reg_dt   AS regDt
+         FROM kids_own.tb_cm_m_conts
+        WHERE rls_yn = 'Y'
+          AND del_yn = 'N'
+          AND bbs_id = #{bbsId}
+        ORDER BY reg_dt DESC
+        LIMIT 1
+    </select>
+
+    <!-- 리비전번호 생성 -->
+    <select id="selectNextRevision" resultType="string">
+        SELECT #{prefix} || LPAD(NEXTVAL('kids_own.sq_cm_rvsn_no')::text, 10, '0')
+    </select>
+
+    <!-- 등록 -->
+    <insert id="insertConts"
+            parameterType="kr.or.kids.domain.cm.community.conts.vo.TbCmMContsVO">
+        INSERT INTO kids_own.tb_cm_m_conts (
+               rvsn_no
+             , bbs_id
+             , rls_yn
+             , conts_cn
+             , del_yn
+             , rgtr_id
+             , reg_dt
+             , mdfr_id
+             , mdfcn_dt
+        ) VALUES (
+             #{rvsnNo}
+             , #{bbsId}
+             , #{rlsYn}
+             , #{contsCn}
+             , 'N'
+             , COALESCE(#{rgtrId}, '관리자')
+             , NOW()
+             , COALESCE(#{mdfrId}, '관리자')
+             , NOW()
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="updateConts"
+            parameterType="kr.or.kids.domain.cm.community.conts.vo.TbCmMContsVO">
+        UPDATE kids_own.tb_cm_m_conts
+           SET rls_yn   = #{rlsYn}
+             , conts_cn = #{contsCn}
+             , mdfr_id  = #{mdfrId}
+             , mdfcn_dt = NOW()
+         WHERE rvsn_no = #{rvsnNo}
+           AND bbs_id  = #{bbsId}
+    </update>
+
+    <!-- 기존 공개 해제 -->
+    <update id="clearPublished" parameterType="string">
+        UPDATE kids_own.tb_cm_m_conts
+           SET rls_yn = 'N'
+         WHERE rls_yn = 'Y'
+           AND del_yn = 'N'
+           AND bbs_id = #{bbsId}
+    </update>
+
+    <!-- 특정 리비전 공개 -->
+    <update id="setPublished" parameterType="map">
+        UPDATE kids_own.tb_cm_m_conts
+           SET rls_yn = 'Y'
+         WHERE rvsn_no = #{rvsnNo}
+           AND del_yn  = 'N'
+           AND bbs_id  = #{bbsId}
+    </update>
+
+    <!-- 삭제 -->
+    <update id="deleteConts" parameterType="map">
+        UPDATE kids_own.tb_cm_m_conts
+           SET del_yn   = 'Y'
+             , mdfcn_dt = NOW()
+         WHERE rvsn_no = #{rvsnNo}
+           AND bbs_id  = #{bbsId}
+    </update>
+
+</mapper>

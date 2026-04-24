@@ -1,0 +1,53 @@
+.search_container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.min_width_spacer {
+  min-width: 5rem;
+}
+
+.full_width_spacer {
+  width: 100%;
+}
+
+.content_container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.list_container {
+  flex: 1;
+}
+
+.pt5 {
+  padding-top: 1.25rem;
+}
+
+.grid_container {
+  height: 25rem !important;
+}
+
+.center_controls {
+  width: 5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spacer_h3 {
+  height: 0.75rem;
+}
+
+.spacer_h6 {
+  height: 1.5rem;
+}
+
+.button_container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

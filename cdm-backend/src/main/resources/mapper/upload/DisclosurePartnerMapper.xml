@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.upload.mapper.DisclosurePartnerMapper">
+
+  <resultMap id="TbCmMUldPrstVOMap" type="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO">
+    <id property="ptcpInstSn" column="ptcp_inst_sn"/>
+    <id property="pblntSn" column="pblnt_sn"/>
+    <result property="instId" column="inst_id"/>
+    <result property="brno" column="brno"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="uldInstPrgrsSttsStcd" column="uld_inst_prgrs_stts_cd"/>
+    <result property="ptcpDmndDt" column="ptcp_dmnd_dt"/>
+    <result property="ptcpCfmtnDt" column="ptcp_cfmtn_dt"/>
+    <result property="ptcpRtrcnDt" column="ptcp_rtrcn_dt"/>
+    <result property="ptcpRegDt" column="ptcp_reg_dt"/>
+    <result property="ptcpCmptnDt" column="ptcp_cmptn_dt"/>
+    <result property="ptcpRdmndDt" column="ptcp_rdmnd_dt"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
+    <result property="uldDt" column="uld_dt"/>
+    <result property="verInfoNm" column="ver_info_nm"/>
+    <result property="lastUpdtYmd" column="last_updt_ymd"/>
+    <result property="updtCycle" column="updt_cycle_cnt"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regYmd" column="reg_dt"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnYmd" column="mdfcn_dt"/>
+  </resultMap>
+
+  <!-- 공시의 참여기관 목록 조회 (JOIN으로 기관명 포함). 삭제된 공시(del_yn='Y')는 제외해 다른 공시의 완료 상태가 섞이지 않도록 함. -->
+  <select id="findByPblntSn" parameterType="long" resultMap="TbCmMUldPrstVOMap">
+    SELECT
+      t1.ptcp_inst_sn, /* 참여기관일련번호 */
+      t1.pblnt_sn, /* 공시일련번호 */
+      t1.inst_id, /* 기관아이디 */
+      t1.brno, /* 사업자등록번호 */
+      t2.inst_nm, /* 기관명 */
+      t1.uld_inst_prgrs_stts_cd, /* 업로드진행상태코드 */
+      t1.ptcp_dmnd_dt, /* 참여요청일시 */
+      t1.ptcp_cfmtn_dt, /* 참여확정일시 */
+      t1.ptcp_rtrcn_dt, /* 참여철회일시 */
+      t1.ptcp_reg_dt, /* 참여등록일시 */
+      t1.ptcp_cmptn_dt, /* 참여완료일시 */
+      t1.ptcp_rdmnd_dt, /* 참여재요청일시 */
+      t1.uld_type_cd, /* 업로드유형코드 */
+      t1.uld_dt, /* 업로드일시 */
+      t1.ver_info_nm, /* 버전정보명 */
+      t1.last_updt_ymd, /* 최종업데이트일 */
+      t1.updt_cycle_cnt, /* 업데이트주기횟수 */
+      t1.del_yn, /* 삭제여부 */
+      t1.rgtr_id, /* 등록자아이디 */
+      t1.reg_dt, /* 등록일시 */
+      t1.mdfr_id, /* 수정자아이디 */
+      t1.mdfcn_dt /* 수정일시 */
+    FROM kids_own.TB_CM_M_ULD_PRST t1
+    INNER JOIN kids_own.TB_CM_M_ULD_PBLNT pblnt ON pblnt.pblnt_sn = t1.pblnt_sn
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+    LEFT JOIN kids_own.TB_PP_M_INST t2 ON TRIM(t1.inst_id) = TRIM(t2.brno)
+    WHERE t1.pblnt_sn = #{pblntSn}
+      AND (t1.del_yn IS NULL OR TRIM(t1.del_yn) = '' OR UPPER(TRIM(t1.del_yn)) = 'N')
+    ORDER BY t1.reg_dt DESC
+  </select>
+
+  <!-- 참여기관 추가 -->
+  <insert id="insert" parameterType="kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO" useGeneratedKeys="true" keyProperty="ptcpInstSn" keyColumn="ptcp_inst_sn">
+    <selectKey keyProperty="ptcpInstSn" resultType="long" order="BEFORE">
+      SELECT COALESCE(MAX(ptcp_inst_sn), 0) + 1 FROM kids_own.TB_CM_M_ULD_PRST WHERE pblnt_sn = #{pblntSn}
+    </selectKey>
+    INSERT INTO kids_own.TB_CM_M_ULD_PRST (
+      ptcp_inst_sn, /* 참여기관일련번호 */
+      pblnt_sn, /* 공시일련번호 */
+      inst_id, /* 기관아이디 */
+      brno, /* 사업자등록번호 */
+      uld_inst_prgrs_stts_cd, /* 업로드진행상태코드 */
+      ptcp_dmnd_dt, /* 참여요청일시 */
+      ptcp_cfmtn_dt, /* 참여확정일시 */
+      ptcp_rtrcn_dt, /* 참여철회일시 */
+      ptcp_reg_dt, /* 참여등록일시 */
+      ptcp_cmptn_dt, /* 참여완료일시 */
+      ptcp_rdmnd_dt, /* 참여재요청일시 */
+      uld_type_cd, /* 업로드유형코드 */
+      uld_dt, /* 업로드일시 */
+      ver_info_nm, /* 버전정보명 */
+      last_updt_ymd, /* 최종업데이트일 */
+      updt_cycle_cnt, /* 업데이트주기횟수 */
+      del_yn, /* 삭제여부 */
+      rgtr_id, /* 등록자아이디 */
+      reg_dt, /* 등록일시 */
+      mdfr_id, /* 수정자아이디 */
+      mdfcn_dt /* 수정일시 */
+    ) VALUES (
+      #{ptcpInstSn},
+      #{pblntSn},
+      #{instId},
+      #{brno},
+      #{uldInstPrgrsSttsStcd},
+      #{ptcpDmndDt},
+      #{ptcpCfmtnDt},
+      #{ptcpRtrcnDt},
+      #{ptcpRegDt},
+      #{ptcpCmptnDt},
+      #{ptcpRdmndDt},
+      #{uldTypeCd},
+      #{uldDt},
+      #{verInfoNm},
+      #{lastUpdtYmd},
+      #{updtCycle},
+      COALESCE(#{delYn}, 'N'),
+      #{rgtrId},
+      COALESCE(#{regYmd}, CURRENT_TIMESTAMP),
+      #{mdfrId},
+      #{mdfcnYmd}
+    )
+  </insert>
+
+  <!-- 참여기관 삭제 (논리 삭제) -->
+  <update id="delete">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET del_yn = 'Y', /* 삭제여부 */
+        mdfcn_dt = CURRENT_TIMESTAMP /* 수정일시 */
+    WHERE ptcp_inst_sn = #{ptcpInstSn} /* 참여기관일련번호 */
+      AND pblnt_sn = #{pblntSn} /* 공시일련번호 */
+  </update>
+
+  <!-- 공시의 모든 참여기관 삭제 (논리 삭제) -->
+  <update id="deleteAllByPblntSn">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET del_yn = 'Y', /* 삭제여부 */
+        mdfcn_dt = CURRENT_TIMESTAMP /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+  </update>
+
+  <!-- 참여기관일련번호로 사업자등록번호(brno) 조회 (inst_task_sn 주입용). pblntSn 있으면 해당 공시 기준 조회.
+       TRIM + 선행0 제거로 0000000001과 1을 동일하게 판단 -->
+  <select id="findBrnoByPtcpInstSn" resultType="string">
+    <!-- brno 정규화 없이 그대로 반환 -->
+    SELECT COALESCE(brno,'') AS brno
+    FROM kids_own.TB_CM_M_ULD_PRST
+    WHERE ptcp_inst_sn = #{ptcpInstSn}
+      <if test="pblntSn != null">AND pblnt_sn = #{pblntSn}</if>
+      AND (del_yn IS NULL OR TRIM(del_yn) = '' OR UPPER(TRIM(del_yn)) = 'N')
+    LIMIT 1
+  </select>
+
+  <!-- 기관아이디로 기관명 조회 (폴백용) -->
+  <select id="findInstNmByInstId" parameterType="string" resultType="string">
+    SELECT inst_nm
+    FROM kids_own.TB_PP_M_INST
+    WHERE TRIM(brno) = TRIM(#{instId}) /* 사업자등록번호(기관ID) */
+      AND (del_yn IS NULL OR del_yn = 'N') /* 삭제여부 */
+    LIMIT 1
+  </select>
+
+  <!-- 참여기관 진행상태 조회 -->
+  <select id="findStatus" resultType="string">
+    SELECT uld_inst_prgrs_stts_cd /* 진행상태코드 */
+    FROM kids_own.TB_CM_M_ULD_PRST
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+      AND ptcp_inst_sn = #{ptcpInstSn} /* 참여기관번호 */
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </select>
+
+  <!-- 참여기관 진행상태 변경 (상태별 관련 일시 컬럼도 함께 업데이트)
+       코드표: 01=참여요청, 02=진행중, 03=완료, 04=참여취소, 05=등록, 06=참여재요청, 07=등록재요청
+       참여취소(04) 시 반드시 ptcp_rtrcn_dt만 설정, ptcp_reg_dt는 사용하지 않음 -->
+  <update id="updateStatus">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET uld_inst_prgrs_stts_cd = #{uldInstPrgrsSttsStcd}, /* 진행상태코드 */
+        mdfr_id = #{mdfrId}, /* 수정자아이디 */
+        mdfcn_dt = #{mdfcnDt} /* 수정일시 */
+        <!-- 상태별 관련 일시 컬럼 업데이트 (04=참여취소는 ptcp_rtrcn_dt만) -->
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '01'">
+          , ptcp_dmnd_dt = #{mdfcnDt} /* 참여요청일시 (01) */
+        </if>
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '02'">
+          , ptcp_cfmtn_dt = #{mdfcnDt} /* 참여확정일시 (02) */
+        </if>
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '03'">
+          , ptcp_cmptn_dt = #{mdfcnDt} /* 참여완료일시 (03) */
+        </if>
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '04'">
+          , ptcp_rtrcn_dt = #{mdfcnDt} /* 참여철회일시 (04: 참여취소) - 화면 취소일자 컬럼에 표시 */
+        </if>
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '05'">
+          , ptcp_reg_dt = #{mdfcnDt} /* 참여등록일시 (05) */
+          , ptcp_cmptn_dt = #{mdfcnDt} /* 참여완료일시 (05: 등록완료 시 기관목록 완료일자 표시용) */
+        </if>
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '06'">
+          , ptcp_rdmnd_dt = #{mdfcnDt} /* 참여재요청일시 (06) */
+        </if>
+        <if test="uldInstPrgrsSttsStcd != null and uldInstPrgrsSttsStcd == '07'">
+          , ptcp_rdmnd_dt = #{mdfcnDt} /* 참여재요청일시 (07) */
+        </if>
+    WHERE pblnt_sn = #{pblntSn} /* 공시일련번호 */
+      AND ptcp_inst_sn = #{ptcpInstSn} /* 참여기관번호 */
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 참여기관 정보 업데이트 (CDM 현황정보) -->
+  <update id="updatePartnerInfo">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET 
+      uld_type_cd = '02',
+      <if test="verInfoNm != null">ver_info_nm = #{verInfoNm},</if>
+      <if test="lastUpdtYmd != null">last_updt_ymd = #{lastUpdtYmd},</if>
+      <if test="updtCycleCnt != null">updt_cycle_cnt = #{updtCycleCnt},</if>
+      mdfr_id = #{mdfrId},
+      mdfcn_dt = #{mdfcnDt}
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 기간&규모 데이터 삭제 -->
+  <delete id="deletePeriodScale">
+    DELETE FROM kids_own.TB_CM_D_ULD_PRD_SCL
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+  </delete>
+
+  <!-- 기간&규모 데이터 삽입 -->
+  <insert id="insertPeriodScale">
+    INSERT INTO kids_own.TB_CM_D_ULD_PRD_SCL (
+      uld_prd_sn,
+      pblnt_sn,
+      ptcp_inst_sn,
+      trsf_se_cd,
+      tbl_se_cd,
+      tnocs,
+      bgng_ymd,
+      end_ymd,
+      del_yn,
+      rgtr_id,
+      reg_dt,
+      mdfr_id,
+      mdfcn_dt
+    ) VALUES (
+      (SELECT COALESCE(MAX(uld_prd_sn), 0) + 1 FROM kids_own.TB_CM_D_ULD_PRD_SCL),
+      #{pblntSn},
+      #{ptcpInstSn},
+      #{trsfSeCd},
+      #{tblSeCd},
+      #{tnocs},
+      #{bgngYmd},
+      #{endYmd},
+      'N',
+      #{rgtrId},
+      #{regDt},
+      #{rgtrId},
+      #{regDt}
+    )
+  </insert>
+
+  <!-- 카탈로그 데이터 삭제 -->
+  <delete id="deleteCatalog">
+    DELETE FROM kids_own.TB_CM_M_ULD_CTLG
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+  </delete>
+
+  <!-- 참여취소(04) 후 CDM·업로드 메타 정리: 진행상태·취소일시 등 취소 결과는 유지 -->
+  <update id="clearPartnerCdmFieldsAfterCloseCancel">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET ver_info_nm = NULL,
+        last_updt_ymd = NULL,
+        updt_cycle_cnt = NULL,
+        uld_type_cd = NULL,
+        uld_dt = NULL,
+        ptcp_reg_dt = NULL,
+        ptcp_cmptn_dt = NULL,
+        ptcp_cfmtn_dt = NULL,
+        ptcp_rdmnd_dt = NULL,
+        uld_prgrs_yn = 'N',
+        mdfr_id = #{mdfrId},
+        mdfcn_dt = #{mdfcnDt}
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR TRIM(del_yn) = '' OR UPPER(TRIM(del_yn)) = 'N')
+  </update>
+
+  <!-- 카탈로그 데이터 삽입 -->
+  <insert id="insertCatalog">
+    INSERT INTO kids_own.TB_CM_M_ULD_CTLG (
+      uld_list_sn,
+      pblnt_sn,
+      ptcp_inst_sn,
+      tbl_se_cd,
+      col_nm,
+      data_type_nm,
+      nul_yn,
+      pk_yn,
+      fk_yn,
+      del_yn,
+      rgtr_id,
+      reg_dt,
+      mdfr_id,
+      mdfcn_dt
+    ) VALUES (
+      (SELECT COALESCE(MAX(uld_list_sn), 0) + 1 FROM kids_own.TB_CM_M_ULD_CTLG),
+      #{pblntSn},
+      #{ptcpInstSn},
+      #{tblSeCd},
+      #{colNm},
+      #{dataTypeCd},
+      #{nullYn},
+      #{pkYn},
+      #{fkYn},
+      'N',
+      #{rgtrId},
+      #{regDt},
+      #{rgtrId},
+      #{regDt}
+    )
+  </insert>
+
+  <select id="findUldPrgrsYn" resultType="string">
+    SELECT COALESCE(NULLIF(TRIM(uld_prgrs_yn), ''), 'N')
+    FROM kids_own.TB_CM_M_ULD_PRST
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+    LIMIT 1
+  </select>
+
+  <update id="updateUldPrgrsYn">
+    UPDATE kids_own.TB_CM_M_ULD_PRST
+    SET uld_prgrs_yn = #{uldPrgrsYn},
+        mdfr_id = COALESCE(#{mdfrId}, mdfr_id),
+        mdfcn_dt = CURRENT_TIMESTAMP
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+  </update>
+
+  <!-- 참여기관 기본정보 조회 (CDM 현황정보) - 여러 건 시 최신 1건 사용 -->
+  <select id="findPartnerBasicInfo" resultType="kr.or.kids.domain.cm.upload.dto.PartnerBasicInfoRow">
+    SELECT ver_info_nm   AS "verInfoNm",
+           last_updt_ymd AS "lastUpdtYmd",
+           updt_cycle_cnt AS "updtCycleCnt"
+    FROM kids_own.TB_CM_M_ULD_PRST
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+    ORDER BY CASE WHEN NULLIF(TRIM(COALESCE(ver_info_nm, '')), '') IS NULL THEN 1 ELSE 0 END ASC,
+             mdfcn_dt DESC NULLS LAST, reg_dt DESC NULLS LAST
+    LIMIT 1
+  </select>
+
+  <!-- 기간&규모 목록 조회 -->
+  <select id="findPeriodScaleList" resultType="kr.or.kids.domain.cm.upload.dto.PartnerPeriodScaleRow">
+    SELECT uld_prd_sn AS "uldPrdSn",
+           trsf_se_cd AS "trsfSeCd",
+           tbl_se_cd  AS "tblSeCd",
+           tnocs      AS "tnocs",
+           bgng_ymd   AS "bgngYmd",
+           end_ymd    AS "endYmd"
+    FROM kids_own.TB_CM_D_ULD_PRD_SCL
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+    ORDER BY trsf_se_cd, tbl_se_cd
+  </select>
+
+  <!-- 카탈로그 목록 조회 -->
+  <select id="findCatalogList" resultType="kr.or.kids.domain.cm.upload.dto.PartnerCatalogRow">
+    SELECT uld_list_sn  AS "uldListSn",
+           tbl_se_cd    AS "tblSeCd",
+           col_nm       AS "colNm",
+           data_type_nm AS "dataTypeNm",
+           nul_yn       AS "nullYn",
+           pk_yn        AS "pkYn",
+           fk_yn        AS "fkYn"
+    FROM kids_own.TB_CM_M_ULD_CTLG
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND (del_yn IS NULL OR del_yn = 'N')
+    ORDER BY uld_list_sn
+  </select>
+
+  <!-- 참여취소 사유 조회 (TB_CM_E_ULD_STTS_CHG에서 상태가 04인 최신 레코드) -->
+  <select id="findCancelReason" resultType="string">
+    SELECT chg_rsn_info_cn /* 변경사유정보내용 */
+    FROM kids_own.TB_CM_E_ULD_STTS_CHG
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND uld_inst_prgrs_stts_cd = '04' /* 참여취소 상태 */
+      AND (del_yn IS NULL OR del_yn = 'N')
+    ORDER BY reg_dt DESC
+    LIMIT 1
+  </select>
+
+  <!-- 참여취소 사유 업데이트 (TB_CM_E_ULD_STTS_CHG에서 상태가 04인 최신 레코드) -->
+  <update id="updateCancelReason">
+    UPDATE kids_own.TB_CM_E_ULD_STTS_CHG
+    SET chg_rsn_info_cn = #{cancelReason}, /* 변경사유정보내용 */
+        mdfr_id = #{mdfrId}, /* 수정자아이디 */
+        mdfcn_dt = #{mdfcnDt} /* 수정일시 */
+    WHERE pblnt_sn = #{pblntSn}
+      AND ptcp_inst_sn = #{ptcpInstSn}
+      AND uld_inst_prgrs_stts_cd = '04' /* 참여취소 상태 */
+      AND (del_yn IS NULL OR del_yn = 'N')
+      AND uld_stts_chg_sn = (
+        SELECT uld_stts_chg_sn
+        FROM kids_own.TB_CM_E_ULD_STTS_CHG
+        WHERE pblnt_sn = #{pblntSn}
+          AND ptcp_inst_sn = #{ptcpInstSn}
+          AND uld_inst_prgrs_stts_cd = '04'
+          AND (del_yn IS NULL OR del_yn = 'N')
+        ORDER BY reg_dt DESC
+        LIMIT 1
+      )
+  </update>
+
+  <!-- 현황정보 입력 이력 목록 조회 (기관 CDM 업로드 이력 팝업용) — 해당 공시·해당 참여기관만 (ptcp_inst_sn은 공시별 재사용 가능) -->
+  <select id="findStatusInfoHistory" resultType="kr.or.kids.domain.cm.upload.dto.PartnerStatusInfoHistoryRow">
+    SELECT prst.pblnt_sn       AS "pblntSn",
+           pblnt.ttl_nm        AS "pblntTtlNm",
+           prst.reg_dt         AS "regDt",
+           prst.rgtr_id        AS "rgtrId",
+           COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), prst.rgtr_id) AS "rgtrNm",
+           prst.ver_info_nm    AS "verInfoNm",
+           prst.last_updt_ymd  AS "lastUpdtYmd",
+           prst.updt_cycle_cnt AS "updtCycleCnt"
+    FROM kids_own.TB_CM_M_ULD_PRST prst
+    INNER JOIN kids_own.TB_CM_M_ULD_PBLNT pblnt ON pblnt.pblnt_sn = prst.pblnt_sn
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(prst.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(prst.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
+    WHERE prst.pblnt_sn = #{pblntSn}
+      AND prst.ptcp_inst_sn = #{ptcpInstSn}
+      AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+    ORDER BY prst.reg_dt DESC
+  </select>
+
+  <!-- 참여기관일련번호에 해당하는 기관 식별값 조회 (inst_id 우선, 없으면 brno). 업로드 초기 행은 brno만 채워진 경우가 있음 -->
+  <select id="findInstIdByPtcpInstSn" resultType="string">
+    SELECT TRIM(COALESCE(NULLIF(TRIM(prst.inst_id), ''), NULLIF(TRIM(prst.brno), '')))
+    FROM kids_own.TB_CM_M_ULD_PRST prst
+    WHERE prst.ptcp_inst_sn = #{ptcpInstSn}
+      <if test="pblntSn != null">AND prst.pblnt_sn = #{pblntSn}</if>
+      AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+      AND (
+        (prst.inst_id IS NOT NULL AND TRIM(prst.inst_id) != '')
+        OR (prst.brno IS NOT NULL AND TRIM(prst.brno) != '')
+      )
+    LIMIT 1
+  </select>
+
+  <!--
+    다른 공시에 참여 중인 기관 식별값(inst_id·brno 각각) — 마감(03)이 아닌 공시만, 참여취소(04) 행 제외.
+    공시상태·참여상태는 한 자리(2,3,4) 저장 호환. 참여기관 선택 모달·addPartners 검증 공통.
+  -->
+  <select id="findInstKeysOnOtherInProgressDisclosures" resultType="string">
+    SELECT DISTINCT TRIM(k)
+    FROM (
+      SELECT TRIM(NULLIF(TRIM(prst.inst_id), '')) AS k
+      FROM kids_own.TB_CM_M_ULD_PRST prst
+      INNER JOIN kids_own.TB_CM_M_ULD_PBLNT p ON p.pblnt_sn = prst.pblnt_sn
+        AND (p.del_yn IS NULL OR TRIM(p.del_yn) = '' OR UPPER(TRIM(p.del_yn)) = 'N')
+      WHERE prst.pblnt_sn &lt;&gt; #{excludePblntSn}
+        AND (prst.del_yn IS NULL OR TRIM(prst.del_yn) = '' OR UPPER(TRIM(prst.del_yn)) = 'N')
+        AND TRIM(COALESCE(p.pblnt_prgrs_stts_cd, '')) NOT IN ('03', '3')
+        AND TRIM(COALESCE(prst.uld_inst_prgrs_stts_cd, '')) NOT IN ('04', '4')
+        AND TRIM(NULLIF(TRIM(prst.inst_id), '')) != ''
+      UNION
+      SELECT TRIM(NULLIF(TRIM(prst.brno), '')) AS k
+      FROM kids_own.TB_CM_M_ULD_PRST prst
+      INNER JOIN kids_own.TB_CM_M_ULD_PBLNT p ON p.pblnt_sn = prst.pblnt_sn
+        AND (p.del_yn IS NULL OR TRIM(p.del_yn) = '' OR UPPER(TRIM(p.del_yn)) = 'N')
+      WHERE prst.pblnt_sn &lt;&gt; #{excludePblntSn}
+        AND (prst.del_yn IS NULL OR TRIM(prst.del_yn) = '' OR UPPER(TRIM(prst.del_yn)) = 'N')
+        AND TRIM(COALESCE(p.pblnt_prgrs_stts_cd, '')) NOT IN ('03', '3')
+        AND TRIM(COALESCE(prst.uld_inst_prgrs_stts_cd, '')) NOT IN ('04', '4')
+        AND TRIM(NULLIF(TRIM(prst.brno), '')) != ''
+    ) t
+    WHERE TRIM(k) != ''
+  </select>
+
+  <!-- 기관 연락처·관리자 이름 조회 (TB_PP_M_INST rgtr_id/mdfr_id → emp_nm 또는 mbr명) -->
+  <select id="findPartnerInstContactAndManager" resultType="kr.or.kids.domain.cm.upload.dto.PartnerContactManagerRow">
+    SELECT
+      COALESCE(NULLIF(TRIM(emp_contact.emp_nm), ''), NULLIF(TRIM(mbr_contact.encpt_mbr_flnm), ''), inst.rgtr_id) AS "instContact",
+      COALESCE(NULLIF(TRIM(emp_mgr.emp_nm), ''), NULLIF(TRIM(mbr_mgr.encpt_mbr_flnm), ''), inst.mdfr_id) AS "instManager"
+    FROM kids_own.TB_CM_M_ULD_PRST prst
+    INNER JOIN kids_own.TB_PP_M_INST inst ON TRIM(prst.inst_id) = TRIM(inst.brno)
+      AND (inst.del_yn IS NULL OR inst.del_yn = 'N')
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp_contact ON TRIM(COALESCE(inst.rgtr_id, '')) = TRIM(COALESCE(emp_contact.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr_contact ON TRIM(COALESCE(inst.rgtr_id, '')) = TRIM(COALESCE(mbr_contact.mbr_id, ''))
+    LEFT JOIN kids_own.tb_pp_m_emp_info emp_mgr ON TRIM(COALESCE(inst.mdfr_id, '')) = TRIM(COALESCE(emp_mgr.emp_no, ''))
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr_mgr ON TRIM(COALESCE(inst.mdfr_id, '')) = TRIM(COALESCE(mbr_mgr.mbr_id, ''))
+    WHERE prst.pblnt_sn = #{pblntSn}
+      AND prst.ptcp_inst_sn = #{ptcpInstSn}
+      AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+    LIMIT 1
+  </select>
+
+</mapper>

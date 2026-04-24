@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.kids.domain.cm.common.mapper.PartnerMapper">
+
+  <resultMap id="TbPpMInstVOMap" type="kr.or.kids.domain.cm.common.vo.TbPpMInstVO">
+    <result property="brno" column="brno"/>
+    <result property="instNm" column="inst_nm"/>
+    <result property="delYn" column="del_yn"/>
+    <result property="rgtrId" column="rgtr_id"/>
+    <result property="regDt" column="reg_dt"/>
+    <result property="regPrgmId" column="reg_prgm_id"/>
+    <result property="mdfrId" column="mdfr_id"/>
+    <result property="mdfcnDt" column="mdfcn_dt"/>
+    <result property="mdfcnPrgmId" column="mdfcn_prgm_id"/>
+  </resultMap>
+
+  <select id="selectExpertEncryptedInfoByBrno" parameterType="String" resultType="map">
+    SELECT /* kr.or.kids.domain.cm.common.mapper.selectExpertEncryptedInfoByBrno */
+           ei.encpt_exprt_inst_eml_nm AS "encptEmail",
+           m.encpt_mbr_flnm           AS "encptFlnm"
+      FROM kids_own.tb_pp_m_exprt_task et
+      JOIN kids_own.tb_pp_m_exprt_info ei
+        ON et.exprt_no = ei.exprt_no
+      JOIN kids_own.tb_pp_m_inst i
+        ON ei.brno = i.brno
+      JOIN kids_own.tb_pp_m_inst_task it
+        ON et.bzmn_task_mng_no = it.bzmn_task_mng_no
+      JOIN kids_own.tb_pp_m_mbr_info m
+        ON ei.mbr_no = m.mbr_no
+     WHERE it.tkcg_exprt_no = et.exprt_no
+       AND i.brno = #{brno}
+     LIMIT 1
+  </select>
+
+  <select id="selectEmpInfoByEmpNo" parameterType="String" resultType="map">
+    SELECT /* kr.or.kids.domain.cm.common.mapper.selectEmpInfoByEmpNo */
+           emp_nm           AS "empNm"
+         , encpt_emp_eml_nm AS "encptEmpEmlNm"
+         , di.dept_nm       AS "deptNm"
+      FROM kids_own.tb_pp_m_emp_info ei
+      LEFT JOIN kids_own.tb_pp_m_dept_info di
+        ON ei.dept_no = di.dept_no
+     WHERE emp_no = #{empNo}
+     LIMIT 1
+  </select>
+
+  <select id="search" resultMap="TbPpMInstVOMap">
+    SELECT *
+    FROM kids_own.tb_pp_m_inst
+    <where>
+      AND (del_yn IS NULL OR del_yn = 'N')
+    </where>
+    ORDER BY reg_dt DESC
+  </select>
+
+  <select id="selectInstAndName" parameterType="String" resultType="map">
+    SELECT /* kr.or.kids.domain.cm.common.mapper.selectInstAndName */
+           i.inst_nm AS inst_nm
+         , m.encpt_mbr_flnm AS encpt_mbr_flnm
+      FROM kids_own.tb_pp_m_exprt_info ei
+      JOIN kids_own.tb_pp_m_inst i
+        ON ei.brno = i.brno
+      JOIN kids_own.tb_pp_m_mbr_info m
+        ON ei.mbr_no = m.mbr_no
+     WHERE ei.mbr_no = #{mbrNo}
+     LIMIT 1
+  </select>
+
+  <select id="selectMbrNo" parameterType="String" resultType="String">
+    SELECT /* kr.or.kids.domain.cm.common.mapper.selectMbrNo */
+           m.mbr_no AS mbrNo
+      FROM kids_own.tb_pp_m_mbr_info m
+     WHERE m.mbr_Id = #{mbrId}
+     LIMIT 1
+  </select>
+
+</mapper>

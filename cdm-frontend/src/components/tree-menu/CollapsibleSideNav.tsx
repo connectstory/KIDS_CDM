@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import CollapsibleNavParentSection from "@/components/tree-menu/CollapsibleNavParentSection";
 import CollapsibleSideNavHeader from "@/components/tree-menu/CollapsibleSideNavHeader";
-import styles from "@/components/tree-menu/CollapsibleSideNav.module.css";
+import styles from "@/components/tree-menu/CollapsibleSideNav.module.scss";
 import type { CollapsibleSideNavProps } from "@/components/tree-menu/collapsibleSideNav.types";
 import { useCollapsibleNavOpenState } from "@/components/tree-menu/useCollapsibleNavOpenState";
 import { findAncestorKeysForLeafMenuKey } from "@/utils/menuRouteMatch";

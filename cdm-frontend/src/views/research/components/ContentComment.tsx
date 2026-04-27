@@ -13,12 +13,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Stack } from "@mui/material";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import Paper from "@mui/material/Paper";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSelector } from "react-redux";
 import { MSG } from "@/constants/string";
@@ -35,6 +33,7 @@ import {
 } from "@/hooks/research/useResearchMutations";
 import { useResearchComments, useResearchDetail, useResearchMentionTargets } from "@/hooks/research/useResearchQueries";
 import { useModal } from "@/hooks/useModal";
+import { AppButton, AppTextField } from "@/components/ui";
 
 type UiComment = {
   asmtCmntSn: number;
@@ -235,7 +234,6 @@ function MentionPopup({
       <Box sx={{ position: "fixed", inset: 0, zIndex: 9 }} onClick={onClose} aria-hidden />
       <Paper
         elevation={3}
-        className="overflow-auto"
         sx={{
           position: "fixed",
           left: Math.max(8, leftClamp),
@@ -248,17 +246,18 @@ function MentionPopup({
           zIndex: 10,
           borderRadius: 2,
           boxShadow: "0 0 20px 0 rgba(0, 0, 0, 0.2)",
+          overflow: "auto",
         }}
       >
         <List dense disablePadding>
           {showAll && (
-            <ListItemButton className="h-[37px]" onClick={onSelectAll}>
+            <ListItemButton sx={{ height: 37 }} onClick={onSelectAll}>
               <Typography variant="body3">전체</Typography>
             </ListItemButton>
           )}
           {partners.map((p) => (
             <ListItemButton
-              className="h-[37px]"
+              sx={{ height: 37 }}
               key={p.asmtPtcpInstSn}
               // selected={showAll ? selectedIndex === i + 1 : selectedIndex === i}
               onClick={() => onSelect(p)}
@@ -509,34 +508,42 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
   };
 
   return (
-    <div className="">
+    <Box>
       {/* 댓글 헤더 + 새로고침 */}
-      <Box className="flex items-center justify-between">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box className="sub_path">
           <Typography className="tit" variant="h5">
             댓글
-            <span className="ml-1"></span>
             <Typography variant="body2">({comments.length})</Typography>
           </Typography>
         </Box>
         <Box className="">
-          <Button variant="containedLight" size="small" onClick={() => refetch()}>
+          <AppButton variant="containedLight" size="small" onClick={() => refetch()}>
             <i className="fa-solid fa-arrows-rotate mr-2"></i> 새로고침
-          </Button>
+          </AppButton>
         </Box>
       </Box>
 
       {/* 댓글 리스트 */}
-      <ul>
+      <List component="ul" disablePadding>
         {comments.length === 0 ? (
-          <Box className="py-2">
-            <Box className="flex items-center justify-center p-4">
+          <Box sx={{ py: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}>
               <Typography variant="body2">등록된 댓글이 없습니다.</Typography>
             </Box>
           </Box>
         ) : (
           comments.map((comment) => (
-            <div key={comment.asmtCmntSn} className="py-3 bg-white border-b border-gray-200">
+            <Box
+              key={comment.asmtCmntSn}
+              component="div"
+              sx={{
+                py: 2,
+                bgcolor: "background.paper",
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
               {/* 댓글 (depth 0) */}
               <CommentItem
                 data={comment}
@@ -554,7 +561,7 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
 
               {/* 대댓글·답글 같은 깊이로 시간순 표시 */}
               {comment.children && comment.children.length > 0 && (
-                <div className="bg-gray-100 rounded-sm">
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 0.5 }}>
                   {comment.children.map((reply) => (
                     <CommentItem
                       key={reply.asmtCmntSn}
@@ -571,14 +578,14 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
                       onCancel={() => setEditing(null)}
                     />
                   ))}
-                </div>
+                </Box>
               )}
 
               {/* 답글 작성 영역: 이 스레드 루트일 때만 표시 */}
               {replyingTo?.rootAsmtCmntSn === comment.asmtCmntSn && (
-                <div className="mt-2 pl-5 pr-3 pb-3 relative">
-                  <div className="w-full">
-                    <TextField
+                <Box sx={{ mt: 1, pl: 5, pr: 2, pb: 2, position: "relative" }}>
+                  <Box sx={{ width: "100%" }}>
+                    <AppTextField
                       multiline
                       rows={3}
                       fullWidth
@@ -593,17 +600,17 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
                           endAdornment: (
                             <InputAdornment position="end">
                               <Stack direction="row" spacing={CONTENT_GAP.XSMALL}>
-                                <Button
+                                <AppButton
                                   variant="containedLight"
                                   size="xsmall"
                                   disabled={inputText.trim().length < 2}
                                   onClick={addComment}
                                 >
                                   <i className="fa-solid fa-paper-plane mr-2"></i> 등록
-                                </Button>
-                                <Button variant="text" size="xsmall" onClick={() => setReplyingTo(null)}>
+                                </AppButton>
+                                <AppButton variant="text" size="xsmall" onClick={() => setReplyingTo(null)}>
                                   취소
-                                </Button>
+                                </AppButton>
                               </Stack>
                             </InputAdornment>
                           ),
@@ -620,21 +627,29 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
                         onClose={() => setMentionState(null)}
                       />
                     )}
-                  </div>
-                </div>
+                  </Box>
+                </Box>
               )}
-            </div>
+            </Box>
           ))
         )}
-      </ul>
+      </List>
 
       {/* 댓글 작성 영역 (일반 댓글만, 대댓글 중일 때는 숨김) */}
       {!isResearchCrudDisabled(research?.asmtPrgrsSttsCd) && (
         <>
           {replyingTo === null && (
-            <div ref={endRef} className="w-full mt-4 rounded-md bg-white">
-              <div className="relative w-full">
-                <TextField
+            <Box
+              ref={endRef}
+              sx={{
+                width: "100%",
+                mt: 2,
+                borderRadius: 1,
+                bgcolor: "background.paper",
+              }}
+            >
+              <Box sx={{ position: "relative", width: "100%" }}>
+                <AppTextField
                   multiline
                   rows={3}
                   fullWidth
@@ -648,14 +663,14 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
                     input: {
                       endAdornment: (
                         <InputAdornment position="end">
-                          <Button
+                          <AppButton
                             variant="containedLight"
                             size="small"
                             disabled={inputText.trim().length < 2}
                             onClick={addComment}
                           >
                             <i className="fa-solid fa-paper-plane mr-2"></i> 등록
-                          </Button>
+                          </AppButton>
                         </InputAdornment>
                       ),
                     },
@@ -671,12 +686,12 @@ export default function ConcentComment({ asmtSn }: { asmtSn: number }) {
                     onClose={() => setMentionState(null)}
                   />
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
         </>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -825,16 +840,36 @@ function CommentItem({
   };
 
   return (
-    <li className={`flex w-full pr-3 ${depth > 0 ? "mt-3 pl-5  py-3 border-t1 border-gray-200" : ""}`}>
-      <div className="w-[10rem] min-w-[10rem] font-semibold leading-tight">
-        <p>{data.instName}</p>
-        <p className="text-gray-500 text-[0.9rem]">({data.rgtrName})</p>
-      </div>
+    <Box
+      component="li"
+      sx={{
+        display: "flex",
+        width: "100%",
+        pr: 2,
+        ...(depth > 0
+          ? {
+              mt: 2,
+              pl: 5,
+              py: 2,
+              borderTop: 1,
+              borderColor: "divider",
+            }
+          : {}),
+      }}
+    >
+      <Box sx={{ width: "10rem", minWidth: "10rem", fontWeight: 600, lineHeight: 1.25 }}>
+        <Typography component="p" variant="body2" sx={{ m: 0 }}>
+          {data.instName}
+        </Typography>
+        <Typography component="p" variant="body2" color="text.secondary" sx={{ m: 0, fontSize: "0.9rem" }}>
+          ({data.rgtrName})
+        </Typography>
+      </Box>
 
-      <div className="px-3 whitespace-pre-line flex-1 relative">
+      <Box sx={{ px: 2, whiteSpace: "pre-line", flex: 1, position: "relative" }}>
         {isEditing ? (
           <>
-            <TextField
+            <AppTextField
               inputRef={editTextareaRef}
               placeholder={MSG.COMMENT_CONTENT_REQUIRED}
               label={"댓글 수정"}
@@ -867,60 +902,47 @@ function CommentItem({
         ) : (
           renderMessageWithMentions(data.message, partners)
         )}
-      </div>
+      </Box>
 
-      <div className="w-[12rem] min-w-[12rem] px-3 text-gray-600 text-[0.9rem]">{data.createdAt}</div>
+      <Typography
+        component="div"
+        variant="body2"
+        color="text.secondary"
+        sx={{ width: "12rem", minWidth: "12rem", px: 2, fontSize: "0.9rem" }}
+      >
+        {data.createdAt}
+      </Typography>
 
-      <div className="w-[9rem] min-w-[9rem] text-right">
+      <Box sx={{ width: "9rem", minWidth: "9rem", textAlign: "right" }}>
         {isEditing ? (
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outlined"
-              size="xsmall"
-              onClick={onSave}
-              sx={{ bgcolor: "white", "&:hover": { bgcolor: "grey.50" } }}
-            >
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+            <AppButton variant="outlined" size="xsmall" onClick={onSave}>
               저장
-            </Button>
-            <Button
-              variant="outlined"
-              size="xsmall"
-              onClick={onCancel}
-              sx={{ bgcolor: "white", "&:hover": { bgcolor: "grey.50" } }}
-            >
+            </AppButton>
+            <AppButton variant="outlined" size="xsmall" onClick={onCancel}>
               취소
-            </Button>
-          </div>
+            </AppButton>
+          </Stack>
         ) : (
-          <div className="flex gap-1 justify-end">
+          <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
             {data.isMy && (
               <>
-                <Button
-                  variant="text"
-                  size="xsmall"
-                  onClick={onEdit}
-                  sx={{ bgcolor: "white", "&:hover": { bgcolor: "grey.50" } }}
-                >
+                <AppButton variant="text" size="xsmall" onClick={onEdit}>
                   수정
-                </Button>
-                <Button
-                  variant="text"
-                  size="xsmall"
-                  onClick={onDelete}
-                  sx={{ bgcolor: "white", "&:hover": { bgcolor: "grey.50" } }}
-                >
+                </AppButton>
+                <AppButton variant="text" size="xsmall" onClick={onDelete}>
                   삭제
-                </Button>
+                </AppButton>
               </>
             )}
             {!data.isMy && onReply && (
-              <Button variant="text" size="xsmall" onClick={onReply} sx={{ bgcolor: "white", "&:hover": { bgcolor: "grey.50" } }}>
+              <AppButton variant="text" size="xsmall" onClick={onReply}>
                 {depth === 0 ? "답글" : "답글"}
-              </Button>
+              </AppButton>
             )}
-          </div>
+          </Stack>
         )}
-      </div>
-    </li>
+      </Box>
+    </Box>
   );
 }

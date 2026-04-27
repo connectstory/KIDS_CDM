@@ -393,7 +393,7 @@ export interface EmpOption {
  */
 export interface AsmtPersonResponse {
   personSn: number;
-  personEmpNo: string;
+  empNo: string;
   empNm: string | null;
   deptNo: string | null;
 }

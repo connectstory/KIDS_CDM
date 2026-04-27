@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Button, InputBase, Paper, Stack, Typography } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import { CONTENT_GAP } from "@/constants/types.ts";
+import styles from "./CdmPaginationMove.module.scss";
 
 interface PaginationMoveProps {
   currentPage: number;
@@ -36,8 +37,8 @@ export default function CdmPaginationMove({ currentPage, totalPages, onPageChang
   };
 
   return (
-    <Stack direction="row" alignItems={"center"} className="paging_move">
-      <Stack direction="row" className="" gap={CONTENT_GAP.XSMALL}>
+    <Stack direction="row" alignItems={"center"} className={styles.paging_move} gap={CONTENT_GAP.SMALL}>
+      <Stack direction="row" className="" gap={CONTENT_GAP.SMALL}>
         <Typography className="" color="primary" fontWeight={600}>
           {currentPage}
         </Typography>{" "}

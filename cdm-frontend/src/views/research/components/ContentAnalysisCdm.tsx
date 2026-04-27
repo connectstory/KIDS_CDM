@@ -10,11 +10,12 @@
  * - 분석결과 검토 요청 및 검토 결과
  */
 import { useMemo, useState } from "react";
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
+import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { STRINGS } from "@/constants/string";
 import { AnalysisResultStatus, CdmUploadType, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { getFileDownloadUrl, getFilePreviewUrl } from "@/api/commonApi";
 import {
   convertResearchAnalysisStatus,
@@ -28,10 +29,10 @@ import { useModal } from "@/hooks/useModal";
 import type { FileData } from "@/components/FileContainer";
 import FileContainer from "@/components/FileContainer";
 import TextWithLineLimit from "@/components/TextWithLineLimit";
-import { isPreviewableFile } from "@/constants/researchFileUpload";
+import { AppButton, AppStatusChip } from "@/components/ui";
+import overlayStyles from "./ResearchOverlay.module.scss";
 
 export default function ContentAnalysisCdm() {
-  // const dispatch = useDispatch();
   const cdmDataManagementModal = useModal(ModalNames.CdmDataManagement);
   const pdfPreviewModal = useModal(ModalNames.PDF_PREVIEW);
 
@@ -93,36 +94,6 @@ export default function ContentAnalysisCdm() {
     return { completed, requestModify, exclude, notRegistered, status };
   }, [latestAnalysisData?.opinionList, latestAnalysisData?.asmtMetaRsltSttsCd, latestAnalysisData?.totalVotePartnerCount]);
 
-  // if (isLoading) {
-  //   return <div>로딩 중...</div>;
-  // }
-
-  // if (!research) {
-  //   return <div>오류 발생</div>;
-  // }
-
-  // const visible1 = latestAnalysisData === undefined || latestAnalysisData === null;
-  // const visible2 = latestAnalysisData === undefined || latestAnalysisData === null || latestAnalysisData?.rsltAlarmDt === null;
-
-  // useEffect(() => {
-  //   dispatch(setTooltipVisible({ id: TOOLTIP_IDS.ANALYSIS_CDM_REGISTER, visible: visible1 }));
-  //   dispatch(setTooltipVisible({ id: TOOLTIP_IDS.ANALYSIS_CDM_REVIEW, visible: visible2 && !visible1 }));
-  // }, [dispatch, visible1, visible2]);
-
-  // const v1 = useSelector((s: RootState) => selectTooltipVisible(TOOLTIP_IDS.ANALYSIS_CDM_REGISTER)(s));
-  // const v2 = useSelector((s: RootState) => selectTooltipVisible(TOOLTIP_IDS.ANALYSIS_CDM_REVIEW)(s));
-  // const showTippy = useMemo(
-  //   () => ({
-  //     visible: v1 || v2,
-  //     content: v1
-  //       ? TOOLTIP_CONTENT[TOOLTIP_IDS.ANALYSIS_CDM_REGISTER]
-  //       : v2
-  //         ? TOOLTIP_CONTENT[TOOLTIP_IDS.ANALYSIS_CDM_REVIEW]
-  //         : "",
-  //   }),
-  //   [v1, v2]
-  // );
-
   const handleOpenCdmDataManagement = () => {
     cdmDataManagementModal.open({
       title: "분석결과 관리",
@@ -131,21 +102,21 @@ export default function ContentAnalysisCdm() {
   };
 
   return (
-    <div style={{ position: "relative" }}>
+    <Box sx={{ position: "relative" }}>
       {/* 사용불가 오버레이 */}
       {isCdmUnavailable && (
-        <Box className="unavailable_overlay">
+        <Box className={overlayStyles.unavailableOverlay}>
           <Box>
-            <Typography component="p" variant="h6" className="text-gray-100">
+            <Typography component="p" variant="h6" sx={{ color: "common.white" }}>
               CDM 데이터를 업로드한 참여기관이 없습니다,
             </Typography>
-            <Typography component="p" variant="h6" className="pt-1 text-gray-100">
+            <Typography component="p" variant="h6" sx={{ color: "common.white", pt: 1 }}>
               통합 데이터 분석결과는 업로드된 CDM 데이터를 기반으로 분석됩니다.
             </Typography>
           </Box>
         </Box>
       )}
-      <div className="form_container">
+      <Box className="form_container">
         {/* 과제 내용 1 */}
         <Stack direction="row" className="form_container-row">
           <Box className="form_container-column">
@@ -191,10 +162,10 @@ export default function ContentAnalysisCdm() {
               <Typography variant="h6">분석결과 상태</Typography>
             </Box>
             <Box className="form_container-row-content ">
-              <Chip
+              <AppStatusChip
                 size="small"
                 label={getResearchAnalysisStatusConfig(latestAnalysisData?.asmtMetaRsltSttsCd)?.label}
-                sx={getResearchAnalysisStatusConfig(latestAnalysisData?.asmtMetaRsltSttsCd)?.chipStyle ?? {}}
+                chipStyle={getResearchAnalysisStatusConfig(latestAnalysisData?.asmtMetaRsltSttsCd)?.chipStyle ?? {}}
               />
             </Box>
           </Box>
@@ -271,22 +242,10 @@ export default function ContentAnalysisCdm() {
               <Typography variant="h6">분석결과 관리</Typography>
             </Box>
             <Box className="form_container-row-content ">
-              {/* <ClickableStateTooltip
-                tooltipId={TOOLTIP_IDS.ANALYSIS_CDM_REGISTER}
-                open={showTippy.visible}
-                title={showTippy.content}
-                tooltipIdsToCloseOnClick={[TOOLTIP_IDS.ANALYSIS_CDM_REGISTER, TOOLTIP_IDS.ANALYSIS_CDM_REVIEW]}
-                placement="top"
-                arrow
-                slotProps={{ popper: { sx: { zIndex: 1 } } }}
-              >
-                <Button variant="containedLight" size="small" disabled={isCdmUnavailable} onClick={handleOpenCdmDataManagement}>
-                  분석결과 관리
-                </Button>
-              </ClickableStateTooltip> */}
-              <Button variant="containedLight" size="small" disabled={isCdmUnavailable} onClick={handleOpenCdmDataManagement}>
+              {/* <ClickableStateTooltip ... /> */}
+              <AppButton variant="containedLight" size="small" disabled={isCdmUnavailable} onClick={handleOpenCdmDataManagement}>
                 분석결과 관리
-              </Button>
+              </AppButton>
             </Box>
           </Box>
           <Box className="form_container-column">
@@ -299,34 +258,34 @@ export default function ContentAnalysisCdm() {
                   {/* 검토 결과 통계 */}
                   <Box component="span">
                     검토완료:
-                    <Box component="span" className="px-1 font-semibold" sx={{ color: "#1E7F43" }}>
+                    <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.voteApprove" }}>
                       {statistics.completed}
                     </Box>
                   </Box>
-                  <Box component="span" className="px-3 text-gray-400">
+                  <Box component="span" sx={{ px: 1, color: "text.disabled" }}>
                     |
                   </Box>
                   <Box component="span">
                     보완요청:
-                    <Box component="span" className="px-1 font-semibold" sx={{ color: "#B26A00" }}>
+                    <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.votePending" }}>
                       {statistics.requestModify}
                     </Box>
                   </Box>
-                  <Box component="span" className="px-3 text-gray-400">
+                  <Box component="span" sx={{ px: 1, color: "text.disabled" }}>
                     |
                   </Box>
                   <Box component="span">
                     결과제외:
-                    <Box component="span" className="px-1 font-semibold" sx={{ color: "#D93025" }}>
+                    <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.voteReject" }}>
                       {statistics.exclude}
                     </Box>
                   </Box>
-                  <Box component="span" className="px-3 text-gray-400">
+                  <Box component="span" sx={{ px: 1, color: "text.disabled" }}>
                     |
                   </Box>
                   <Box component="span">
                     미등록:
-                    <Box component="span" className="px-1 font-semibold" sx={{ color: "#5F6368" }}>
+                    <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.voteNeutral" }}>
                       {statistics.notRegistered}
                     </Box>
                   </Box>
@@ -336,7 +295,7 @@ export default function ContentAnalysisCdm() {
             </Box>
           </Box>
         </Stack>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

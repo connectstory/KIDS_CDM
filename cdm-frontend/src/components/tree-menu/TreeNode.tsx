@@ -1,7 +1,7 @@
 import { Typography } from "@mui/material";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { setActiveMenuSn } from "@/api/axios";
-import styles from "./TreeMenu.module.css";
+import styles from "./TreeMenu.module.scss";
 
 export interface TreeItem {
   id: string;

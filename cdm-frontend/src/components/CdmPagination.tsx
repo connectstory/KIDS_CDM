@@ -1,4 +1,4 @@
-import styles from "./CdmPagination.module.css";
+import styles from "./CdmPagination.module.scss";
 
 export default function CdmPagination({
   page,

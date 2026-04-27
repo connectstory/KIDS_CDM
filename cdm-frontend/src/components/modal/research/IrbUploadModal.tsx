@@ -3,7 +3,7 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch, useSelector } from "react-redux";
 import { CONTENT_GAP } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy } from "@/api/commonApi";
 import { ResearchAPI } from "@/api/researchApi";
 import { type RootState } from "@/store";
@@ -16,6 +16,7 @@ import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { useModal } from "@/hooks/useModal";
 import FileContainer, { type FileData } from "@/components/FileContainer";
 import FileDropZone from "@/components/FileDropzone";
+import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 import BaseModal from "@/components/modal/BaseModal";
 
@@ -35,7 +36,12 @@ export default function IrbUploadModal() {
 
   const asmtSn = (modal?.data as IrbUploadModalData | undefined)?.asmtSn;
   const enabled = !!asmtSn && !!modal?.open;
-  const { data: irbFiles = [], refetch: refetchIrbFiles } = useResearchFiles(asmtSn, "01", "01", enabled);
+  const {
+    data: irbFiles = [],
+    refetch: refetchIrbFiles,
+    isLoading: isLoadingIrbFiles,
+    isError: isErrorIrbFiles,
+  } = useResearchFiles(asmtSn, "01", "01", enabled);
 
   if (!modal?.open) return null;
 
@@ -140,7 +146,17 @@ export default function IrbUploadModal() {
             <SpaceBox gap={CONTENT_GAP.MEDIUM} />
 
             {/* 기존 업로드된 IRB 파일 리스트 */}
-            {existingIrbFiles.length > 0 && (
+            {isLoadingIrbFiles && (
+              <Box sx={{ position: "relative", minHeight: 160 }}>
+                <Loader isLoading={true} />
+              </Box>
+            )}
+            {!isLoadingIrbFiles && isErrorIrbFiles && (
+              <Box sx={{ py: 2, textAlign: "center" }}>
+                <Typography color="text.secondary">기존 파일 목록을 불러오지 못했습니다.</Typography>
+              </Box>
+            )}
+            {!isLoadingIrbFiles && !isErrorIrbFiles && existingIrbFiles.length > 0 && (
               <>
                 <FileContainer
                   files={existingIrbFiles}

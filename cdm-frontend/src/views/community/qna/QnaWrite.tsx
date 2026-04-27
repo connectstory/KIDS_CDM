@@ -329,7 +329,7 @@ export default function QnaWriteView() {
                             파일 선택
                           </span>
                           {row.file && (
-                            <span className="text-sm truncate" style={{ color: "#111827", fontSize: "13px" }}>
+                            <span className="text-sm u-ellipsis" style={{ color: "#111827", fontSize: "13px" }}>
                               {row.file.name}
                             </span>
                           )}

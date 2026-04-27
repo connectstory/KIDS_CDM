@@ -1,5 +1,6 @@
 import { STRINGS } from "@/constants/string";
 import type { PROGRESS_STATUS_TYPE, PathParams, StatusChipConfig } from "@/constants/types";
+import { theme } from "@/theme";
 import {
   AnalysisResultStatus,
   ParticipationCdmStatus,
@@ -9,37 +10,18 @@ import {
 } from "@/constants/types";
 
 /* ------------------------------
- * 상태 칩 공통 색상 (배경, 텍스트)
+ * 상태 칩 공통 색상 (배경, 텍스트) — `theme.palette.research` 단일 출처
  * ------------------------------ */
+const rp = theme.palette.research;
+
 export const CHIP_COLORS = {
-  /* ------------------------------
-   * 🟡 요청/대기 - 작성됨
-   * ------------------------------ */
-  yellowRegistered: { bg: "#F5F3FF", text: "#5B21B6" }, // { bg: "#FEF7E0", text: "#B26A00" }
-  /* ------------------------------
-   * 🟡 요청/대기 - 참여·검토·보완 등
-   * ------------------------------ */
-  yellowRequest: { bg: "#FEF7E0", text: "#B26A00" }, // { bg: "#F5F3FF", text: "#5B21B6" },
-  /* ------------------------------
-   * 🟠 수정 요청 (보완·재요청·답변대기)
-   * ------------------------------ */
-  yellowModifyRequest: { bg: "#FFF7ED", text: "#C2410C" },
-  /* ------------------------------
-   * 🔵 진행중
-   * ------------------------------ */
-  blueProgress: { bg: "#E8F0FE", text: "#1A73E8" },
-  /* ------------------------------
-   * 🟢 완료/승인
-   * ------------------------------ */
-  greenComplete: { bg: "#E6F4EA", text: "#1E7F43" },
-  /* ------------------------------
-   * 🔴 거부/취소/제외
-   * ------------------------------ */
-  redReject: { bg: "#FDECEA", text: "#D93025" },
-  /* ------------------------------
-   * ⚪ 비활성/마감
-   * ------------------------------ */
-  grayInactive: { bg: "#F1F3F4", text: "#454545" },
+  yellowRegistered: { bg: rp.chipRegisteredBg, text: rp.chipRegisteredText },
+  yellowRequest: { bg: rp.chipPendingBg, text: rp.votePending },
+  yellowModifyRequest: { bg: rp.chipModifyBg, text: rp.chipModifyText },
+  blueProgress: { bg: rp.chipProgressBg, text: rp.chipProgressText },
+  greenComplete: { bg: rp.chipApproveBg, text: rp.voteApprove },
+  redReject: { bg: rp.chipRejectBg, text: rp.voteReject },
+  grayInactive: { bg: rp.chipNeutralBg, text: rp.voteNeutral },
 } as const;
 
 /* ------------------------------

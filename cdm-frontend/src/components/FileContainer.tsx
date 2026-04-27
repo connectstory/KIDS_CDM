@@ -1,5 +1,5 @@
 import { IconButton, Typography } from "@mui/material";
-import styles from "./FileContainer.module.css";
+import styles from "./FileContainer.module.scss";
 
 export interface FileData {
   /** 로컬에서만 쓰는 임시 식별자(다건 업로드 시 개별 삭제용) */

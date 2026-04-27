@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
-import { Box, Chip, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import { CONTENT_GAP } from "@/constants/types";
 import type { AsmtPersonResponse } from "@/interfaces/researchInterface";
 import { useCreateAsmtPerson, useDeleteAsmtPerson } from "@/hooks/research/useResearchMutations";
 import { useAsmtPersonEmpOptions, useAsmtPersonList } from "@/hooks/research/useResearchQueries";
 import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
+import { AppChip } from "@/components/ui";
 
 const DEPT_PHARM = "0000004";
 const DEPT_INFO = "0000080";
@@ -35,7 +36,7 @@ function PersonSection({
     () => empOptions.filter((o) => o.deptNo === deptNo && !assignedEmpNos.has(o.empNo)),
     [empOptions, deptNo, assignedEmpNos]
   );
-  const chips = useMemo(() => persons.filter((p) => p.deptNo === deptNo), [persons, deptNo]);
+  const chips = useMemo(() => persons.filter((p) => p.deptNo === deptNo), [persons]);
 
   const handleChange = useCallback(
     (value: string) => {
@@ -75,19 +76,32 @@ function PersonSection({
         </FormControl>
       </Box>
       <SpaceBox gap={CONTENT_GAP.XSMALL} />
-      <Box className="flex flex-wrap items-center gap-2 min-h-[52px] p-3 bg-gray-100 border border-gray-200 rounded-md">
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 2,
+          minHeight: 52,
+          p: 2,
+          borderRadius: 1,
+          border: 1,
+          borderColor: "divider",
+          bgcolor: "grey.100",
+        }}
+      >
         {chips.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             담당자를 추가해주세요, 설정한 담당자에게 알림이 전송됩니다.
           </Typography>
         ) : (
           chips.map((p) => (
-            <Chip
+            <AppChip
               key={p.personSn}
-              label={`${p.empNm ? ` ${p.empNm}` : ""} (${p.personEmpNo})`}
+              label={`${p.empNm ? ` ${p.empNm}` : ""} (${p.empNo})`}
               onDelete={() => onDelete(p.personSn)}
               size="medium"
-              sx={{ backgroundColor: "white" }}
+              variant="outlined"
             />
           ))
         )}
@@ -103,7 +117,7 @@ export default function ContentEmailSetting() {
   const createMutation = useCreateAsmtPerson();
   const deleteMutation = useDeleteAsmtPerson();
 
-  const assignedEmpNos = useMemo(() => new Set(persons.map((p) => p.personEmpNo)), [persons]);
+  const assignedEmpNos = useMemo(() => new Set(persons.map((p) => p.empNo)), [persons]);
   const allEmpOptions = useMemo(() => [...empOptionsPharm, ...empOptionsInfo], [empOptionsPharm, empOptionsInfo]);
 
   const handleCreate = useCallback(
@@ -129,11 +143,11 @@ export default function ContentEmailSetting() {
   }
 
   if (isErrorList) {
-    return <div>담당자 정보를 조회할 수 없습니다.</div>;
+    return <Box>담당자 정보를 조회할 수 없습니다.</Box>;
   }
 
   return (
-    <div>
+    <Box>
       <PersonSection
         title="약물역학빅데이터 담당자 설정"
         deptNo={DEPT_INFO}
@@ -157,6 +171,6 @@ export default function ContentEmailSetting() {
         onDelete={handleDelete}
         isLoadingOptions={isLoadingInfo}
       />
-    </div>
+    </Box>
   );
 }

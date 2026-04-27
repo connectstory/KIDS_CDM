@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { Box, Button, Chip, Typography } from "@mui/material";
-import { AllCommunityModule, type ColDef, type ICellRendererParams, ModuleRegistry } from "ag-grid-community";
+import { Box, Typography } from "@mui/material";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { CONTENT_GAP } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
@@ -11,8 +11,7 @@ import { useSearchAsmtAccounts } from "@/hooks/research/useResearchQueries";
 import { useModal } from "@/hooks/useModal";
 import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
+import { AppButton, AppStack, AppStatusChip } from "@/components/ui";
 
 type AccountRow = {
   sqAsmtAccountSn: number;
@@ -72,7 +71,7 @@ function buildAccountColDefs(
       cellRenderer: (p: ICellRendererParams<AccountRow>) => {
         const value = p.data?.asmtId;
         if (!value) {
-          return <Chip size="small" label="미사용" sx={StatusMap.notRegistered.chipStyle} variant="outlined" />;
+          return <AppStatusChip size="small" label="미사용" chipStyle={StatusMap.notRegistered.chipStyle} variant="outlined" />;
         }
         return value;
       },
@@ -114,14 +113,14 @@ function buildAccountColDefs(
       if (!row) return null;
       const hasAsmtSn = !!row.asmtId;
       return (
-        <Box className="flex gap-0.5">
-          <Button size="small" variant="outlined" onClick={() => onEdit(row)} disabled={hasAsmtSn}>
+        <AppStack direction="row" spacing={0.5}>
+          <AppButton size="small" variant="outlined" onClick={() => onEdit(row)} disabled={hasAsmtSn}>
             수정
-          </Button>
-          <Button size="small" variant="containedGray" color="error" onClick={() => onDelete(row)} disabled={hasAsmtSn}>
+          </AppButton>
+          <AppButton size="small" variant="containedGray" color="error" onClick={() => onDelete(row)} disabled={hasAsmtSn}>
             삭제
-          </Button>
-        </Box>
+          </AppButton>
+        </AppStack>
       );
     },
   });
@@ -184,22 +183,22 @@ export default function ContentAccount() {
   }
 
   if (isError) {
-    return <div>계정 정보를 조회할 수 없습니다.</div>;
+    return <Box>계정 정보를 조회할 수 없습니다.</Box>;
   }
 
   return (
-    <div>
+    <Box>
       <Box className="">
-        <Box className="flex items-center justify-between">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box className="sub_path">
             <Typography className="tit" variant="h5">
               VDI 계정
             </Typography>
           </Box>
           <Box className="">
-            <Button variant="contained" onClick={() => handleAddClick("vdi")}>
+            <AppButton variant="contained" onClick={() => handleAddClick("vdi")}>
               VDI 계정 추가
-            </Button>
+            </AppButton>
           </Box>
         </Box>
         <SpaceBox gap={CONTENT_GAP.XSMALL} />
@@ -216,16 +215,16 @@ export default function ContentAccount() {
       <SpaceBox gap={CONTENT_GAP.LARGE} />
 
       <Box className="">
-        <Box className="flex items-center justify-between">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box className="sub_path">
             <Typography className="tit" variant="h5">
               DB 계정
             </Typography>
           </Box>
           <Box className="">
-            <Button variant="contained" onClick={() => handleAddClick("db")}>
+            <AppButton variant="contained" onClick={() => handleAddClick("db")}>
               DB 계정 추가
-            </Button>
+            </AppButton>
           </Box>
         </Box>
         <SpaceBox gap={CONTENT_GAP.XSMALL} />
@@ -238,6 +237,6 @@ export default function ContentAccount() {
           />
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 }

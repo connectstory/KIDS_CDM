@@ -11,16 +11,11 @@ const axiosInstance = axios.create({
 });
 
 function readBearerTokenFromSessionStorage(): string | undefined {
-  // 1) new format: sessionStorage.auth = { acsTokenCn: "..." }
-  try {
-    const rawAuth = sessionStorage.getItem(SESSION_PP_AUTH_KEY);
-    if (rawAuth) {
-      const parsed = JSON.parse(rawAuth) as { acsTokenCn?: string } | null;
-      const token = parsed?.acsTokenCn;
-      if (token) return token;
-    }
-  } catch {
-    // ignore
+  const rawAuth = sessionStorage.getItem(SESSION_PP_AUTH_KEY);
+  if (rawAuth) {
+    const parsed = JSON.parse(rawAuth) as { acsTokenCn?: string } | null;
+    const token = parsed?.acsTokenCn;
+    if (token) return token;
   }
 
   // 2) legacy fallback
@@ -169,7 +164,6 @@ export function setActiveMenuSn(menuSn: number | undefined): void {
 export function getActiveMenuSn(): number | undefined {
   return activeMenuSn;
 }
-
 
 // =======================================
 // HTTP 메서드 → 수행업무코드(CA0003) 매핑

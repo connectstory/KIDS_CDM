@@ -9,17 +9,20 @@
  * - 분석결과 관리 버튼
  */
 import { useMemo } from "react";
-import { Box, Button, Chip, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { type ColDef, type ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useParams } from "react-router-dom";
 import { CdmUploadType, ParticipationCdmStatus, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { OrgAnalysisDataResponse } from "@/interfaces/researchInterface";
 import { getResearchAnalysisStatusConfig } from "@/utils/common";
 import { formatDateTime } from "@/utils/dateUtils";
 import { useOrgAnalysisDataList, useResearchPartners } from "@/hooks/research/useResearchQueries";
 import { useModal } from "@/hooks/useModal";
+import Loader from "@/components/Loader";
+import { AppButton, AppStatusChip } from "@/components/ui";
+import overlayStyles from "./ResearchOverlay.module.scss";
 
 /** 테이블 행 데이터 타입 */
 interface PartnerAnalysisRow {
@@ -47,15 +50,14 @@ export default function ContentAnalysisMember() {
   // 참여기관 목록 조회
   const { data: researchPartners = [] } = useResearchPartners(asmtSnNumber);
 
-  // uldTypeCd가 "01"인 기관 수 계산
-  const cdmUploadedCount = useMemo(() => {
-    let partners = researchPartners.filter((p) => p.ptcpPrgrsSttsCd !== ParticipationCdmStatus.NOT_PARTICIPATING);
-    partners = partners.filter((p) => p.uldTypeCd === null || p.uldTypeCd !== CdmUploadType.CDM);
-    return partners.length;
+  /** 기관 데이터 분석(비-CDM 업로드) 대상 참여기관 수 */
+  const orgAnalysisEligiblePartnerCount = useMemo(() => {
+    let eligible = researchPartners.filter((p) => p.ptcpPrgrsSttsCd !== ParticipationCdmStatus.NOT_PARTICIPATING);
+    eligible = eligible.filter((p) => p.uldTypeCd === null || p.uldTypeCd !== CdmUploadType.CDM);
+    return eligible.length;
   }, [researchPartners]);
 
-  // CDM 데이터 업로드된 기관이 없으면 사용불가
-  const isCdmUnavailable = cdmUploadedCount === 0;
+  const isOrgAnalysisSectionUnavailable = orgAnalysisEligiblePartnerCount === 0;
 
   /* ------------------------------
    * 테이블 행 데이터
@@ -97,7 +99,7 @@ export default function ContentAnalysisMember() {
           },
           cellRenderer: (p: ICellRendererParams<PartnerAnalysisRow>) => {
             const statusConfig = getResearchAnalysisStatusConfig(p.value);
-            return <Chip size="small" label={statusConfig?.label ?? "-"} sx={statusConfig?.chipStyle ?? {}} />;
+            return <AppStatusChip size="small" label={statusConfig?.label ?? "-"} chipStyle={statusConfig?.chipStyle ?? {}} />;
           },
         },
         {
@@ -119,7 +121,7 @@ export default function ContentAnalysisMember() {
           },
           cellRenderer: (p: ICellRendererParams<PartnerAnalysisRow>) => {
             return (
-              <Button
+              <AppButton
                 variant="containedLight"
                 size="small"
                 onClick={() => {
@@ -133,7 +135,7 @@ export default function ContentAnalysisMember() {
                 }}
               >
                 분석결과 관리
-              </Button>
+              </AppButton>
             );
           },
         },
@@ -142,18 +144,26 @@ export default function ContentAnalysisMember() {
   );
 
   if (isLoading) {
-    return <div>로딩 중...</div>;
+    return (
+      <Box sx={{ position: "relative", minHeight: 200 }}>
+        <Loader isLoading={true} />
+      </Box>
+    );
   }
 
   if (isError) {
-    return <div>참여기관 분석결과 조회에 실패했습니다.</div>;
+    return (
+      <Box sx={{ py: 2, textAlign: "center" }}>
+        <Typography color="text.secondary">참여기관 분석결과 조회에 실패했습니다.</Typography>
+      </Box>
+    );
   }
 
   return (
-    <div style={{ position: "relative" }}>
+    <Box sx={{ position: "relative" }}>
       {/* 사용불가 오버레이 */}
-      {isCdmUnavailable && (
-        <Box className="unavailable_overlay">
+      {isOrgAnalysisSectionUnavailable && (
+        <Box className={overlayStyles.unavailableOverlay}>
           <Box>
             <Typography component="p" variant="h6">
               현황 업로드 참여기관이 없습니다,
@@ -164,7 +174,7 @@ export default function ContentAnalysisMember() {
           </Box>
         </Box>
       )}
-      <div className="ag-theme-cdm w-full" style={{ minHeight: 222, maxHeight: 350, overflow: "auto" }}>
+      <Box className="ag-theme-cdm w-full" sx={{ minHeight: 222, maxHeight: 350, overflow: "auto" }}>
         <AgGridReact
           rowData={rowData}
           columnDefs={colDefs}
@@ -172,7 +182,7 @@ export default function ContentAnalysisMember() {
           rowHeight={42}
           overlayNoRowsTemplate={`<span style="padding:8px;">참여기관이 없습니다.</span>`}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

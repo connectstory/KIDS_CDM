@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { STRINGS } from "@/constants/string";
 import { AnalysisResultStatus, CONTENT_GAP, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { OpinionItemResponse } from "@/interfaces/researchInterface";
 import {
   CHIP_COLORS,
@@ -299,23 +299,31 @@ export default function CdmDataManagementVote({
 
         <SpaceBox gap={CONTENT_GAP.XSMALL} />
 
-        <Box className="flex w-full bg-gray-100 border-t border-black">
-          <Box className="w-[80px] text-center py-3 bg-red-5001">
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            bgcolor: "grey.200",
+            borderTop: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Box sx={{ width: 80, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.STATUS}
             </Typography>
           </Box>
-          <Box className="flex-1 py-3 bg-blue-5001">
+          <Box sx={{ flex: 1, py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.PARTNER} / {STRINGS.CONTENT}
             </Typography>
           </Box>
-          <Box className="w-[120px] text-center py-3 bg-yellow-5001">
+          <Box sx={{ width: 120, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.REGISTERED_BY}
             </Typography>
           </Box>
-          <Box className="w-[180px] text-center py-3 bg-purple-5001">
+          <Box sx={{ width: 180, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.REGISTERED_AT}
             </Typography>

@@ -3,7 +3,7 @@ import { Box, Button, TextField } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
 import { resolveModal } from "@/utils/modalPromise";

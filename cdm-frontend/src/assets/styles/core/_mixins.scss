@@ -1,0 +1,19 @@
+$default-container-width: 1200px;
+
+@mixin container($max-width: $default-container-width) {
+  width: min($max-width, calc(100% - 0px));
+  margin: 0 auto;
+}
+
+@mixin sr_only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

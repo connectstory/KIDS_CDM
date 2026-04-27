@@ -34,14 +34,11 @@ import type {
   ResearchPartnerListApiResponse,
   ResearchSearchRequest,
 } from "@/interfaces/researchInterface";
+import { researchApiPaths } from "@/api/apiPaths";
 import axios from "@/api/axios";
 import { convertResearchStatus } from "@/utils/common";
 
-const BASE_URL = "/researches";
-
-/**
- * ResearchListResponse의 상태 코드를 변환
- */
+// ResearchListResponse의 상태 코드를 변환
 function transformResearchListResponse(response: ResearchListResponse): ResearchListResponse {
   return {
     ...response,
@@ -49,10 +46,7 @@ function transformResearchListResponse(response: ResearchListResponse): Research
   };
 }
 
-/**
- * ResearchDetailResponse의 상태 코드를 변환
- * 현재 ResearchDetailResponse에는 상태 필드가 없지만, 향후 확장 대비
- */
+// ResearchDetailResponse의 상태 코드를 변환
 function transformResearchDetailResponse(response: ResearchDetailResponse): ResearchDetailResponse {
   return {
     ...response,
@@ -62,16 +56,12 @@ function transformResearchDetailResponse(response: ResearchDetailResponse): Rese
 
 export const ResearchAPI = {
   // =====================================
-  // 연구과제: 게시글 관리
+  // 연구과제 — 본문 (목록·상세·등록·수정·삭제·상태·마감·취소)
   // =====================================
 
-  /**
-   * F-CM-037 연구과제 목록 조회
-   * @param params 검색 조건 (title, content)
-   * @returns 연구과제 목록
-   */
+  // 연구과제 목록 조회
   getResearchesByAdmin: async (params?: ResearchSearchRequest) => {
-    const response = await axios.get<ResearchListApiResponse>(`${BASE_URL}/admin`, {
+    const response = await axios.get<ResearchListApiResponse>(researchApiPaths.adminList(), {
       params,
     });
     // 서버 코드를 프론트엔드 코드로 변환
@@ -87,13 +77,9 @@ export const ResearchAPI = {
     return response;
   },
 
-  /**
-   * F-CM-037 연구과제 목록 조회
-   * @param params 검색 조건 (title, content)
-   * @returns 연구과제 목록
-   */
+  // 연구과제 목록 조회
   getResearchesByPartner: async (params?: ResearchSearchRequest) => {
-    const response = await axios.get<ResearchListApiResponse>(`${BASE_URL}/partner`, {
+    const response = await axios.get<ResearchListApiResponse>(researchApiPaths.partnerList(), {
       params,
     });
     // 서버 코드를 프론트엔드 코드로 변환
@@ -109,16 +95,12 @@ export const ResearchAPI = {
     return response;
   },
 
-  /**
-   * F-CM-038 연구과제 상세 조회
-   * @param id 연구과제 ID
-   * @returns 연구과제 상세 정보
-   */
+  // 연구과제 상세 조회
   getResearchById: async (id: number) => {
     if (id == null || id === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    const response = await axios.get<ResearchDetailApiResponse>(`${BASE_URL}/${id}`);
+    const response = await axios.get<ResearchDetailApiResponse>(researchApiPaths.researchById(id));
     // 서버 코드를 프론트엔드 코드로 변환
     if (response.data.data) {
       return {
@@ -132,18 +114,10 @@ export const ResearchAPI = {
     return response;
   },
 
-  /**
-   * F-CM-039 연구과제 등록 (multipart: data 필수, files 선택)
-   * @param formData part "data" (JSON Blob), part "files" (File[] optional)
-   */
-  createResearch: (formData: FormData) => axios.post<ResearchCreateApiResponse>(BASE_URL, formData),
+  // 연구과제 등록 (multipart: data 필수, files 선택)
+  createResearch: (formData: FormData) => axios.post<ResearchCreateApiResponse>(researchApiPaths.researchesRoot(), formData),
 
-  /**
-   * F-CM-040 연구과제 수정 (multipart: data 필수, files·deleteFileIds 선택)
-   * @param asmtSn 연구과제 ID
-   * @param formData part "data" (JSON Blob), part "files" (File[] optional)
-   * @param deleteFileIds 삭제할 파일 ID 목록 (query param, repeated)
-   */
+  // 연구과제 수정 (multipart: data 필수, files·deleteFileIds 선택)
   updateResearch: (asmtSn: number, formData: FormData, deleteFileIds?: string[]) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -152,7 +126,7 @@ export const ResearchAPI = {
     if (deleteFileIds && deleteFileIds.length > 0) {
       params.deleteFileIds = deleteFileIds;
     }
-    return axios.put<void>(`${BASE_URL}/${asmtSn}`, formData, {
+    return axios.put<void>(researchApiPaths.researchByAsmtSn(asmtSn), formData, {
       params,
       paramsSerializer: (p) => {
         const search = new URLSearchParams();
@@ -168,36 +142,57 @@ export const ResearchAPI = {
     });
   },
 
-  /**
-   * F-CM-041 연구과제 삭제
-   * @param id 연구과제 ID
-   */
+  // 연구과제 삭제
   removeResearch: (id: number) => {
     if (id == null || id === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    return axios.delete<void>(`${BASE_URL}/${id}`);
+    return axios.delete<void>(researchApiPaths.researchById(id));
   },
 
-  /**
-   * 연구과제 참여기관 목록 조회
-   * @param asmtSn 연구과제 ID
-   * @returns 참여기관 목록
-   */
+  // 연구과제 상태 변경
+  updateResearchStatus: (asmtSn: number, asmtPrgrsSttsCd: string) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtPrgrsSttsCd == null || asmtPrgrsSttsCd === undefined) {
+      throw new Error("과제진행상태코드는 필수입니다.");
+    }
+    return axios.put<ApiResponse<void>>(researchApiPaths.status(asmtSn), {
+      asmtPrgrsSttsCd,
+    });
+  },
+
+  // 연구과제 마감
+  closeResearch: (asmtSn: number, payload: CloseResearchRequest) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    return axios.put<ApiResponse<void>>(researchApiPaths.close(asmtSn), payload);
+  },
+
+  // 연구과제 취소 (asmt_cls_cn, asmt_cls_dt 저장)
+  cancelResearch: (asmtSn: number, payload: CancelResearchRequest) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    return axios.put<ApiResponse<void>>(researchApiPaths.cancel(asmtSn), payload);
+  },
+
+  // =====================================
+  // 연구과제 — 참여기관
+  // =====================================
+
+  // 연구과제 참여기관 목록 조회
   getResearchPartners: async (asmtSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    const response = await axios.get<ResearchPartnerListApiResponse>(`${BASE_URL}/${asmtSn}/partners`);
+    const response = await axios.get<ResearchPartnerListApiResponse>(researchApiPaths.partners(asmtSn));
     return response;
   },
 
-  /**
-   * 연구과제 참여기관 단건 조회
-   * @param asmtSn 연구과제 ID
-   * @param ptcpInstSn 참여기관 일련번호
-   * @returns 참여기관 정보
-   */
+  // 연구과제 참여기관 단건 조회
   getResearchPartner: async (asmtSn: number, asmtPtcpInstSn: string | number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -205,29 +200,50 @@ export const ResearchAPI = {
     if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
       throw new Error("참여기관 일련번호는 필수입니다.");
     }
-    const response = await axios.get<ResearchPartnerApiResponse>(`${BASE_URL}/${asmtSn}/partners/${asmtPtcpInstSn}`);
+    const response = await axios.get<ResearchPartnerApiResponse>(researchApiPaths.partnerBySn(asmtSn, asmtPtcpInstSn));
     return response;
   },
 
-  /**
-   * 참여기관 정보 저장
-   * @param asmtSn 연구과제 ID
-   * @param payload 참여기관 생성 요청 데이터
-   */
+  // 참여기관 정보 저장
   createPartners: (asmtSn: number, payload: PartnerCreateRequest) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/partners`, payload);
+    return axios.post<ApiResponse<void>>(researchApiPaths.partners(asmtSn), payload);
   },
 
-  /**
-   * 분석 데이터 목록 조회
-   * @param asmtSn 연구과제 ID
-   * @param rsltGroupStcd 결과그룹상태코드
-   * @param instId 기관아이디 (사업자등록번호)
-   * @returns 분석 데이터 목록
-   */
+  // 참여기관 참여취소
+  cancelInvitePartner: (asmtSn: number, instId: number, payload: CancelInviteRequest) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (instId == null || instId === undefined) {
+      throw new Error("기관 ID는 필수입니다.");
+    }
+    return axios.put<ApiResponse<void>>(researchApiPaths.inviteByInst(asmtSn, instId), {
+      action: "delete",
+      asmtPtcpRtrcnRsn: payload.asmtPtcpRtrcnRsn,
+    } as PartnerActionRequest);
+  },
+
+  // 참여기관 참여승인
+  approveInvitePartner: (asmtSn: number, asmtPtcpInstSn: number | string) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
+      throw new Error("참여기관 일련번호는 필수입니다.");
+    }
+    return axios.put<ApiResponse<void>>(researchApiPaths.inviteByPtcp(asmtSn, asmtPtcpInstSn), {
+      action: "approve",
+    } as PartnerActionRequest);
+  },
+
+  // =====================================
+  // 연구과제 — 분석 데이터·의견·검토
+  // =====================================
+
+  // 분석 데이터 목록 조회
   getAnalysisData: async (asmtSn: number, rsltGroupStcd?: string, instId?: string) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -235,16 +251,11 @@ export const ResearchAPI = {
     const params: { rsltGroupStcd?: string; instId?: string } = {};
     if (rsltGroupStcd) params.rsltGroupStcd = rsltGroupStcd;
     if (instId) params.instId = instId;
-    const response = await axios.get<ApiResponse<AnalysisDataResponse[]>>(`${BASE_URL}/${asmtSn}/analysis-data`, { params });
+    const response = await axios.get<ApiResponse<AnalysisDataResponse[]>>(researchApiPaths.analysisData(asmtSn), { params });
     return response;
   },
 
-  /**
-   * Non-CDM 기관 분석 데이터 목록 조회
-   * @param asmtSn 연구과제 ID
-   * @param rsltGroupStcd 결과그룹상태코드
-   * @returns Non-CDM 기관 분석 데이터 목록
-   */
+  // Non-CDM 기관 분석 데이터 목록 조회
   getOrgAnalysisData: async (asmtSn: number, rsltGroupStcd: string) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -252,19 +263,13 @@ export const ResearchAPI = {
     if (rsltGroupStcd == null || rsltGroupStcd === undefined) {
       throw new Error("결과그룹상태코드는 필수입니다.");
     }
-    const response = await axios.get<OrgAnalysisDataApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data/org-analysis-data`, {
+    const response = await axios.get<OrgAnalysisDataApiResponse>(researchApiPaths.orgAnalysisData(asmtSn), {
       params: { rsltGroupStcd },
     });
     return response;
   },
 
-  /**
-   * 분석 데이터 상세 조회
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   * @param rsltGroupStcd 결과그룹상태코드
-   * @returns 분석 데이터 상세 정보
-   */
+  // 분석 데이터 상세 조회
   getAnalysisDataDetail: async (asmtSn: number, asmtMetaRsltSn: number, rsltGroupStcd?: string) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -273,18 +278,13 @@ export const ResearchAPI = {
       throw new Error("분석 데이터 ID는 필수입니다.");
     }
     const params = rsltGroupStcd ? { rsltGroupStcd: rsltGroupStcd } : {};
-    const response = await axios.get<AnalysisDataDetailApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}`, {
+    const response = await axios.get<AnalysisDataDetailApiResponse>(researchApiPaths.analysisDataBySn(asmtSn, asmtMetaRsltSn), {
       params,
     });
     return response;
   },
 
-  /**
-   * 최신 분석 데이터 상세 조회
-   * @param asmtSn 연구과제 ID
-   * @param rsltGroupStcd 결과그룹상태코드
-   * @returns 최신 분석 데이터 상세 정보
-   */
+  // 최신 분석 데이터 상세 조회
   getLatestAnalysisDataDetail: async (asmtSn: number, rsltGroupStcd: string) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -293,18 +293,11 @@ export const ResearchAPI = {
       throw new Error("결과그룹상태코드는 필수입니다.");
     }
     const params = { rsltGroupStcd: rsltGroupStcd };
-    const response = await axios.get<AnalysisDataDetailApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data/latest`, { params });
+    const response = await axios.get<AnalysisDataDetailApiResponse>(researchApiPaths.analysisDataLatest(asmtSn), { params });
     return response;
   },
 
-  /**
-   * 분석 데이터 생성 (multipart: data 필수, files 선택)
-   * @param asmtSn 연구과제 ID
-   * @param payload 분석 데이터 생성 요청 데이터
-   * @param files 첨부 파일 (legacy 선택)
-   * @param datasetFiles 분석 DATASET 첨부 파일 (optional)
-   * @param vdiFiles VDI 신청서 첨부 파일 (optional)
-   */
+  // 분석 데이터 생성 (multipart: data 필수, files 선택)
   createAnalysisData: (
     asmtSn: number,
     payload: AnalysisDataRequest,
@@ -326,20 +319,12 @@ export const ResearchAPI = {
     if (vdiFiles?.length) {
       vdiFiles.forEach((file) => formData.append("vdiFiles", file, file.name));
     }
-    return axios.post<AnalysisDataApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data`, formData, {
+    return axios.post<AnalysisDataApiResponse>(researchApiPaths.analysisData(asmtSn), formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
 
-  /**
-   * 분석 데이터 수정 (multipart: data 필수, files 선택)
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   * @param payload 분석 데이터 수정 요청 데이터
-   * @param files 첨부 파일 (legacy 선택)
-   * @param datasetFiles 분석 DATASET 첨부 파일 (optional)
-   * @param vdiFiles VDI 신청서 첨부 파일 (optional)
-   */
+  // 분석 데이터 수정 (multipart: data 필수, files 선택)
   updateAnalysisData: (
     asmtSn: number,
     asmtMetaRsltSn: number,
@@ -373,7 +358,7 @@ export const ResearchAPI = {
     if (deleteDatasetFileIds && deleteDatasetFileIds.length > 0) params.deleteDatasetFileIds = deleteDatasetFileIds;
     if (deleteVdiFileIds && deleteVdiFileIds.length > 0) params.deleteVdiFileIds = deleteVdiFileIds;
 
-    return axios.put<AnalysisDataUpdateApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}`, formData, {
+    return axios.put<AnalysisDataUpdateApiResponse>(researchApiPaths.analysisDataBySn(asmtSn, asmtMetaRsltSn), formData, {
       headers: { "Content-Type": "multipart/form-data" },
       params,
       paramsSerializer: (p) => {
@@ -387,253 +372,7 @@ export const ResearchAPI = {
     });
   },
 
-  /**
-   * 연구과제 파일 목록 조회 (uldTaskSeCd=01, fileSeCd 필터)
-   * @param asmtSn 연구과제 ID
-   * @param fileSeCd 파일구분코드 (01=IRB 등)
-   * @param uldTaskSeCd 업로드업무구분코드 (기본 01)
-   * @param ptcpInstSn 참여기관 일련번호 (IRB 조회 시 해당 기관 파일만, 생략 시 현재 사용자 기준)
-   */
-  getResearchFiles: async (asmtSn: number, fileSeCd: string, uldTaskSeCd?: string, ptcpInstSn?: number | null) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (!fileSeCd) {
-      throw new Error("fileSeCd는 필수입니다.");
-    }
-    const params: { fileSeCd: string; uldTaskSeCd?: string; ptcpInstSn?: number } = { fileSeCd };
-    if (uldTaskSeCd) params.uldTaskSeCd = uldTaskSeCd;
-    if (ptcpInstSn != null && !isNaN(ptcpInstSn)) params.ptcpInstSn = ptcpInstSn;
-    const response = await axios.get<ApiResponse<ResearchFileItem[]>>(`${BASE_URL}/${asmtSn}/files`, { params });
-    return response;
-  },
-
-  /**
-   * IRB/DRB 파일 업로드 (multipart files)
-   * @param asmtSn 연구과제 ID
-   * @param files 첨부 파일 (선택, 비어 있으면 호출만 하고 업로드 없음)
-   */
-  uploadIrbFiles: (asmtSn: number, files?: File[]) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    const formData = new FormData();
-    if (files?.length) {
-      files.forEach((file) => formData.append("files", file, file.name));
-    }
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/irb-files`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-
-  /**
-   * IRB 파일 삭제 (본인 업로드분만, DRB는 삭제 불가)
-   * @param asmtSn 연구과제 ID
-   * @param atchFileId 첨부파일ID(UUID)
-   */
-  deleteIrbFile: (asmtSn: number, atchFileId: string) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (!atchFileId) {
-      throw new Error("첨부파일 ID는 필수입니다.");
-    }
-    const encoded = encodeURIComponent(atchFileId);
-    return axios.delete<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/irb-files/${encoded}`);
-  },
-
-  /**
-   * 참여기관 공유파일 업로드 (multipart files, FileCodeType.RESEARCH_PARTNER)
-   * @param asmtSn 연구과제 ID
-   * @param asmtPtcpInstSn 참여기관 일련번호(pst_sn)
-   * @param files 첨부 파일 (선택)
-   */
-  uploadPartnerFiles: (asmtSn: number, asmtPtcpInstSn: number, files?: File[]) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
-      throw new Error("참여기관 일련번호는 필수입니다.");
-    }
-    const formData = new FormData();
-    formData.append("asmtPtcpInstSn", String(asmtPtcpInstSn));
-    if (files?.length) {
-      files.forEach((file) => formData.append("files", file, file.name));
-    }
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/partner-files`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-
-  /**
-   * 연구과제 등록자(주관기관) 첨부파일 업로드 (multipart files, FileCodeType.RESEARCH_ADMIN_ATTACHED)
-   * @param asmtSn 연구과제 ID
-   * @param files 첨부 파일 (선택)
-   */
-  uploadAdminFiles: (asmtSn: number, files?: File[]) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    const formData = new FormData();
-    if (files?.length) {
-      files.forEach((file) => formData.append("files", file, file.name));
-    }
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/admin-files`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-
-  /**
-   * 연구과제 등록자/관리자 첨부파일 삭제 (atchFileId 기준)
-   * @param asmtSn 연구과제 ID
-   * @param atchFileId 첨부파일ID(UUID)
-   */
-  deleteAdminFile: (asmtSn: number, atchFileId: string) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (!atchFileId) {
-      throw new Error("첨부파일 ID는 필수입니다.");
-    }
-    const encoded = encodeURIComponent(atchFileId);
-    return axios.delete<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/admin-files/${encoded}`);
-  },
-
-  /**
-   * 참여기관 공유파일 삭제 (atchFileId 기준)
-   * @param asmtSn 연구과제 ID
-   * @param asmtPtcpInstSn 참여기관 일련번호
-   * @param atchFileId 첨부파일ID(UUID)
-   */
-  deletePartnerFile: (asmtSn: number, asmtPtcpInstSn: number, atchFileId: string) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
-      throw new Error("참여기관 일련번호는 필수입니다.");
-    }
-    if (!atchFileId) {
-      throw new Error("첨부파일 ID는 필수입니다.");
-    }
-    const encoded = encodeURIComponent(atchFileId);
-    return axios.delete<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/partner-files/${encoded}`, {
-      params: { asmtPtcpInstSn },
-    });
-  },
-
-  /**
-   * 의견 등록
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   * @param payload 의견 등록 요청 데이터
-   */
-  createOpinion: (asmtSn: number, asmtMetaRsltSn: number, payload: OpinionRequest) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
-      throw new Error("분석 데이터 ID는 필수입니다.");
-    }
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}/opinion`, payload);
-  },
-
-  /**
-   * 의견 수정
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   * @param payload 의견 수정 요청 데이터
-   */
-  updateOpinion: (asmtSn: number, asmtMetaRsltSn: number, payload: OpinionRequest) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
-      throw new Error("분석 데이터 ID는 필수입니다.");
-    }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}/opinion`, payload);
-  },
-
-  /**
-   * 의견 목록 조회
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   * @returns 의견 목록
-   */
-  getOpinionList: async (asmtSn: number, asmtMetaRsltSn: number, rsltGroupStcd: string) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
-      throw new Error("분석 데이터 ID는 필수입니다.");
-    }
-    if (rsltGroupStcd == null || rsltGroupStcd === undefined) {
-      throw new Error("결과그룹상태코드는 필수입니다.");
-    }
-    const response = await axios.get<OpinionListApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}/opinion`, {
-      params: { rsltGroupStcd },
-    });
-    return response;
-  },
-
-  /**
-   * 참여기관 참여취소
-   * @param asmtSn 연구과제 ID
-   * @param instId 기관 ID
-   * @param payload 참여취소 요청 데이터
-   */
-  cancelInvitePartner: (asmtSn: number, instId: number, payload: CancelInviteRequest) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (instId == null || instId === undefined) {
-      throw new Error("기관 ID는 필수입니다.");
-    }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/partners/${instId}/invite`, {
-      action: "delete",
-      asmtPtcpRtrcnRsn: payload.asmtPtcpRtrcnRsn,
-    } as PartnerActionRequest);
-  },
-
-  /**
-   * 참여기관 참여승인
-   * @param asmtSn 연구과제 ID
-   * @param ptcpInstSn 참여기관 일련번호
-   */
-  approveInvitePartner: (asmtSn: number, asmtPtcpInstSn: number | string) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
-      throw new Error("참여기관 일련번호는 필수입니다.");
-    }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/partners/${asmtPtcpInstSn}/invite`, {
-      action: "approve",
-    } as PartnerActionRequest);
-  },
-
-  /**
-   * 연구과제 상태 변경
-   * @param asmtSn 연구과제 ID
-   * @param asmtPrgrsSttsCd 과제진행상태코드 ("01" 참여요청, "02" 진행중, "03" 완료)
-   */
-  updateResearchStatus: (asmtSn: number, asmtPrgrsSttsCd: string) => {
-    if (asmtSn == null || asmtSn === undefined) {
-      throw new Error("연구과제 ID는 필수입니다.");
-    }
-    if (asmtPrgrsSttsCd == null || asmtPrgrsSttsCd === undefined) {
-      throw new Error("과제진행상태코드는 필수입니다.");
-    }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/status`, {
-      asmtPrgrsSttsCd,
-    });
-  },
-
-  /**
-   * 분석 데이터 상태 수정
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   * @param payload 분석 데이터 상태 수정 요청 데이터
-   */
+  // 분석 데이터 상태 수정
   updateAnalysisDataStatus: (
     asmtSn: number,
     asmtMetaRsltSn: number,
@@ -646,16 +385,12 @@ export const ResearchAPI = {
       throw new Error("분석 데이터 ID는 필수입니다.");
     }
     return axios.put<ApiResponse<{ asmtMetaRsltSn: number }>>(
-      `${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}/status`,
+      researchApiPaths.analysisDataStatus(asmtSn, asmtMetaRsltSn),
       payload
     );
   },
 
-  /**
-   * 검토 요청 전송
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   */
+  // 검토 요청 전송
   sendReviewRequest: (asmtSn: number, asmtMetaRsltSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -663,17 +398,10 @@ export const ResearchAPI = {
     if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
       throw new Error("분석 데이터 ID는 필수입니다.");
     }
-    return axios.post<ApiResponse<{ asmtMetaRsltSn: number }>>(
-      `${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}/review-request`,
-      null
-    );
+    return axios.post<ApiResponse<{ asmtMetaRsltSn: number }>>(researchApiPaths.reviewRequest(asmtSn, asmtMetaRsltSn), null);
   },
 
-  /**
-   * 검토 요청 마감
-   * @param asmtSn 연구과제 ID
-   * @param asmtMetaRsltSn 분석 데이터 ID
-   */
+  // 검토 요청 마감
   closeReview: (asmtSn: number, asmtMetaRsltSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -681,96 +409,204 @@ export const ResearchAPI = {
     if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
       throw new Error("분석 데이터 ID는 필수입니다.");
     }
-    return axios.post<ApiResponse<{ asmtMetaRsltSn: number }>>(
-      `${BASE_URL}/${asmtSn}/analysis-data/${asmtMetaRsltSn}/review-close`,
-      null
-    );
+    return axios.post<ApiResponse<{ asmtMetaRsltSn: number }>>(researchApiPaths.reviewClose(asmtSn, asmtMetaRsltSn), null);
   },
 
-  /**
-   * 의견 전체 상태 체크 (메타분석, 원천데이터 분석의 최신 데이터가 모두 검토완료인지 확인)
-   * @param asmtSn 연구과제 ID
-   * @returns 모두 검토완료인 경우 true, 아닌 경우 false
-   */
+  // 의견 전체 상태 체크 (메타분석, 원천데이터 분석의 최신 데이터가 모두 검토완료인지 확인)
   checkAllStatusCompleted: async (asmtSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    const response = await axios.get<ApiResponse<boolean>>(`${BASE_URL}/${asmtSn}/analysis-data/all-status-check`);
+    const response = await axios.get<ApiResponse<boolean>>(researchApiPaths.allStatusCheck(asmtSn));
     return response;
   },
 
-  /**
-   * 메타분석 접근 가능 여부 체크 (결과제외/활용미동의)
-   * @param asmtSn 연구과제 ID
-   */
+  // 메타분석 접근 가능 여부 체크 (결과제외/활용미동의)
   checkMetaAccess: async (asmtSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    const response = await axios.get<ApiResponse<MetaAccessCheckResponse>>(
-      `${BASE_URL}/${asmtSn}/analysis-data/meta-access-check`
-    );
+    const response = await axios.get<ApiResponse<MetaAccessCheckResponse>>(researchApiPaths.metaAccessCheck(asmtSn));
     return response;
   },
 
-  /**
-   * 결과제외 등 의견 목록 조회 (`GET .../analysis-data/opinion`, 평면 OpinionListResponse 배열)
-   * @param asmtSn 연구과제 ID
-   * @param instId 기관아이디 (선택)
-   */
+  // 의견 등록
+  createOpinion: (asmtSn: number, asmtMetaRsltSn: number, payload: OpinionRequest) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
+      throw new Error("분석 데이터 ID는 필수입니다.");
+    }
+    return axios.post<ApiResponse<void>>(researchApiPaths.opinion(asmtSn, asmtMetaRsltSn), payload);
+  },
+
+  // 의견 수정
+  updateOpinion: (asmtSn: number, asmtMetaRsltSn: number, payload: OpinionRequest) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
+      throw new Error("분석 데이터 ID는 필수입니다.");
+    }
+    return axios.put<ApiResponse<void>>(researchApiPaths.opinion(asmtSn, asmtMetaRsltSn), payload);
+  },
+
+  // 의견 목록 조회
+  getOpinionList: async (asmtSn: number, asmtMetaRsltSn: number, rsltGroupStcd: string) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtMetaRsltSn == null || asmtMetaRsltSn === undefined) {
+      throw new Error("분석 데이터 ID는 필수입니다.");
+    }
+    if (rsltGroupStcd == null || rsltGroupStcd === undefined) {
+      throw new Error("결과그룹상태코드는 필수입니다.");
+    }
+    const response = await axios.get<OpinionListApiResponse>(researchApiPaths.opinion(asmtSn, asmtMetaRsltSn), {
+      params: { rsltGroupStcd },
+    });
+    return response;
+  },
+
+  // =====================================
+  // 연구과제 — 파일·IRB·첨부
+  // =====================================
+
+  // 결과제외 등 의견 목록 조회 (`GET .../analysis-data/opinion`, 평면 OpinionListResponse 배열)
   getOpinionByCondition: async (asmtSn: number, instId?: string) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
     const params: { instId?: string } = {};
     if (instId) params.instId = instId;
-    const response = await axios.get<ExcludedOpinionListApiResponse>(`${BASE_URL}/${asmtSn}/analysis-data/opinion`, { params });
+    const response = await axios.get<ExcludedOpinionListApiResponse>(researchApiPaths.opinionFlat(asmtSn), { params });
     return response;
   },
 
-  /**
-   * 연구과제 마감
-   * @param asmtSn 연구과제 ID
-   * @param payload 마감 요청 데이터
-   */
-  closeResearch: (asmtSn: number, payload: CloseResearchRequest) => {
+  // 연구과제 파일 목록 조회 (uldTaskSeCd=01, fileSeCd 필터)
+  getResearchFiles: async (asmtSn: number, fileSeCd: string, uldTaskSeCd?: string, ptcpInstSn?: number | null) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/close`, payload);
+    if (!fileSeCd) {
+      throw new Error("fileSeCd는 필수입니다.");
+    }
+    const params: { fileSeCd: string; uldTaskSeCd?: string; ptcpInstSn?: number } = { fileSeCd };
+    if (uldTaskSeCd) params.uldTaskSeCd = uldTaskSeCd;
+    if (ptcpInstSn != null && !isNaN(ptcpInstSn)) params.ptcpInstSn = ptcpInstSn;
+    const response = await axios.get<ApiResponse<ResearchFileItem[]>>(researchApiPaths.files(asmtSn), { params });
+    return response;
   },
 
-  /**
-   * 연구과제 취소 (asmt_cls_cn, asmt_cls_dt 저장)
-   * @param asmtSn 연구과제 ID
-   * @param payload 취소 요청 데이터
-   */
-  cancelResearch: (asmtSn: number, payload: CancelResearchRequest) => {
+  // IRB/DRB 파일 업로드 (multipart files)
+  uploadIrbFiles: (asmtSn: number, files?: File[]) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/cancel`, payload);
+    const formData = new FormData();
+    if (files?.length) {
+      files.forEach((file) => formData.append("files", file, file.name));
+    }
+    return axios.post<ApiResponse<void>>(researchApiPaths.irbFiles(asmtSn), formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  // IRB 파일 삭제 (본인 업로드분만, DRB는 삭제 불가)
+  deleteIrbFile: (asmtSn: number, atchFileId: string) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (!atchFileId) {
+      throw new Error("첨부파일 ID는 필수입니다.");
+    }
+    const encoded = encodeURIComponent(atchFileId);
+    return axios.delete<ApiResponse<void>>(researchApiPaths.irbFileItem(asmtSn, encoded));
+  },
+
+  // 참여기관 공유파일 업로드 (multipart files, FileCodeType.RESEARCH_PARTNER)
+  uploadPartnerFiles: (asmtSn: number, asmtPtcpInstSn: number, files?: File[]) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
+      throw new Error("참여기관 일련번호는 필수입니다.");
+    }
+    const formData = new FormData();
+    formData.append("asmtPtcpInstSn", String(asmtPtcpInstSn));
+    if (files?.length) {
+      files.forEach((file) => formData.append("files", file, file.name));
+    }
+    return axios.post<ApiResponse<void>>(researchApiPaths.partnerFiles(asmtSn), formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  // 연구과제 등록자(주관기관) 첨부파일 업로드 (multipart files, FileCodeType.RESEARCH_ADMIN_ATTACHED)
+  uploadAdminFiles: (asmtSn: number, files?: File[]) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    const formData = new FormData();
+    if (files?.length) {
+      files.forEach((file) => formData.append("files", file, file.name));
+    }
+    return axios.post<ApiResponse<void>>(researchApiPaths.adminFiles(asmtSn), formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  // 연구과제 등록자/관리자 첨부파일 삭제 (atchFileId 기준)
+  deleteAdminFile: (asmtSn: number, atchFileId: string) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (!atchFileId) {
+      throw new Error("첨부파일 ID는 필수입니다.");
+    }
+    const encoded = encodeURIComponent(atchFileId);
+    return axios.delete<ApiResponse<void>>(researchApiPaths.adminFileItem(asmtSn, encoded));
   },
 
   // =====================================
-  // 연구과제: 댓글
+  // 연구과제 — 댓글
   // =====================================
 
+  // 참여기관 공유파일 삭제 (atchFileId 기준)
+  deletePartnerFile: (asmtSn: number, asmtPtcpInstSn: number, atchFileId: string) => {
+    if (asmtSn == null || asmtSn === undefined) {
+      throw new Error("연구과제 ID는 필수입니다.");
+    }
+    if (asmtPtcpInstSn == null || asmtPtcpInstSn === undefined) {
+      throw new Error("참여기관 일련번호는 필수입니다.");
+    }
+    if (!atchFileId) {
+      throw new Error("첨부파일 ID는 필수입니다.");
+    }
+    const encoded = encodeURIComponent(atchFileId);
+    return axios.delete<ApiResponse<void>>(researchApiPaths.partnerFileItem(asmtSn, encoded), {
+      params: { asmtPtcpInstSn },
+    });
+  },
+
+  // 댓글 목록 조회
   getComments: async (asmtSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    return axios.get<ResearchCommentsApiResponse>(`${BASE_URL}/${asmtSn}/comments`);
+    return axios.get<ResearchCommentsApiResponse>(researchApiPaths.comments(asmtSn));
   },
 
+  // 댓글 등록
   createComment: (asmtSn: number, payload: ResearchCommentCreateRequest) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    return axios.post<ApiResponse<any>>(`${BASE_URL}/${asmtSn}/comments`, payload);
+    return axios.post<ApiResponse<any>>(researchApiPaths.comments(asmtSn), payload);
   },
 
+  // 댓글 수정
   updateComment: (asmtSn: number, asmtCmntSn: number, payload: ResearchCommentUpdateRequest) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -778,9 +614,10 @@ export const ResearchAPI = {
     if (asmtCmntSn == null || asmtCmntSn === undefined) {
       throw new Error("댓글 ID는 필수입니다.");
     }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/comments/${asmtCmntSn}`, payload);
+    return axios.put<ApiResponse<void>>(researchApiPaths.commentBySn(asmtSn, asmtCmntSn), payload);
   },
 
+  // 댓글 삭제
   deleteComment: (asmtSn: number, asmtCmntSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
@@ -788,148 +625,94 @@ export const ResearchAPI = {
     if (asmtCmntSn == null || asmtCmntSn === undefined) {
       throw new Error("댓글 ID는 필수입니다.");
     }
-    return axios.delete<ApiResponse<void>>(`${BASE_URL}/${asmtSn}/comments/${asmtCmntSn}`);
+    return axios.delete<ApiResponse<void>>(researchApiPaths.commentBySn(asmtSn, asmtCmntSn));
   },
 
-  /**
-   * VDI/DB 계정 목록 조회 (searchAsmtAccounts - 관리자용 전체 목록)
-   * @returns VDI/DB 계정 목록 (vdiType으로 VDI/DB 구분)
-   */
+  // =====================================
+  // 연구과제 — VDI/DB 계정
+  // =====================================
+
+  // VDI/DB 계정 목록 조회 (searchAsmtAccounts - 관리자용 전체 목록)
   searchAsmtAccounts: async () => {
-    const response = await axios.get<AsmtAccountListApiResponse>(`${BASE_URL}/accounts`);
+    const response = await axios.get<AsmtAccountListApiResponse>(researchApiPaths.accounts());
     return response;
   },
 
-  /**
-   * 과제별 VDI/DB 계정 목록 조회
-   * @param asmtSn 연구과제 ID
-   * @returns 과제별 계정 목록
-   */
+  // 과제별 VDI/DB 계정 목록 조회
   getAsmtAccounts: async (asmtSn: number) => {
     if (asmtSn == null || asmtSn === undefined) {
       throw new Error("연구과제 ID는 필수입니다.");
     }
-    const response = await axios.get<AsmtAccountListApiResponse>(`${BASE_URL}/${asmtSn}/accounts`);
+    const response = await axios.get<AsmtAccountListApiResponse>(researchApiPaths.accountsByAsmt(asmtSn));
     return response;
   },
 
-  /**
-   * VDI/DB 계정 등록 (ADMIN 전용)
-   */
+  // VDI/DB 계정 등록 (ADMIN 전용)
   createAsmtAccount: (payload: AsmtAccountRequest) => {
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/accounts`, payload);
+    return axios.post<ApiResponse<void>>(researchApiPaths.accounts(), payload);
   },
 
-  /**
-   * VDI/DB 계정 수정 (ADMIN 전용)
-   */
+  // VDI/DB 계정 수정 (ADMIN 전용)
   updateAsmtAccount: (sqAsmtAccountSn: number, payload: AsmtAccountRequest) => {
     if (sqAsmtAccountSn == null || sqAsmtAccountSn === undefined) {
       throw new Error("계정 일련번호는 필수입니다.");
     }
-    return axios.put<ApiResponse<void>>(`${BASE_URL}/accounts/${sqAsmtAccountSn}`, payload);
+    return axios.put<ApiResponse<void>>(researchApiPaths.accountBySn(sqAsmtAccountSn), payload);
   },
 
-  /**
-   * VDI/DB 계정 삭제 (ADMIN 전용)
-   */
+  // VDI/DB 계정 삭제 (ADMIN 전용)
   deleteAsmtAccount: (sqAsmtAccountSn: number) => {
     if (sqAsmtAccountSn == null || sqAsmtAccountSn === undefined) {
       throw new Error("계정 일련번호는 필수입니다.");
     }
-    return axios.delete<ApiResponse<void>>(`${BASE_URL}/accounts/${sqAsmtAccountSn}`);
+    return axios.delete<ApiResponse<void>>(researchApiPaths.accountBySn(sqAsmtAccountSn));
   },
 
-  /**
-   * 담당자 드롭다운용 직원 목록 (deptNos: 0000004,0000080 등)
-   */
+  // =====================================
+  // 연구과제 — 과제 담당자
+  // =====================================
+
+  // 담당자 드롭다운용 직원 목록 (deptNos: 0000004,0000080 등)
   searchAsmtPersonEmpOptions: (deptNos: string[]) => {
     const params = deptNos.length > 0 ? { deptNos: deptNos.join(",") } : {};
-    return axios.get<EmpOptionListApiResponse>(`${BASE_URL}/asmt-persons/emp-options`, { params });
+    return axios.get<EmpOptionListApiResponse>(researchApiPaths.asmtPersonEmpOptions(), { params });
   },
 
-  /**
-   * 담당자 목록 (emp_nm, dept_no 포함)
-   */
+  // 담당자 목록 (emp_nm, dept_no 포함)
   searchAsmtPersons: () => {
-    return axios.get<AsmtPersonListApiResponse>(`${BASE_URL}/asmt-persons`);
+    return axios.get<AsmtPersonListApiResponse>(researchApiPaths.asmtPersons());
   },
 
-  /**
-   * 담당자 등록 (ADMIN 전용)
-   */
+  // 담당자 등록 (ADMIN 전용)
   createAsmtPerson: (payload: AsmtPersonCreateRequest) => {
-    return axios.post<ApiResponse<void>>(`${BASE_URL}/asmt-persons`, payload);
+    return axios.post<ApiResponse<void>>(researchApiPaths.asmtPersons(), payload);
   },
 
-  /**
-   * 담당자 삭제 (ADMIN 전용)
-   */
+  // 담당자 삭제 (ADMIN 전용)
   deleteAsmtPerson: (personSn: number) => {
     if (personSn == null || personSn === undefined) {
       throw new Error("담당자 일련번호는 필수입니다.");
     }
-    return axios.delete<ApiResponse<void>>(`${BASE_URL}/asmt-persons/${personSn}`);
+    return axios.delete<ApiResponse<void>>(researchApiPaths.asmtPersonBySn(personSn));
   },
 
-  // // =====================================
-  // // Legacy API (for backward compatibility)
-  // // =====================================
-  // // 과제 목록 조회 (legacy)
-  // getAllResearchs: () => axios.get<Research[]>(BASE_URL),
-  // // 과제 상세 조회 (legacy)
-  // getByIdResearch: (id: number) => axios.get<Research>(`${BASE_URL}/${id}`),
-  // // 과제 생성 (legacy)
-  // createResearch: (payload: Partial<Research>) => axios.post(BASE_URL, payload),
-  // // 과제 수정 (legacy)
-  // updateResearch: (id: number, payload: Partial<Research>) =>
-  //   axios.put(`${BASE_URL}/${id}`, payload),
-  // // 과제 삭제 (legacy)
-  // removeResearch: (id: number) => axios.delete(`${BASE_URL}/${id}`),
-  // // 과제 초대요청 상태 변경 (legacy)
-  // changeStatusInviteResearch: (id: number, payload: Partial<{ desc: string }>) =>
-  //   axios.put(`${BASE_URL}/${id}`, payload),
-  // // 과제 진행중 상태 변경 (legacy)
-  // changeStatusOpenResearch: (id: number, payload: Partial<{ desc: string }>) =>
-  //   axios.put(`${BASE_URL}/${id}`, payload),
-  // // 과제 마감 상태 변경 (legacy)
-  // changeStatusCloseResearch: (id: number, payload: Partial<{ desc: string }>) =>
-  //   axios.put(`${BASE_URL}/${id}`, payload),
+  // =====================================
+  // 연구과제 — 분석 데이터셋(CDM 복사 비동기)
+  // =====================================
 
-  // // =====================================
-  // // 연구과제: 참여기관 관리
-  // // =====================================
-
-  // // =====================================
-  // // 연구과제: 통합분석 관리
-  // // =====================================
-
-  // // =====================================
-  // // 연구과제: 기관분석 관리
-  // // =====================================
-
-  // // =====================================
-  // // 연구과제: 메타분석 관리
-  // // =====================================
-
-  /**
-   * 분석 데이터셋 조건 기반 복사 비동기 제출 (CDM 데이터 생성).
-   * asmtSn만 전달하며, 서버에서 과제·참여기관(CDM)·최신 메타·엑셀·스키마를 조회 후 복사. 복사 완료 시 해당 과제가 진행 상태로 변경됨.
-   */
+  // 분석 데이터셋 조건 기반 복사 비동기 제출 (CDM 데이터 생성).
   submitAnalysisDatasetCopy: async (params: { asmtSn: number }) => {
     const searchParams = new URLSearchParams({ asmtSn: String(params.asmtSn) });
     const response = await axios.post<ApiResponse<AnalysisDatasetTaskResponse>>(
-      `${BASE_URL}/analysis-dataset?${searchParams.toString()}`
+      researchApiPaths.analysisDataset(searchParams.toString())
     );
     return response;
   },
 
-  /**
-   * 분석 데이터셋 복사 작업 상태 조회
-   */
+  // 분석 데이터셋 복사 작업 상태 조회
   getAnalysisDatasetTaskStatus: async (taskId: string) => {
     const response = await axios.get<ApiResponse<AnalysisDatasetTaskResponse>>(
-      `${BASE_URL}/analysis-dataset/tasks/${encodeURIComponent(taskId)}`
+      researchApiPaths.analysisDatasetTask(encodeURIComponent(taskId))
     );
     return response;
   },

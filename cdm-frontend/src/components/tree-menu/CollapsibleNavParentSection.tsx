@@ -2,7 +2,7 @@ import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { setActiveMenuSn } from "@/api/axios";
 import type { CollapsibleNavItem } from "@/components/tree-menu/collapsibleSideNav.types";
 import CollapsibleNavChildRow from "@/components/tree-menu/CollapsibleNavChildRow";
-import styles from "@/components/tree-menu/CollapsibleSideNav.module.css";
+import styles from "@/components/tree-menu/CollapsibleSideNav.module.scss";
 
 type Props = Readonly<{
   item: CollapsibleNavItem;

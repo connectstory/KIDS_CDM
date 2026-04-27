@@ -1,5 +1,5 @@
 import { Menu as MenuIcon, MenuOpen as MenuOpenIcon } from "@mui/icons-material";
-import styles from "@/components/tree-menu/CollapsibleSideNav.module.css";
+import styles from "@/components/tree-menu/CollapsibleSideNav.module.scss";
 
 type Props = {
   title: string;

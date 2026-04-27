@@ -4,53 +4,12 @@
 //        RelatedSites, SkipNavigation (assets/css/potal 에서 해당 레이아웃용만 추출)
 // =============================================================================
 
+@use "../styles/core/mixins" as *;
+
 // -----------------------------------------------------------------------------
 // 1. 변수 (layout에서 참조하는 것만)
 // -----------------------------------------------------------------------------
-:root {
-  --font-main: "Pretendard", sans-serif;
-  --container: 1200px;
-  --border-1: #8a949e;
-  --border-2: #cdd1d5;
-  --border-3: #087c80;
-  --color-text-1: #1e2124;
-  --color-text-2: #087c80;
-  --color-text-3: #464c53;
-  --color-text-4: #cdd1d5;
-  --font-Awesome: "Font Awesome 7 Free", sans-serif;
-  --fs-24: 24px;
-}
-
-// -----------------------------------------------------------------------------
-// 2. Mixins
-// -----------------------------------------------------------------------------
-$default-width: 1200px;
-
-@mixin container($max-width: $default-width) {
-  width: min($max-width, calc(100% - 0px));
-  margin: 0 auto;
-}
-
-@mixin sr_only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-// 스크린리더 전용 텍스트 (시각적으로 숨김)
-.blind {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  clip: rect(0 0 0 0);
-  overflow: hidden;
-}
+// (moved) Partner CSS variables + global sr-only utilities live in `assets/styles/core/*`.
 
 // -----------------------------------------------------------------------------
 // 3. #partnerWrap, 스킵 네비게이션
@@ -88,10 +47,6 @@ $default-width: 1200px;
     text-decoration: underline !important;
     font-size: 14px;
   }
-}
-
-.sr_only {
-  @include sr_only;
 }
 
 // -----------------------------------------------------------------------------

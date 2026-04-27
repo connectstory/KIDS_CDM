@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
 import { CONTENT_GAP, type PROGRESS_STATUS_TYPE, ProgressStatusType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { OpinionListResponse, ResearchPartnerResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
@@ -33,6 +33,7 @@ import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { useModal } from "@/hooks/useModal";
 import FileContainer, { type FileData } from "@/components/FileContainer";
 import FileDropZone from "@/components/FileDropzone";
+import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 import TextWithLineLimit from "@/components/TextWithLineLimit";
 import BaseModal from "@/components/modal/BaseModal";
@@ -58,13 +59,33 @@ export default function PartnerDetailModal() {
 
   const { asmtSn } = useParams<{ role: string; asmtSn: string }>();
   const asmtSnNumber = asmtSn ? Number(asmtSn) : null;
-  const { data: research, refetch: refetchResearch } = useResearchDetail(asmtSnNumber);
+  const {
+    data: research,
+    refetch: refetchResearch,
+    isLoading: isLoadingResearch,
+    isError: isErrorResearch,
+  } = useResearchDetail(asmtSnNumber);
   const modalData = modal?.open ? (modal.data as PartnerDetailModalData) : null;
 
-  const { data: partnerDetail, refetch: refetchPartner } = useResearchPartner(asmtSnNumber, modalData?.partner?.asmtPtcpInstSn);
-  const { data: excludeOpinionList, refetch: refetchOpinion } = useOpinionByCondition(asmtSnNumber, modalData?.partner?.instId);
+  const {
+    data: partnerDetail,
+    refetch: refetchPartner,
+    isLoading: isLoadingPartner,
+    isError: isErrorPartner,
+  } = useResearchPartner(asmtSnNumber, modalData?.partner?.asmtPtcpInstSn);
+  const {
+    data: excludeOpinionList,
+    refetch: refetchOpinion,
+    isLoading: isLoadingOpinions,
+    isError: isErrorOpinions,
+  } = useOpinionByCondition(asmtSnNumber, modalData?.partner?.instId);
 
-  const { data: partnerFiles = [], refetch: refetchPartnerFiles } = useResearchFiles(
+  const {
+    data: partnerFiles = [],
+    refetch: refetchPartnerFiles,
+    isLoading: isLoadingPartnerFiles,
+    isError: isErrorPartnerFiles,
+  } = useResearchFiles(
     asmtSnNumber,
     PARTNER_FILE_SE_CD,
     "01",
@@ -188,6 +209,9 @@ export default function PartnerDetailModal() {
 
   if (!modal?.open || !modalData) return null;
 
+  const anyLoading = isLoadingResearch || isLoadingPartner || isLoadingOpinions || isLoadingPartnerFiles;
+  const anyError = isErrorResearch || isErrorPartner || isErrorOpinions || isErrorPartnerFiles;
+
   // ------------------------------
   // 파일 업로드 핸들러
   // ------------------------------
@@ -292,11 +316,25 @@ export default function PartnerDetailModal() {
 
         <SpaceBox gap={CONTENT_GAP.LARGE} />
 
-        {/* ==============================
-          참여기관 정보
-        ============================== */}
+        {anyLoading && (
+          <Box sx={{ position: "relative", minHeight: 320 }}>
+            <Loader isLoading={true} />
+          </Box>
+        )}
 
-        {partnerDetail && (
+        {!anyLoading && anyError && (
+          <Box sx={{ py: 3, textAlign: "center" }}>
+            <Typography color="text.secondary">정보를 불러오지 못했습니다.</Typography>
+          </Box>
+        )}
+
+        {!anyLoading && !anyError && (
+          <>
+            {/* ==============================
+              참여기관 정보
+            ============================== */}
+
+            {partnerDetail && (
           <Box>
             <Box className="sub_path">
               <Typography className="tit" variant="h5">
@@ -523,6 +561,8 @@ export default function PartnerDetailModal() {
                 </Button>
               </Box>
             </Box>
+          </>
+            )}
           </>
         )}
       </Box>

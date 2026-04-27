@@ -1,7 +1,7 @@
 @import "./cdm.css";
-@import "./aggrid.css";
-@import "./aggridguard.css";
-@import "./layout.css";
+@import "./global-aggrid.css";
+@import "./global-aggridguard.css";
+@import "./layout.scss";
 @import "./content.css";
 @import "./common.css";
 @import "./community.css";

@@ -2,12 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, Chip, Divider, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import {
-  AllCommunityModule,
   type ColDef,
   type FirstDataRenderedEvent,
   type GridApi,
   type ICellRendererParams,
-  ModuleRegistry,
   type RowDataUpdatedEvent,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
@@ -20,7 +18,7 @@ import {
   ProgressStatusType,
   RsltGroupStcdType,
 } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { AnalysisDataResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
@@ -28,13 +26,12 @@ import { getResearchAnalysisStatusConfig, isResearchCrudDisabled } from "@/utils
 import { formatDate } from "@/utils/dateUtils";
 import { resolveModal } from "@/utils/modalPromise";
 import { useAnalysisDataList, useResearchDetail } from "@/hooks/research/useResearchQueries";
+import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 import BaseModal from "@/components/modal/BaseModal";
 import AnalysisDataManagementDetail from "./AnalysisDataManagementDetail";
 import AnalysisDataManagementWrite from "./AnalysisDataManagementWrite";
-import Styles from "./AnalysisManagementModal.module.css";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
+import Styles from "./AnalysisManagementModal.module.scss";
 
 type ViewType = "none" | "write" | "detail";
 
@@ -84,7 +81,12 @@ export default function AnalysisDataManagementModal() {
   /* ------------------------------
    * 분석 DATASET 목록 조회
    * ------------------------------ */
-  const { data: analysisDatasList, refetch } = useAnalysisDataList(
+  const {
+    data: analysisDatasList,
+    refetch,
+    isLoading: isLoadingAnalysisList,
+    isError: isErrorAnalysisList,
+  } = useAnalysisDataList(
     research?.asmtSn ?? null,
     RsltGroupStcdType.ANALYSIS_DATA,
     undefined,
@@ -288,6 +290,17 @@ export default function AnalysisDataManagementModal() {
                 </p>
               </div>
             </div>
+            {isLoadingAnalysisList && (
+              <Box sx={{ position: "relative", minHeight: 240 }}>
+                <Loader isLoading={true} />
+              </Box>
+            )}
+            {!isLoadingAnalysisList && isErrorAnalysisList && (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <Typography color="text.secondary">목록을 불러오지 못했습니다.</Typography>
+              </Box>
+            )}
+            {!isLoadingAnalysisList && !isErrorAnalysisList && (
             <AgGridReact
               ref={gridRef}
               rowData={analysisDatas}
@@ -340,16 +353,30 @@ export default function AnalysisDataManagementModal() {
                 syncGridSelection(event.api);
               }}
             />
+            )}
           </Box>
           <Divider orientation="vertical" flexItem />
           <Box ref={rightContainerRef} className={Styles.analysis_container_right}>
             {/* 분석 데이터셋 미등록 상태 */}
             {"none" === currentViewType && (
               <Box className="w-full h-full flex justify-center items-center">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center m-auto h-[120px] w-[120px] p-14 bg-gray-100 rounded-full ">
-                    <i className="fa-solid fa-file-arrow-up text-7xl text-gray-300"></i>
-                  </div>
+                <Box sx={{ textAlign: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      m: "auto",
+                      height: 120,
+                      width: 120,
+                      p: 7,
+                      bgcolor: "grey.100",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    <Box component="i" className="fa-solid fa-file-arrow-up" sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }} />
+                  </Box>
                   <SpaceBox gap={CONTENT_GAP.LARGE} />
                   <Typography variant="h5">분석결과가 없습니다.</Typography>
                   <SpaceBox gap={CONTENT_GAP.XSMALL} />
@@ -358,7 +385,7 @@ export default function AnalysisDataManagementModal() {
                       ? "분석 DATASET이 등록되면 알림을 받으실 수 있습니다."
                       : "분석 DATASET을 작성하고 자료를 첨부해주세요."}
                   </Typography>
-                </div>
+                </Box>
               </Box>
             )}
             {/* 분석 데이터셋 작성 모드 */}
@@ -366,17 +393,34 @@ export default function AnalysisDataManagementModal() {
               (!isWriteAllowed ? (
                 <>
                   <Box className="w-full h-full flex justify-center items-center">
-                    <div className="text-center">
-                      <div className="flex flex-col items-center justify-center m-auto h-[120px] w-[120px] p-14 bg-gray-100 rounded-full ">
-                        <i className="fa-solid fa-circle-exclamation text-7xl text-gray-300"></i>
-                      </div>
+                    <Box sx={{ textAlign: "center" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          m: "auto",
+                          height: 120,
+                          width: 120,
+                          p: 7,
+                          bgcolor: "grey.100",
+                          borderRadius: "50%",
+                        }}
+                      >
+                        <Box
+                          component="i"
+                          className="fa-solid fa-circle-exclamation"
+                          sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }}
+                        />
+                      </Box>
                       <SpaceBox gap={CONTENT_GAP.LARGE} />
                       <Typography variant="h6">분석 DATASET을 등록할 수 없습니다.</Typography>
                       <SpaceBox gap={CONTENT_GAP.XSMALL} />
                       <Typography variant="description">
                         연구과제 상태가 참여요청인 경우에만 분석 DATASET을 등록할 수 있습니다.
                       </Typography>
-                    </div>
+                    </Box>
                   </Box>
                 </>
               ) : (

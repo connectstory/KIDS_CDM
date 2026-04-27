@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { STRINGS } from "@/constants/string";
 import { AnalysisResultStatus, CONTENT_GAP, CdmUploadType, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { OpinionItemResponse } from "@/interfaces/researchInterface";
 import {
   formatResearchOpinionConsentLabel,
@@ -255,7 +255,7 @@ export default function MetaDataManagementVote({
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="default">
               검토완료:
-              <Typography component="span" variant="default" sx={{ pl: 1, color: "#1E7F43" }}>
+              <Typography component="span" variant="default" sx={{ pl: 1, color: "research.voteApprove" }}>
                 {statistics.completed}
               </Typography>
             </Typography>
@@ -264,7 +264,7 @@ export default function MetaDataManagementVote({
             </Typography>
             <Typography variant="default">
               보완요청:
-              <Typography component="span" variant="default" sx={{ pl: 1, color: "#B26A00" }}>
+              <Typography component="span" variant="default" sx={{ pl: 1, color: "research.votePending" }}>
                 {statistics.requestModify}
               </Typography>
             </Typography>
@@ -273,7 +273,7 @@ export default function MetaDataManagementVote({
             </Typography>
             <Typography variant="default">
               미등록:
-              <Typography component="span" variant="default" sx={{ pl: 1, color: "#5F6368" }}>
+              <Typography component="span" variant="default" sx={{ pl: 1, color: "research.voteNeutral" }}>
                 {statistics?.notRegistered ?? "-"}
               </Typography>
             </Typography>
@@ -282,7 +282,7 @@ export default function MetaDataManagementVote({
             </Typography>
             <Typography variant="default">
               활용동의:
-              <Typography component="span" variant="default" sx={{ pl: 1, color: "#1E7F43" }}>
+              <Typography component="span" variant="default" sx={{ pl: 1, color: "research.voteApprove" }}>
                 {statistics.consentAgree}
               </Typography>
             </Typography>
@@ -291,7 +291,7 @@ export default function MetaDataManagementVote({
             </Typography>
             <Typography variant="default">
               활용미동의:
-              <Typography component="span" variant="default" sx={{ pl: 1, color: "#B00020" }}>
+              <Typography component="span" variant="default" sx={{ pl: 1, color: "research.voteDanger" }}>
                 {statistics.consentDisagree}
               </Typography>
             </Typography>
@@ -303,28 +303,36 @@ export default function MetaDataManagementVote({
 
         <SpaceBox gap={CONTENT_GAP.XSMALL} />
 
-        <Box className="flex w-full bg-gray-100 border-t border-black">
-          <Box className="w-[80px] text-center py-3 bg-red-5001">
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            bgcolor: "grey.200",
+            borderTop: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Box sx={{ width: 80, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.STATUS}
             </Typography>
           </Box>
-          <Box className="w-[80px] text-center py-3 bg-red-5001">
+          <Box sx={{ width: 80, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               활용동의
             </Typography>
           </Box>
-          <Box className="flex-1 py-3 bg-blue-5001">
+          <Box sx={{ flex: 1, py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.PARTNER} / {STRINGS.CONTENT}
             </Typography>
           </Box>
-          <Box className="w-[120px] text-center py-3 bg-yellow-5001">
+          <Box sx={{ width: 120, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.REGISTERED_BY}
             </Typography>
           </Box>
-          <Box className="w-[180px] text-center py-3 bg-purple-5001">
+          <Box sx={{ width: 180, textAlign: "center", py: 2, bgcolor: "grey.200" }}>
             <Typography variant="default" fontWeight={600}>
               {STRINGS.REGISTERED_AT}
             </Typography>

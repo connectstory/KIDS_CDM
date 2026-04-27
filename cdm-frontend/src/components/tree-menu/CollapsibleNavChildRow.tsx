@@ -1,6 +1,6 @@
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { setActiveMenuSn } from "@/api/axios";
-import styles from "@/components/tree-menu/CollapsibleSideNav.module.css";
+import styles from "@/components/tree-menu/CollapsibleSideNav.module.scss";
 import type { CollapsibleNavItem } from "@/components/tree-menu/collapsibleSideNav.types";
 
 type Props = Readonly<{

@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
 import { resolveModal } from "@/utils/modalPromise";

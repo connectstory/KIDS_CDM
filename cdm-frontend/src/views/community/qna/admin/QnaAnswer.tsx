@@ -337,7 +337,7 @@ export default function QnaWriteView() {
                           </span>
                           {row.file && (
                             <span
-                              className="text-sm truncate"
+                              className="text-sm u-ellipsis"
                               style={{
                                 color: "#111827",
                                 fontSize: "13px",

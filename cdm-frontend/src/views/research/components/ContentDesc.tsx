@@ -1,29 +1,22 @@
-// import { ResearchAPI } from "@/api";
-import { useEffect /* useMemo, useState */ } from "react";
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { useEffect, useMemo } from "react";
+import { Box, Stack, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useDispatch, useSelector } from "react-redux";
 import { STRINGS } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
 import { type PROGRESS_STATUS_TYPE, ProgressStatusType, RoleType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { ResearchDetailResponse, ResearchFileItem } from "@/interfaces/researchInterface";
 import { downloadFileViaProxy } from "@/api/commonApi";
 import type { RootState } from "@/store";
 import { setTooltipVisible } from "@/store/tooltipSlice";
-import {
-  convertResearchStatus,
-  formatFileSize,
-  // getFileExtension,
-  getResearchAnalysisStatusConfig,
-  getStatusConfig,
-} from "@/utils/common";
+import { convertResearchStatus, formatFileSize, getResearchAnalysisStatusConfig, getStatusConfig } from "@/utils/common";
 import { formatDate, formatDateTime } from "@/utils/dateUtils";
 import { useModal } from "@/hooks/useModal";
-// import { useResearchFiles } from "@/hooks/research/useResearchQueries";
-// import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import type { FileData } from "@/components/FileContainer";
 import FileContainer from "@/components/FileContainer";
 import TextWithLineLimit from "@/components/TextWithLineLimit";
+import { AppButton, AppStatusChip } from "@/components/ui";
 
 function researchFileToFileData(f: ResearchFileItem): FileData {
   const ext = f.fileExtNm ?? (f.fileNm?.split(".").pop() || "");
@@ -50,28 +43,41 @@ const STEP_SECTION_IDS: Record<(typeof PROGRESS_STEPS)[number], string | null> =
   [ProgressStatusType.COMPLETED]: "content-status-btn",
 };
 
+/** ResearchDetail: 주관 분석 탭 / 참여기관 기관·CDM 분석 블록 중 DOM에 있는 첫 섹션으로 스크롤 */
+const ANALYSIS_PROGRESS_ANCHOR_IDS = ["content-analysis", "content-org-analysis-partner", "content-cdm-analysis-partner"] as const;
+
 function scrollToSection(sectionId: string | null) {
   if (!sectionId) return;
   const el = document.getElementById(sectionId);
   el?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-const INACTIVE_CHIP_STYLE = {
-  bgcolor: "#E0E0E0",
-  color: "#9E9E9E",
-};
+function scrollToFirstVisibleAnalysisSection() {
+  for (const id of ANALYSIS_PROGRESS_ANCHOR_IDS) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+  }
+}
 
 function ProgressStepper({ currentStatus }: { currentStatus: PROGRESS_STATUS_TYPE }) {
+  const theme = useTheme();
+  const inactiveChipStyle = useMemo(
+    () => ({ bgcolor: theme.palette.grey[300], color: theme.palette.grey[600] }),
+    [theme]
+  );
   const currentStepIndex = PROGRESS_STEPS.indexOf(currentStatus as (typeof PROGRESS_STEPS)[number]);
   const activeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   return (
-    <Stack className="items-center" direction="row" gap={0}>
+    <Stack alignItems="center" direction="row" gap={0}>
       {PROGRESS_STEPS.map((stepType, index) => {
         const isCurrentStep = index === activeIndex;
         const isLinePassed = index > 0 && index <= activeIndex;
         const stepConfig = getStatusConfig(stepType);
-        const chipStyle = isCurrentStep ? stepConfig?.chipStyle || INACTIVE_CHIP_STYLE : INACTIVE_CHIP_STYLE;
+        const chipStyle = isCurrentStep ? stepConfig?.chipStyle || inactiveChipStyle : inactiveChipStyle;
         const label = stepConfig?.label ?? stepType;
 
         // 라인 단일 색상 (그라데이션 복원 시 아래 주석 참고)
@@ -84,20 +90,26 @@ function ProgressStepper({ currentStatus }: { currentStatus: PROGRESS_STATUS_TYP
         };
 
         const sectionId = STEP_SECTION_IDS[stepType];
-        const isClickable = isCurrentStep && sectionId;
+        const isAnalysisProgressStep = stepType === ProgressStatusType.IN_PROGRESS_ANALYSIS;
+        const isClickable = isCurrentStep && (Boolean(sectionId) || isAnalysisProgressStep);
 
         return (
           <Stack key={stepType} direction="row" alignItems="center" gap={0} flexShrink={0}>
             {index > 0 && <Box sx={lineSx} />}
-            <Chip
+            <AppStatusChip
               size="small"
               label={label}
-              sx={{
+              chipStyle={{
                 ...chipStyle,
                 cursor: isClickable ? "pointer" : "default",
                 opacity: isCurrentStep ? 1 : 0.7,
               }}
-              onClick={isClickable ? () => scrollToSection(sectionId) : undefined}
+              onClick={
+                isClickable
+                  ? () =>
+                      isAnalysisProgressStep ? scrollToFirstVisibleAnalysisSection() : scrollToSection(sectionId)
+                  : undefined
+              }
               component={isClickable ? "button" : "div"}
             />
           </Stack>
@@ -110,9 +122,7 @@ function ProgressStepper({ currentStatus }: { currentStatus: PROGRESS_STATUS_TYP
 export default function ContentDescView({ research }: { research: ResearchDetailResponse }) {
   const dispatch = useDispatch();
   const analysisManagementModal = useModal(ModalNames.AnalysisDataManagement);
-  // const pdfPreviewModal = useModal(ModalNames.PDF_PREVIEW);
   const session = useSelector((state: RootState) => state.session);
-  // const { showAlert } = useGlobalAlert();
   const legacyCancelReason = (research as ResearchDetailResponse & { asmt_ddln_cn?: string | null }).asmt_ddln_cn;
   const cancelReason = legacyCancelReason?.trim() || research.asmtClsCn?.trim() || "-";
 
@@ -209,7 +219,7 @@ export default function ContentDescView({ research }: { research: ResearchDetail
   // };
 
   return (
-    <div className="form_container">
+    <Box className="form_container">
       {/* 과제 내용 1 */}
       <Stack direction="row" className="form_container-row">
         <Box className="form_container-column">
@@ -252,10 +262,10 @@ export default function ContentDescView({ research }: { research: ResearchDetail
             {research.asmtPrgrsSttsCd !== ProgressStatusType.CANCELLED ? (
               <ProgressStepper currentStatus={convertResearchStatus(research.asmtPrgrsSttsCd)} />
             ) : (
-              <Chip
+              <AppStatusChip
                 size="small"
                 label={getStatusConfig(ProgressStatusType.CANCELLED)?.label}
-                sx={getStatusConfig(ProgressStatusType.CANCELLED)?.chipStyle ?? {}}
+                chipStyle={getStatusConfig(ProgressStatusType.CANCELLED)?.chipStyle ?? {}}
               />
             )}
           </Box>
@@ -303,40 +313,7 @@ export default function ContentDescView({ research }: { research: ResearchDetail
       </Stack>
 
       {/* 과제 내용 6 */}
-      {/* {isCreator && (
-        <Stack direction="row" className="form_container-row">
-          <Box className="form_container-column">
-            <Box className="form_container-row-label">
-              <Typography variant="h6">과제 생성자 연구파일</Typography>
-            </Box>
-            <Box className="form_container-row-content">
-              <Box className="w100">
-                {adminFiles.length > 0 ? (
-                  <FileContainer
-                    files={adminFiles.map(researchFileToFileData)}
-                    onClick={onFileClick}
-                    showDeleteButton={isCreator}
-                    onDelete={handleAdminUploadedFileDelete}
-                  />
-                ) : (
-                  <Typography variant="default">첨부 파일이 없습니다.</Typography>
-                )}
-                <FileContainer files={pendingFiles} showDeleteButton={true} onDelete={handleAdminPendingFileDelete} />
-                <Box sx={{ mt: 1 }} />
-                <FileDropZone onDrop={handleAdminFileDrop} />
-                <Box sx={{ mt: 1 }} />
-                <Button
-                  variant="contained"
-                  onClick={handleUploadAdminFiles}
-                  disabled={submittingAdminFiles || uploadFiles.length === 0}
-                >
-                  {submittingAdminFiles ? "업로드 중..." : "업로드"}
-                </Button>
-              </Box>
-            </Box>
-          </Box>
-        </Stack>
-      )} */}
+      {/* {isCreator && (...) } */}
 
       {/* 과제 내용 6 */}
       <Stack direction="row" className="form_container-row">
@@ -345,7 +322,7 @@ export default function ContentDescView({ research }: { research: ResearchDetail
             <Typography variant="h6">첨부파일</Typography>
           </Box>
           <Box className="form_container-row-content">
-            <Box className="w100">
+              <Box className="w-full">
               {research.fileList && research.fileList?.length > 0 ? (
                 <FileContainer files={(research.fileList ?? []).map(researchFileToFileData)} onClick={onFileClick} />
               ) : (
@@ -363,7 +340,7 @@ export default function ContentDescView({ research }: { research: ResearchDetail
             <Typography variant="h6">분석질의</Typography>
           </Box>
           <Box className="form_container-row-content">
-            <Box className="w100">
+            <Box className="w-full">
               {research.analysisFileList && research.analysisFileList?.length > 0 ? (
                 <FileContainer files={(research.analysisFileList ?? []).map(researchFileToFileData)} onClick={onFileClick} />
               ) : (
@@ -383,19 +360,9 @@ export default function ContentDescView({ research }: { research: ResearchDetail
                 <Typography variant="h6">분석 DATASET 관리</Typography>
               </Box>
               <Box className="form_container-row-content">
-                {/* <ClickableStateTooltip
-                  tooltipId={TOOLTIP_IDS.ANALYSIS_DATASET_REGISTER}
-                  placement="bottom"
-                  arrow
-                  slotProps={{ popper: { sx: { zIndex: 1 } } }}
-                >
-                  <Button variant="containedLight" size="small" onClick={onShowAnalysisDataManagementModal}>
-                    분석 DATASET 관리
-                  </Button>
-                </ClickableStateTooltip> */}
-                <Button variant="containedLight" size="small" onClick={onShowAnalysisDataManagementModal}>
+                <AppButton variant="containedLight" size="small" onClick={onShowAnalysisDataManagementModal}>
                   분석 DATASET 관리
-                </Button>
+                </AppButton>
               </Box>
             </Box>
             <Box className="form_container-column">
@@ -405,17 +372,17 @@ export default function ContentDescView({ research }: { research: ResearchDetail
               <Box className="form_container-row-content">
                 <Box component="span" className="form_container-row-content-inline-block">
                   {research.asmtMetaRsltSttsCd === null && (
-                    <Chip
+                    <AppStatusChip
                       size="small"
                       label={getStatusConfig(ProgressStatusType.NOT_REGISTERED)?.label}
-                      sx={getStatusConfig(ProgressStatusType.NOT_REGISTERED)?.chipStyle ?? {}}
+                      chipStyle={getStatusConfig(ProgressStatusType.NOT_REGISTERED)?.chipStyle ?? {}}
                     />
                   )}
                   {research.asmtMetaRsltSttsCd && (
-                    <Chip
+                    <AppStatusChip
                       size="small"
                       label={getResearchAnalysisStatusConfig(research.asmtMetaRsltSttsCd)?.label}
-                      sx={getResearchAnalysisStatusConfig(research.asmtMetaRsltSttsCd)?.chipStyle ?? {}}
+                      chipStyle={getResearchAnalysisStatusConfig(research.asmtMetaRsltSttsCd)?.chipStyle ?? {}}
                     />
                   )}
                 </Box>
@@ -424,6 +391,6 @@ export default function ContentDescView({ research }: { research: ResearchDetail
           </Stack>
         </>
       )}
-    </div>
+    </Box>
   );
 }

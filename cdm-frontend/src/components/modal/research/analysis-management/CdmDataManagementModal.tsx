@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Divider, Tab, Tabs, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
-import { AllCommunityModule, type ColDef, ModuleRegistry } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
 import { CONTENT_GAP } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { AnalysisDataResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
@@ -17,16 +17,15 @@ import { isResearchCrudDisabled } from "@/utils/common";
 import { resolveModal } from "@/utils/modalPromise";
 import { useAnalysisDataList, useResearchDetail } from "@/hooks/research/useResearchQueries";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
+import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 import BaseModal from "@/components/modal/BaseModal";
-import Styles from "./AnalysisManagementModal.module.css";
+import Styles from "./AnalysisManagementModal.module.scss";
 import CdmDataManagementDetail from "./CdmDataManagementDetail";
 import CdmDataManagementVote from "./CdmDataManagementVote";
 import CdmDataManagementWrite from "./CdmDataManagementWrite";
 import { buildCdmAnalysisColumnDefs } from "./cdmDataManagementModalColumnDefs";
 import type { CdmDataManagementModalData, CdmDataManagementViewType } from "./cdmDataManagementModalTypes";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function CdmDataManagementModal() {
   const dispatch = useDispatch();
@@ -51,7 +50,7 @@ export default function CdmDataManagementModal() {
   const [currentViewType, setCurrentViewType] = useState<CdmDataManagementViewType>("none");
   const [currentAnalysisDatas, setCurrentAnalysisDatas] = useState<AnalysisDataResponse | null>(null);
   const [analysisDatas, setAnalysisDatas] = useState<AnalysisDataResponse[]>([]);
-  const [rsltGroupStcd] = useState("02");
+  const rsltGroupStcd = "02";
   const [analysisTabIndex, setAnalysisTabIndex] = useState(0);
   const [newlyCreatedAsmtMetaRsltSn, setNewlyCreatedAsmtMetaRsltSn] = useState<number | null>(null);
 
@@ -71,7 +70,12 @@ export default function CdmDataManagementModal() {
   /* ------------------------------
    * 분석 데이터 목록 조회
    * ------------------------------ */
-  const { data: analysisDatasList, refetch } = useAnalysisDataList(
+  const {
+    data: analysisDatasList,
+    refetch,
+    isLoading: isLoadingAnalysisList,
+    isError: isErrorAnalysisList,
+  } = useAnalysisDataList(
     research?.asmtSn ?? null,
     rsltGroupStcd,
     undefined,
@@ -284,61 +288,86 @@ export default function CdmDataManagementModal() {
                 </p>
               </div>
             </div>
-            <AgGridReact
-              ref={gridRef}
-              rowData={analysisDatas}
-              pinnedTopRowData={research?.instId === session.instId && !isCrudDisabled ? pinnedTopRowData : []}
-              columnDefs={colDefs}
-              rowHeight={42}
-              rowSelection={{
-                mode: "singleRow",
-                checkboxes: false, // 왼쪽 체크박스 컬럼 제거
-                enableClickSelection: true, // 행 클릭으로 선택 가능
-              }}
-              overlayNoRowsTemplate={"<span>등록된 분석 데이터가 없습니다.</span>"}
-              getRowId={(params) => {
-                return params.data?.asmtMetaRsltSn?.toString() || "";
-              }}
-              getRowHeight={(params) => {
-                // pinned row는 다른 높이 설정 (예: 60px, 필요에 따라 조절 가능)
-                if (params.node.rowPinned === "top") {
-                  return 50;
-                }
-                return 40;
-              }}
-              getRowStyle={(params) => {
-                // pinned row는 스타일 적용 안함
-                if (params.node.rowPinned === "top") {
-                  return { cursor: "default" };
-                }
-                // currentAnalysisDatas와 일치하는 경우 배경색 적용
-                if (params.data && params.data.asmtMetaRsltSn === currentAnalysisDatas?.asmtMetaRsltSn) {
-                  return {
-                    cursor: "pointer",
-                    backgroundColor: "var(--ag-row-hover-color)",
-                  } as any;
-                }
-                return { cursor: "pointer" } as any;
-              }}
-              onRowClicked={(event) => {
-                // pinned row는 클릭 이벤트 무시
-                if (event.node.rowPinned === "top") {
-                  return;
-                }
-                if (event.data) {
-                  handleClickAnalysis(event.data);
-                }
-              }}
-            />
+            {isLoadingAnalysisList && (
+              <Box sx={{ position: "relative", minHeight: 240 }}>
+                <Loader isLoading={true} />
+              </Box>
+            )}
+            {!isLoadingAnalysisList && isErrorAnalysisList && (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <Typography color="text.secondary">목록을 불러오지 못했습니다.</Typography>
+              </Box>
+            )}
+            {!isLoadingAnalysisList && !isErrorAnalysisList && (
+              <AgGridReact
+                ref={gridRef}
+                rowData={analysisDatas}
+                pinnedTopRowData={research?.instId === session.instId && !isCrudDisabled ? pinnedTopRowData : []}
+                columnDefs={colDefs}
+                rowHeight={42}
+                rowSelection={{
+                  mode: "singleRow",
+                  checkboxes: false, // 왼쪽 체크박스 컬럼 제거
+                  enableClickSelection: true, // 행 클릭으로 선택 가능
+                }}
+                overlayNoRowsTemplate={"<span>등록된 분석 데이터가 없습니다.</span>"}
+                getRowId={(params) => {
+                  return params.data?.asmtMetaRsltSn?.toString() || "";
+                }}
+                getRowHeight={(params) => {
+                  // pinned row는 다른 높이 설정 (예: 60px, 필요에 따라 조절 가능)
+                  if (params.node.rowPinned === "top") {
+                    return 50;
+                  }
+                  return 40;
+                }}
+                getRowStyle={(params) => {
+                  // pinned row는 스타일 적용 안함
+                  if (params.node.rowPinned === "top") {
+                    return { cursor: "default" };
+                  }
+                  // currentAnalysisDatas와 일치하는 경우 배경색 적용
+                  if (params.data && params.data.asmtMetaRsltSn === currentAnalysisDatas?.asmtMetaRsltSn) {
+                    return {
+                      cursor: "pointer",
+                      backgroundColor: "var(--ag-row-hover-color)",
+                    } as any;
+                  }
+                  return { cursor: "pointer" } as any;
+                }}
+                onRowClicked={(event) => {
+                  // pinned row는 클릭 이벤트 무시
+                  if (event.node.rowPinned === "top") {
+                    return;
+                  }
+                  if (event.data) {
+                    handleClickAnalysis(event.data);
+                  }
+                }}
+              />
+            )}
           </Box>
           <Divider orientation="vertical" flexItem />
           <Box ref={rightContainerRef} className={Styles.analysis_container_right}>
             {"none" === currentViewType && (
               <Box className="w-full h-full flex justify-center items-center">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center m-auto h-[120px] w-[120px] p-14 bg-gray-100 rounded-full ">
-                    <i className="fa-solid fa-file-arrow-up text-7xl text-gray-300"></i>
-                  </div>
+                <Box sx={{ textAlign: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      m: "auto",
+                      height: 120,
+                      width: 120,
+                      p: 7,
+                      bgcolor: "grey.100",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    <Box component="i" className="fa-solid fa-file-arrow-up" sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }} />
+                  </Box>
                   <SpaceBox gap={CONTENT_GAP.LARGE} />
                   <Typography variant="h5">분석결과가 없습니다.</Typography>
                   <SpaceBox gap={CONTENT_GAP.XSMALL} />
@@ -347,23 +376,40 @@ export default function CdmDataManagementModal() {
                       ? "분석결과를 작성하고 자료를 첨부해주세요."
                       : "분석결과가 등록되면 알림을 받으실 수 있습니다."}
                   </Typography>
-                </div>
+                </Box>
               </Box>
             )}
             {isCrudDisabled ? (
               "write" === currentViewType ? (
                 <Box className="w-full h-full flex justify-center items-center">
-                  <div className="text-center">
-                    <div className="flex flex-col items-center justify-center m-auto h-[120px] w-[120px] p-14 bg-gray-100 rounded-full ">
-                      <i className="fa-solid fa-circle-exclamation text-7xl text-gray-300"></i>
-                    </div>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        m: "auto",
+                        height: 120,
+                        width: 120,
+                        p: 7,
+                        bgcolor: "grey.100",
+                        borderRadius: "50%",
+                      }}
+                    >
+                      <Box
+                        component="i"
+                        className="fa-solid fa-circle-exclamation"
+                        sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }}
+                      />
+                    </Box>
                     <SpaceBox gap={CONTENT_GAP.LARGE} />
                     <Typography variant="h6">통합분석 데이터를 등록할 수 없습니다.</Typography>
                     <SpaceBox gap={CONTENT_GAP.XSMALL} />
                     <Typography variant="description">
                       연구과제가 마감 또는 취소된 상태에서는 분석결과를 등록할 수 없습니다.
                     </Typography>
-                  </div>
+                  </Box>
                 </Box>
               ) : null
             ) : (

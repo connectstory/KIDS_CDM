@@ -10,7 +10,7 @@
  * - 연구결과 관리 및 검토 현황
  */
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
@@ -39,6 +39,7 @@ import { useModal } from "@/hooks/useModal";
 import type { FileData } from "@/components/FileContainer";
 import FileContainer from "@/components/FileContainer";
 import TextWithLineLimit from "@/components/TextWithLineLimit";
+import { AppButton, AppStatusChip } from "@/components/ui";
 
 export default function ContentAnalysisMeta() {
   const dispatch = useDispatch();
@@ -210,9 +211,9 @@ export default function ContentAnalysisMeta() {
   };
 
   return (
-    <div style={{ position: "relative" }}>
+    <Box sx={{ position: "relative" }}>
       {/* {isMetaUnavailable && (
-        <Box className="unavailable_overlay">
+        <Box className={overlayStyles.unavailableOverlay}>
           <Box>
             <Typography component="p" variant="h6" className="text-gray-100">
               기관 데이터 분석 및 통합 데이터 분석이 모두 검토완료 상태가 아닙니다.
@@ -223,7 +224,7 @@ export default function ContentAnalysisMeta() {
           </Box>
         </Box>
       )} */}
-      <div className="form_container">
+      <Box className="form_container">
         {/* 과제 내용 1 */}
         <Stack direction="row" className="form_container-row">
           <Box className="form_container-column">
@@ -248,10 +249,10 @@ export default function ContentAnalysisMeta() {
               <Typography variant="h6">연구결과 상태</Typography>
             </Box>
             <Box className="form_container-row-content ">
-              <Chip
+              <AppStatusChip
                 size="small"
                 label={getResearchAnalysisStatusConfig(latestAnalysisData?.asmtMetaRsltSttsCd)?.label}
-                sx={getResearchAnalysisStatusConfig(latestAnalysisData?.asmtMetaRsltSttsCd)?.chipStyle ?? {}}
+                chipStyle={getResearchAnalysisStatusConfig(latestAnalysisData?.asmtMetaRsltSttsCd)?.chipStyle ?? {}}
               />
             </Box>
           </Box>
@@ -319,19 +320,10 @@ export default function ContentAnalysisMeta() {
               <Typography variant="h6">연구결과 관리</Typography>
             </Box>
             <Box className="form_container-row-content ">
-              {/* <ClickableStateTooltip
-                tooltipId={TOOLTIP_IDS.ANALYSIS_META_REGISTER}
-                placement="top"
-                arrow
-                slotProps={{ popper: { sx: { zIndex: 1 } } }}
-              >
-                <Button variant="containedLight" size="small" onClick={handleOpenMetaDataManagement}>
-                  연구결과 관리
-                </Button>
-              </ClickableStateTooltip> */}
-              <Button variant="containedLight" size="small" onClick={handleOpenMetaDataManagement}>
+              {/* <ClickableStateTooltip ... /> */}
+              <AppButton variant="containedLight" size="small" onClick={handleOpenMetaDataManagement}>
                 연구결과 관리
-              </Button>
+              </AppButton>
             </Box>
           </Box>
           <Box className="form_container-column">
@@ -346,25 +338,25 @@ export default function ContentAnalysisMeta() {
                       {/* 검토 결과 통계 */}
                       <Box component="span">
                         검토완료:
-                        <Box component="span" className="px-1 font-semibold" sx={{ color: "#1E7F43" }}>
+                        <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.voteApprove" }}>
                           {statistics.completed}
                         </Box>
                       </Box>
-                      <Box component="span" className="px-3 text-gray-400">
+                      <Box component="span" sx={{ px: 3, color: "text.disabled" }}>
                         |
                       </Box>
                       <Box component="span">
                         보완요청:
-                        <Box component="span" className="px-1 font-semibold" sx={{ color: "#B26A00" }}>
+                        <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.votePending" }}>
                           {statistics.requestModify}
                         </Box>
                       </Box>
-                      <Box component="span" className="px-3 text-gray-400">
+                      <Box component="span" sx={{ px: 3, color: "text.disabled" }}>
                         |
                       </Box>
                       <Box component="span">
                         미등록:
-                        <Box component="span" className="px-1 font-semibold" sx={{ color: "#5F6368" }}>
+                        <Box component="span" sx={{ px: 1, fontWeight: 600, color: "research.voteNeutral" }}>
                           {statistics.notRegistered}
                         </Box>
                       </Box>
@@ -373,14 +365,14 @@ export default function ContentAnalysisMeta() {
                   {!latestAnalysisData && <Typography variant="default">-</Typography>}
                 </>
               ) : (
-                <Chip
+                <AppStatusChip
                   size="small"
                   label={
                     getResearchAnalysisStatusConfig(
                       latestAnalysisData?.opinion ? researchOpinionDisplayStatusCode(latestAnalysisData.opinion) : undefined
                     )?.label
                   }
-                  sx={
+                  chipStyle={
                     getResearchAnalysisStatusConfig(
                       latestAnalysisData?.opinion ? researchOpinionDisplayStatusCode(latestAnalysisData.opinion) : undefined
                     )?.chipStyle ?? {}
@@ -390,7 +382,7 @@ export default function ContentAnalysisMeta() {
             </Box>
           </Box>
         </Stack>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

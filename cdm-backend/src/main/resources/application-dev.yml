@@ -59,11 +59,11 @@ mail:
   uex-front-url: http://localhost:8080 # uex 프론트 주소 (섭외요청 승인/거부 팝업 URL) - dev 환경에 맞게 수정 필요
 
 ca:
-  api-url: http://localhost:3000 # 파드 주소
+  api-url: http://kids-ca-be-service.kids-dev-ca:8080 # 파드 주소
   ext-url: https://stg.drugsafe.or.kr # 파드 주소
 
 pp:
-  api-url: http://localhost:3000 # 파드 주소
+  api-url: http://kids-pp-adm-service.kids-dev-pp:8080 # 파드 주소
 
 decrypt:
   api-url: http://kids-ca-auth-service.kids-dev-ca:8080 # 파드 주소

@@ -18,7 +18,7 @@ import { DATASET_EXTS } from "@/constants/researchFileUpload";
 import { MSG } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
 import { AnalysisResultStatus, CONTENT_GAP, RoleType, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy } from "@/api/commonApi";
 import type { RootState } from "@/store";
 import { setTooltipVisible } from "@/store/tooltipSlice";

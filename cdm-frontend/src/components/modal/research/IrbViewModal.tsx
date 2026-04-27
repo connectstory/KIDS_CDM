@@ -1,5 +1,5 @@
 import { ResearchAPI, downloadFileViaProxy } from "@/api";
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { type RootState } from "@/store";
@@ -111,9 +111,9 @@ export default function IrbViewModal() {
 
   return (
     <BaseModal open={!!modal?.open} onClose={() => handleClose(false)} title="IRB/DRB" width="sm" fullWidth={true}>
-      <div className="text-gray-700 whitespace-pre-line mb-6">
+      <Box sx={{ color: "text.primary", whiteSpace: "pre-line", mb: 3 }}>
         <Typography variant="subtitle">{modalData?.name}</Typography>
-      </div>
+      </Box>
 
       <div>
         <FileContainer

@@ -1,15 +1,17 @@
 import { useMemo } from "react";
-import { Button, Chip, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { type ColDef, type ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
 import { CdmUploadType, ParticipationStatus } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { ResearchPartnerResponse } from "@/interfaces/researchInterface";
 import { CdmUploadStatus, getCdmParticipationStatusConfig, getOrgParticipationStatusConfig } from "@/utils/common";
 import { useResearchPartners } from "@/hooks/research/useResearchQueries";
 import { useModal } from "@/hooks/useModal";
+import Loader from "@/components/Loader";
+import { AppButton, AppStatusChip } from "@/components/ui";
 
 /** 참여진행상태 정렬: 미참여(02)는 항상 마지막(오름차순 기준; desc는 그리드가 반전) */
 function participationProgressStatusSortRank(code: string | null | undefined): number {
@@ -19,7 +21,7 @@ function participationProgressStatusSortRank(code: string | null | undefined): n
   return Number.isNaN(n) ? 9_000 : n;
 }
 
-export default function ConcentMembersView() {
+export default function ContentMembersView() {
   // 컴포넌트 hook
   const partnerDetailModal = useModal(ModalNames.PartnerDetail);
   // URL param
@@ -29,7 +31,7 @@ export default function ConcentMembersView() {
    * React Query로 데이터 조회
    * ------------------------------ */
   const asmtSnNumber = asmtSn ? Number(asmtSn) : null;
-  const { data: partners = [], isLoading, isError } = useResearchPartners(asmtSnNumber);
+  const { data: partners = [], isLoading, isError, refetch } = useResearchPartners(asmtSnNumber);
 
   type PartnerRow = {
     instId: string;
@@ -97,7 +99,11 @@ export default function ConcentMembersView() {
                 ? getCdmParticipationStatusConfig(p.value)
                 : getOrgParticipationStatusConfig(p.value);
             return (
-              <Chip size="small" label={statusConfig?.label ?? (p.value as string) ?? ""} sx={statusConfig?.chipStyle ?? {}} />
+              <AppStatusChip
+                size="small"
+                label={statusConfig?.label ?? (p.value as string) ?? ""}
+                chipStyle={statusConfig?.chipStyle ?? {}}
+              />
             );
           },
         },
@@ -187,7 +193,7 @@ export default function ConcentMembersView() {
           },
           cellRenderer: (p: ICellRendererParams<PartnerRow>) => {
             return (
-              <Button
+              <AppButton
                 variant="outlined"
                 size="small"
                 onClick={() => {
@@ -199,7 +205,7 @@ export default function ConcentMembersView() {
                 }}
               >
                 상세
-              </Button>
+              </AppButton>
             );
           },
         },
@@ -208,21 +214,34 @@ export default function ConcentMembersView() {
   );
 
   if (isLoading) {
-    return <div>로딩 중...</div>;
+    return (
+      <Box sx={{ position: "relative", minHeight: 220 }}>
+        <Loader isLoading={true} />
+      </Box>
+    );
   }
 
   if (isError) {
-    return <div>참여기관 조회에 실패했습니다.</div>;
+    return (
+      <Box sx={{ py: 3, textAlign: "center" }}>
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          참여기관 조회에 실패했습니다.
+        </Typography>
+        <AppButton variant="outlined" size="small" onClick={() => void refetch()}>
+          다시 시도
+        </AppButton>
+      </Box>
+    );
   }
 
   return (
-    <div className="ag-theme-cdm w-full" style={{ maxHeight: 350, overflow: "auto" }}>
+    <Box className="ag-theme-cdm w-full" style={{ maxHeight: 350, overflow: "auto" }}>
       <AgGridReact
         rowData={rowData}
         columnDefs={colDefs}
         domLayout="autoHeight"
         overlayNoRowsTemplate={`<span style="padding:8px;">참여기관이 없습니다.</span>`}
       />
-    </div>
+    </Box>
   );
 }

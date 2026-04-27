@@ -1,0 +1,73 @@
+:root {
+  font-family:
+    Pretendard GOV,
+    system-ui,
+    Avenir,
+    Helvetica,
+    Arial,
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 500;
+  font-size: 14px;
+
+  color-scheme: light dark;
+  color: var(--main-font-color);
+  background-color: #fff;
+
+  font-synthesis: none !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+
+  /* Partner layout tokens (legacy compatibility) */
+  --font-main: "Pretendard", sans-serif;
+  --container: 1200px;
+  --border-1: #8a949e;
+  --border-2: #cdd1d5;
+  --border-3: #087c80;
+  --color-text-1: #1e2124;
+  --color-text-2: #087c80;
+  --color-text-3: #464c53;
+  --color-text-4: #cdd1d5;
+  --font-Awesome: "Font Awesome 7 Free", sans-serif;
+  --fs-24: 24px;
+
+  /* Admin legacy tokens (from assets/css/common.css) */
+  --color_01: #087c80;
+  --color_02: #0d4f52;
+  --color_03: #58616a;
+  --color_04: #de3412;
+
+  --btn_color_01: #087c80;
+  --btn_color_02: #58616a;
+  --btn_color_03: #256ef4;
+  --btn_color_04: #edf8f8;
+  --btn_color_05: #de3412;
+
+  --btn_border_color_01: #087c80;
+
+  --selected-row-background-color: rgba(0, 51, 38, 0.05);
+
+  --input-bg: #fff;
+  --input-border: #afafaf;
+  --input-border-hover: #afafaf;
+  --inputbtn-height: 35px;
+  --inputbtn-height-xs: 24px;
+  --inputbtn-height-sm: 28px;
+  --inputbtn-height-lg: 45px;
+  --inputbtn-width-xs: 50px;
+  --inputbtn-width-lg: 110px;
+
+  --disabled_bg: #e5e5e5;
+
+  --main-font: "Pretendard GOV";
+  --main-font-color: #1e2124;
+
+  --border-radius01: 4px;
+  --border-radius02: 10px;
+
+  --maxwidth-content: 1500px;
+
+  --box-border: #eee;
+}
+

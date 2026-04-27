@@ -10,10 +10,6 @@ import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import Footer from "@/components/layouts/Footer";
 import Header from "@/components/layouts/Header";
 import ModalHost from "@/components/modal";
-// 포탈 스타일: PartnerAppLayout(및 그 하위 PartnerContentLayout 등)에서만 적용됨 (#partnerWrap 스코프)
-// import "@/assets/css/potal/main.en.scss";
-// import "@/assets/css/potal/main.ko.scss";
-import "@/assets/css/potal/partner-layout.scss";
 
 export default function PartnerAppLayout() {
   const location = useLocation();
@@ -35,7 +31,7 @@ export default function PartnerAppLayout() {
       console.error("Failed to set axios Authorization header");
     }
     dispatch(fetchPartnerMe());
-  }, []);
+  }, [dispatch]);
 
   const extendInFlightRef = useRef(false);
   const lastExtendAtRef = useRef(0);

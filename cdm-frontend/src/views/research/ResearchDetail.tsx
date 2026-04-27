@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Fade, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { Helmet } from "react-helmet";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
@@ -14,7 +14,7 @@ import {
   RoleType,
   RsltGroupStcdType,
 } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { PartnerResponse } from "@/interfaces/researchInterface";
 import type { RootState } from "@/store";
 import { resetTooltips } from "@/store/tooltipSlice";
@@ -26,6 +26,8 @@ import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { useModal } from "@/hooks/useModal";
 import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
+import { AppButton } from "@/components/ui";
+import styles from "./ResearchDetail.module.scss";
 import ContentCdm from "./components/ContentAnalysisCdm";
 import ContentMember from "./components/ContentAnalysisMember";
 import ContentMeta from "./components/ContentAnalysisMeta";
@@ -49,6 +51,8 @@ export default function ResearchDetailView() {
   const shownParticipatingAlertForRef = useRef<number | null>(null);
   /** 해당 asmtSn에 대해 참여기관 CDM 안내 알림을 이미 표시했는지 (한 번만 표시) */
   const shownCdmGuideAlertForRef = useRef<number | null>(null);
+  /** 상세 조회 실패 시 alert/navigate를 렌더 밖에서 한 번만 처리 */
+  const loadErrorHandledRef = useRef(false);
   const [analysisTabIndex, setAnalysisTabIndex] = useState(0);
   const [isAllCompleted, setIsAllCompleted] = useState<boolean>(false);
   // 데이터 조회
@@ -64,7 +68,6 @@ export default function ResearchDetailView() {
   );
   // 데이터 수정 & 등록
   const approveInviteMutation = useApproveInvitePartner();
-  // const closeResearchMutation = useCloseResearch();
   const createPartnersMutation = useCreatePartners();
   // 컴포넌트 hook
   const routes = useCmRoutes();
@@ -96,6 +99,23 @@ export default function ResearchDetailView() {
   useEffect(() => {
     hasScrolledOnLoadRef.current = false;
   }, [asmtSn]);
+
+  useEffect(() => {
+    loadErrorHandledRef.current = false;
+  }, [asmtSnNumber]);
+
+  /* 로딩 종료 후 조회 실패: 렌더가 아닌 effect에서 알림 + 뒤로가기 */
+  useEffect(() => {
+    if (isLoading || asmtSnNumber == null) return;
+    if (!isError && research) return;
+    if (loadErrorHandledRef.current) return;
+    loadErrorHandledRef.current = true;
+    showAlert({
+      message: error?.message || "존재하지 않는 연구과제입니다.",
+      severity: "error",
+    });
+    navigate(-1);
+  }, [isLoading, isError, research, error, asmtSnNumber, showAlert, navigate]);
 
   /* 연구 상태가 취소(05)인 경우 툴팁 전부 비활성화 */
   useEffect(() => {
@@ -181,11 +201,6 @@ export default function ResearchDetailView() {
   }
 
   if (isError || !research) {
-    showAlert({
-      message: error?.message || "존재하지 않는 연구과제입니다.",
-      severity: "error",
-    });
-    navigate(-1);
     return null;
   }
 
@@ -201,7 +216,8 @@ export default function ResearchDetailView() {
       case ProgressStatusType.IN_PROGRESS_META:
         return STRINGS.COMPLETED;
       default:
-        return console.error(MSG.STATUS_NOT_FOUND);
+        console.error(MSG.STATUS_NOT_FOUND);
+        return "";
     }
   };
 
@@ -467,30 +483,17 @@ export default function ResearchDetailView() {
     if (!result.length) return;
     if (result.length === researchPartners.length) return;
 
-    createPartnersMutation.mutateAsync({
-      asmtSn: research.asmtSn,
-      data: {
-        asmtPrcpInsttList: result.map((partner) => (partner.instId ? partner.instId : partner.brno)),
-      },
-    });
-
-    // const newMembers: Member[] = result.map((partner: PartneR) => ({
-    //   ...partner,
-    //   id: createRandom(5),
-    //   progressStatus: "requestInvite",
-    //   isCancel: false,
-    //   cancelDate: "",
-    //   cancelDescription: "",
-    // }));
-
-    // setMembers((prev) => {
-    //   // 중복 제거 (기관명 기준)
-    //   const exists = new Set(prev.map((m) => m.name));
-    //   return [
-    //     ...prev,
-    //     ...newMembers.filter((m) => !exists.has(m.name)),
-    //   ];
-    // });
+    try {
+      await createPartnersMutation.mutateAsync({
+        asmtSn: research.asmtSn,
+        data: {
+          asmtPrcpInsttList: result.map((partner) => (partner.instId ? partner.instId : partner.brno)),
+        },
+      });
+      await refetchPartners();
+    } catch {
+      /* onError에서 처리 */
+    }
   };
 
   const handleAnalysisTabIndexChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -498,227 +501,228 @@ export default function ResearchDetailView() {
   };
 
   return (
-    <div className="">
-      <Helmet>
-        <title>{`CDM - 연구과제 상세`}</title>
-      </Helmet>
-      {/* ==============================
+    <Fade in timeout={280}>
+      <Box className={styles.root}>
+        <Helmet>
+          <title>{`CDM - 연구과제 상세`}</title>
+        </Helmet>
+        {/* ==============================
           헤더
       ============================== */}
-      <Box className="btn_container">
-        <Stack direction="column" spacing={1}>
-          <Typography variant="mainTitle">{research.asmtNm}</Typography>
-          <Typography variant="h6">과제ID: {research.asmtId}</Typography>
-        </Stack>
-        <Stack className="btn_wrapper tbl_top" direction="row">
-          {research?.instId === session.instId && !isCrudDisabled && (
-            <Button variant="outlined" onClick={() => navigate(buildPath(routes.RESEARCH.EDIT, { asmtSn }))}>
-              수정
-            </Button>
-          )}
-          <Button
-            variant="outlined"
-            onClick={() => (role === "owner" ? navigate(routes.RESEARCH.OWNER) : navigate(routes.RESEARCH.PARTNER))}
-          >
-            목록
-          </Button>
-        </Stack>
-      </Box>
+        <Box className="btn_container">
+          <Stack direction="column" spacing={1}>
+            <Typography variant="mainTitle">{research.asmtNm}</Typography>
+            <Typography variant="h6">과제ID: {research.asmtId}</Typography>
+          </Stack>
+          <Stack className="btn_wrapper tbl_top" direction="row">
+            {research?.instId === session.instId && !isCrudDisabled && (
+              <AppButton variant="outlined" onClick={() => navigate(buildPath(routes.RESEARCH.EDIT, { asmtSn }))}>
+                수정
+              </AppButton>
+            )}
+            <AppButton
+              variant="outlined"
+              onClick={() => (role === "owner" ? navigate(routes.RESEARCH.OWNER) : navigate(routes.RESEARCH.PARTNER))}
+            >
+              목록
+            </AppButton>
+          </Stack>
+        </Box>
 
-      <SpaceBox gap={CONTENT_GAP.LARGE} />
+        <SpaceBox gap={CONTENT_GAP.LARGE} />
 
-      {/* ==============================
+        {/* ==============================
           과제 내용
       ============================== */}
-      <section id="content-desc">
-        <Box className="sub_path">
-          <Typography className="tit" variant="h5">
-            연구내용
-          </Typography>
+        <Box component="section" id="content-desc" className={styles.section}>
+          <Box className="sub_path">
+            <Typography className="tit" variant="h5">
+              연구내용
+            </Typography>
+          </Box>
+          <ContentDesc research={research} />
         </Box>
-        <ContentDesc research={research} />
-      </section>
 
-      <SpaceBox gap={CONTENT_GAP.SMALL} />
+        <SpaceBox gap={CONTENT_GAP.SMALL} />
 
-      {/* ==============================
+        {/* ==============================
           상태 버튼
       ============================== */}
-      <Box id="content-status-btn" className="btn_container btn_right">
-        {/* 과제 상태가 완료 또는 취소가 아닌 경우에만 버튼 표시 */}
-        {!isCrudDisabled && (
-          <>
-            {appTarget === "admin" ? (
-              <>
-                {research.instId === session.instId && session.deptNo === DeptCodeType.DRUG_ANALYSIS && (
-                  <Box className="btn_container btn_right">
-                    <Button variant="contained" onClick={() => handleChangeResearchStatus()}>
-                      <i className="fa-regular fa-circle-check mr-2"></i>
-                      <Typography variant="default">과제 {changeResearchStatusButtonTitle() || ""}</Typography>
-                    </Button>
-                    <Button variant="containedGray" color="secondary" onClick={() => handleCancelResearch()}>
-                      <i className="fa-solid fa-ban mr-2"></i>
-                      <Typography variant="default">과제 취소</Typography>
-                    </Button>
-                  </Box>
-                )}
-              </>
-            ) : (
-              <>
-                {research.instId === session.instId && (
-                  <Box className="btn_container btn_right">
-                    <Button variant="contained" onClick={() => handleChangeResearchStatus()}>
-                      <i className="fa-regular fa-circle-check mr-2"></i>
-                      <Typography variant="default">과제 {changeResearchStatusButtonTitle() || ""}</Typography>
-                    </Button>
-                    <Button variant="containedGray" color="secondary" onClick={() => handleCancelResearch()}>
-                      <i className="fa-solid fa-ban mr-2"></i>
-                      <Typography variant="default">과제 취소</Typography>
-                    </Button>
-                  </Box>
-                )}
-              </>
-            )}
-            {research?.instId !== session.instId && (
-              <>
-                {session.userType !== RoleType.ADMIN && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      irbUploadModal.open({ data: { asmtSn: research?.asmtSn } });
-                    }}
-                  >
-                    IRB/DRB 자료 업로드
-                  </Button>
-                )}
-
-                {research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE &&
-                  research.asmtPrcp?.ptcpPrgrsSttsCd === ParticipationCdmStatus.INVITATION_REQUEST && (
-                    <Button variant="contained" onClick={handleJoinResearch}>
-                      과제참여
-                    </Button>
+        <Box id="content-status-btn" className="btn_container btn_right">
+          {/* 과제 상태가 완료 또는 취소가 아닌 경우에만 버튼 표시 */}
+          {!isCrudDisabled && (
+            <>
+              {appTarget === "admin" ? (
+                <>
+                  {research.instId === session.instId && session.deptNo === DeptCodeType.DRUG_ANALYSIS && (
+                    <Box className="btn_container btn_right">
+                      <AppButton variant="contained" onClick={() => handleChangeResearchStatus()}>
+                        <i className="fa-regular fa-circle-check mr-2"></i>
+                        <Typography variant="default">과제 {changeResearchStatusButtonTitle() || ""}</Typography>
+                      </AppButton>
+                      <AppButton variant="containedGray" color="secondary" onClick={() => handleCancelResearch()}>
+                        <i className="fa-solid fa-ban mr-2"></i>
+                        <Typography variant="default">과제 취소</Typography>
+                      </AppButton>
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <>
+                  {research.instId === session.instId && (
+                    <Box className="btn_container btn_right">
+                      <AppButton variant="contained" onClick={() => handleChangeResearchStatus()}>
+                        <i className="fa-regular fa-circle-check mr-2"></i>
+                        <Typography variant="default">과제 {changeResearchStatusButtonTitle() || ""}</Typography>
+                      </AppButton>
+                      <AppButton variant="containedGray" color="secondary" onClick={() => handleCancelResearch()}>
+                        <i className="fa-solid fa-ban mr-2"></i>
+                        <Typography variant="default">과제 취소</Typography>
+                      </AppButton>
+                    </Box>
+                  )}
+                </>
+              )}
+              {research?.instId !== session.instId && (
+                <>
+                  {session.userType !== RoleType.ADMIN && (
+                    <AppButton
+                      variant="outlined"
+                      onClick={() => {
+                        irbUploadModal.open({ data: { asmtSn: research?.asmtSn } });
+                      }}
+                    >
+                      IRB/DRB 자료 업로드
+                    </AppButton>
                   )}
 
-                {research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE &&
-                  research.asmtPrcp?.ptcpPrgrsSttsCd === ParticipationCdmStatus.INVITATION_REQUEST && (
-                    <Button variant="containedGray" onClick={handleCancelInvite}>
-                      참여거절
-                    </Button>
-                  )}
-              </>
-            )}
-          </>
-        )}
-        {isCrudDisabled && research?.instId !== session.instId && (
-          <>
-            {session.userType !== RoleType.ADMIN && (
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  irbUploadModal.open({ data: { asmtSn: research?.asmtSn } });
-                }}
-              >
-                IRB/DRB 자료 업로드
-              </Button>
-            )}
-          </>
-        )}
-      </Box>
+                  {research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE &&
+                    research.asmtPrcp?.ptcpPrgrsSttsCd === ParticipationCdmStatus.INVITATION_REQUEST && (
+                      <AppButton variant="contained" onClick={handleJoinResearch}>
+                        과제참여
+                      </AppButton>
+                    )}
 
-      <SpaceBox gap={CONTENT_GAP.XLARGE} />
+                  {research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE &&
+                    research.asmtPrcp?.ptcpPrgrsSttsCd === ParticipationCdmStatus.INVITATION_REQUEST && (
+                      <AppButton variant="containedGray" onClick={handleCancelInvite}>
+                        참여거절
+                      </AppButton>
+                    )}
+                </>
+              )}
+            </>
+          )}
+          {isCrudDisabled && research?.instId !== session.instId && (
+            <>
+              {session.userType !== RoleType.ADMIN && (
+                <AppButton
+                  variant="outlined"
+                  onClick={() => {
+                    irbUploadModal.open({ data: { asmtSn: research?.asmtSn } });
+                  }}
+                >
+                  IRB/DRB 자료 업로드
+                </AppButton>
+              )}
+            </>
+          )}
+        </Box>
 
-      {/* {research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE && research.asmtPrcp?.ptcpPrgrsSttsCd === ParticipationStatus.APPROVAL_INVITE && (
+        <SpaceBox gap={CONTENT_GAP.XLARGE} />
+
+        {/* {research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE && research.asmtPrcp?.ptcpPrgrsSttsCd === ParticipationStatus.APPROVAL_INVITE && (
         <Box className="text-center">
           <Typography variant="h5">연구과제의 참여가 승인되었습니다.</Typography>
           <Typography variant="body2">연구과제의 상태가 진행중으로 변경시 이메일로 알림을 발송합니다.</Typography>
         </Box>
       )} */}
 
-      {/* ==============================
+        {/* ==============================
           분석결과 관리
       ============================== */}
-      {showContentSection("analysis") && (
-        <>
-          <section id="content-analysis">
-            <Box className="sub_path">
-              <Typography className="tit" variant="h5">
-                분석결과
-              </Typography>
-            </Box>
-
-            <Box>
-              <Box className="tab_container">
-                <Tabs value={analysisTabIndex} onChange={handleAnalysisTabIndexChange}>
-                  <Tab label="통합 데이터 분석결과" />
-                  <Tab label="기관 데이터 분석결과" />
-                </Tabs>
+        {showContentSection("analysis") && (
+          <>
+            <Box component="section" id="content-analysis" className={styles.section}>
+              <Box className="sub_path">
+                <Typography className="tit" variant="h5">
+                  분석결과
+                </Typography>
               </Box>
 
-              <Box className="tab_content">
-                {analysisTabIndex === 0 && <ContentCdm />}
-                {analysisTabIndex === 1 && <ContentMember />}
+              <Box>
+                <Box className="tab_container">
+                  <Tabs value={analysisTabIndex} onChange={handleAnalysisTabIndexChange}>
+                    <Tab label="통합 데이터 분석결과" />
+                    <Tab label="기관 데이터 분석결과" />
+                  </Tabs>
+                </Box>
+
+                <Box className="tab_content">
+                  {analysisTabIndex === 0 && <ContentCdm />}
+                  {analysisTabIndex === 1 && <ContentMember />}
+                </Box>
               </Box>
             </Box>
-          </section>
 
-          <SpaceBox gap={CONTENT_GAP.XLARGE} />
-        </>
-      )}
-      {/* ==============================
+            <SpaceBox gap={CONTENT_GAP.XLARGE} />
+          </>
+        )}
+        {/* ==============================
           기관 데이터 분석결과 - Not CDM
       ============================== */}
-      {showContentSection("orgAnalysis") && (
-        <>
-          <section id="content-analysis">
-            <Box className="sub_path">
-              <Typography className="tit" variant="h5">
-                기관 데이터 분석결과
-              </Typography>
+        {showContentSection("orgAnalysis") && (
+          <>
+            <Box component="section" id="content-org-analysis-partner" className={styles.section}>
+              <Box className="sub_path">
+                <Typography className="tit" variant="h5">
+                  기관 데이터 분석결과
+                </Typography>
+              </Box>
+              <ContentMemberAnalysisOrg />
             </Box>
-            <ContentMemberAnalysisOrg />
-          </section>
 
-          <SpaceBox gap={CONTENT_GAP.XLARGE} />
-        </>
-      )}
+            <SpaceBox gap={CONTENT_GAP.XLARGE} />
+          </>
+        )}
 
-      {/* ==============================
+        {/* ==============================
           기관 데이터 분석결과 - CDM
       ============================== */}
-      {showContentSection("cdmAnalysis") && (
-        <>
-          <section id="content-analysis">
-            <Box className="sub_path">
-              <Typography className="tit" variant="h5">
-                통합 데이터 분석결과
-              </Typography>
+        {showContentSection("cdmAnalysis") && (
+          <>
+            <Box component="section" id="content-cdm-analysis-partner" className={styles.section}>
+              <Box className="sub_path">
+                <Typography className="tit" variant="h5">
+                  통합 데이터 분석결과
+                </Typography>
+              </Box>
+              <ContentMemberAnalysisCdm />
             </Box>
-            <ContentMemberAnalysisCdm />
-          </section>
 
-          <SpaceBox gap={CONTENT_GAP.XLARGE} />
-        </>
-      )}
+            <SpaceBox gap={CONTENT_GAP.XLARGE} />
+          </>
+        )}
 
-      {/* ==============================
+        {/* ==============================
           연구결과 (메타분석)
       ============================== */}
-      {research && showContentSection("meta") && (
-        <>
-          <section id="content-meta">
-            <Box className="sub_path">
-              <Typography className="tit" variant="h5">
-                연구결과(메타분석)
-              </Typography>
+        {research && showContentSection("meta") && (
+          <>
+            <Box component="section" id="content-meta" className={styles.section}>
+              <Box className="sub_path">
+                <Typography className="tit" variant="h5">
+                  연구결과(메타분석)
+                </Typography>
+              </Box>
+              <ContentMeta />
             </Box>
-            <ContentMeta />
-          </section>
 
-          <SpaceBox gap={CONTENT_GAP.XLARGE} />
-        </>
-      )}
+            <SpaceBox gap={CONTENT_GAP.XLARGE} />
+          </>
+        )}
 
-      {/* {session.userType !== RoleType.ADMIN &&
+        {/* {session.userType !== RoleType.ADMIN &&
         research?.instId !== session.instId &&
         research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE && (
           <Box className="text-center">
@@ -726,43 +730,47 @@ export default function ResearchDetailView() {
           </Box>
         )} */}
 
-      {/* ==============================
+        {/* ==============================
           참여기관
       ============================== */}
-      {showContentSection("partners") && (
-        <>
-          <section id={research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE ? "content-request-invite" : ""}>
-            <Box className="sub_path">
-              <Typography className="tit" variant="h5">
-                참여기관
-                <span className="ml-1"></span>
-                <Typography variant="body2">({researchPartners.length})</Typography>
-              </Typography>
-              <Box className="controller">
-                {research &&
-                  research.instId === session.instId &&
-                  research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE && (
-                    <Button variant="containedLight" color="primary" onClick={handleAddPartners}>
-                      참여기관 추가
-                    </Button>
-                  )}
+        {showContentSection("partners") && (
+          <>
+            <Box
+              component="section"
+              id={research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE ? "content-request-invite" : ""}
+              className={styles.section}
+            >
+              <Box className="sub_path">
+                <Typography className="tit" variant="h5">
+                  참여기관
+                  <Typography variant="body2">({researchPartners.length})</Typography>
+                </Typography>
+                <Box className="controller">
+                  {research &&
+                    research.instId === session.instId &&
+                    research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE && (
+                      <AppButton variant="containedLight" color="primary" onClick={handleAddPartners}>
+                        참여기관 추가
+                      </AppButton>
+                    )}
+                </Box>
               </Box>
+              <ContentMembers />
             </Box>
-            <ContentMembers />
-          </section>
-        </>
-      )}
+          </>
+        )}
 
-      {/* ==============================
+        {/* ==============================
           댓글
       ============================== */}
-      {research && showContentSection("comment") && (
-        <>
-          <SpaceBox gap={CONTENT_GAP.XLARGE} />
+        {research && showContentSection("comment") && (
+          <>
+            <SpaceBox gap={CONTENT_GAP.XLARGE} />
 
-          <section>{asmtSnNumber && <ContentComment asmtSn={asmtSnNumber} />}</section>
-        </>
-      )}
-    </div>
+            <Box component="section">{asmtSnNumber && <ContentComment asmtSn={asmtSnNumber} />}</Box>
+          </>
+        )}
+      </Box>
+    </Fade>
   );
 }

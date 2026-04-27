@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { koKR } from "@mui/x-date-pickers/locales";
-import { AllCommunityModule, type ColDef, type ICellRendererParams, ModuleRegistry } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
@@ -13,7 +13,7 @@ import { useBlocker, useLocation, useNavigate, useParams } from "react-router-do
 import { ANALYSIS_QUERY_ACCEPT } from "@/constants/researchFileUpload";
 import { MSG, STRINGS } from "@/constants/string";
 import { CONTENT_GAP, ProgressStatusType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { PartnerResponse, ResearchCreateRequest, ResearchUpdateRequest } from "@/interfaces/researchInterface";
 import { buildPath, formatFileSize, getFileExtension } from "@/utils/common";
 import { useCreateResearch, useRemoveResearch, useUpdateResearch } from "@/hooks/research/useResearchMutations";
@@ -25,8 +25,8 @@ import FileContainer, { type FileData } from "@/components/FileContainer";
 import FileDropZone from "@/components/FileDropzone";
 import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
+import { AppButton, AppIconButton, AppTextField } from "@/components/ui";
+import styles from "./ResearchWrite.module.scss";
 
 /* ------------------------------
  * 파트너의 고유 키를 반환하는 헬퍼 함수
@@ -256,9 +256,9 @@ export default function ResearchWriteView() {
           };
 
           return (
-            <IconButton className="delete_button" aria-label="close" onClick={handleDelete}>
+            <AppIconButton className={styles.deleteButton} aria-label="close" onClick={handleDelete}>
               <i className="fa-solid fa-xmark"></i>
-            </IconButton>
+            </AppIconButton>
           );
         },
       },
@@ -498,13 +498,17 @@ export default function ResearchWriteView() {
 
   // 수정 모드일 때 데이터가 없으면 에러 처리
   if (isEditMode && !researchDetail) {
-    return <div className="p-10 text-center text-gray-500">연구과제를 찾을 수 없습니다.</div>;
+    return (
+      <Box sx={{ p: 5, textAlign: "center" }}>
+        <Typography color="text.secondary">연구과제를 찾을 수 없습니다.</Typography>
+      </Box>
+    );
   }
 
   return (
-    <div className="">
+    <Box className={styles.root}>
       <Helmet>
-        <title>{`CDM - 연구과제 등록`}</title>
+        <title>{isEditMode ? `CDM - 연구과제 수정` : `CDM - 연구과제 등록`}</title>
       </Helmet>
       {/* ==============================
           과제 내용
@@ -517,7 +521,7 @@ export default function ResearchWriteView() {
               <Typography className="required">과제명</Typography>
             </Box>
             <Box className="form_container-row-content">
-              <TextField
+              <AppTextField
                 variant="outlined"
                 placeholder="연구과제명을 입력해주세요."
                 label="과제명"
@@ -536,7 +540,7 @@ export default function ResearchWriteView() {
               <Typography>과제내용</Typography>
             </Box>
             <Box className="form_container-row-content">
-              <TextField
+              <AppTextField
                 variant="outlined"
                 placeholder={MSG.COMMENT_CONTENT_REQUIRED}
                 label="과제내용"
@@ -588,7 +592,9 @@ export default function ResearchWriteView() {
                   minDate={isEditMode ? undefined : dayjs()}
                   maxDate={endDate ?? undefined}
                 />
-                <span className="pl5 pr5">-</span>
+                <Box component="span" className="px-2">
+                  -
+                </Box>
                 <DatePicker
                   label={STRINGS["END_DATE"]}
                   format="YYYY-MM-DD"
@@ -619,17 +625,17 @@ export default function ResearchWriteView() {
               <Typography>첨부파일</Typography>
             </Box>
             <Box className="form_container-row-content">
-              <div className="w100">
+              <Box className="w-full">
                 {existingFiles.length > 0 && (
                   <>
                     <FileContainer files={existingFiles} showDeleteButton={true} onDelete={handleExistingFileDelete} />
-                    <div className="pt5"></div>
+                    <Box className="pt-2" />
                   </>
                 )}
                 <FileContainer files={files} showDeleteButton={true} onDelete={handleFileDelete} />
-                <div className="pt5"></div>
+                <Box className="pt-2" />
                 <FileDropZone onDrop={handleFileDrop}></FileDropZone>
-              </div>
+              </Box>
             </Box>
           </Box>
         </Stack>
@@ -640,10 +646,20 @@ export default function ResearchWriteView() {
               <Typography className="required">분석질의</Typography>
             </Box>
             <Box className="form_container-row-content">
-              <div className="relative w-full">
+              <Box className="relative w-full">
                 {/* 분석질의 설명 */}
                 {existingAnalysisFiles.length === 0 && analysisFiles.length === 0 && (
-                  <Box className="relative px-3 py-2 rounded-md border-1 border-gray-300 bg-gray-50">
+                  <Box
+                    sx={{
+                      position: "relative",
+                      px: 2,
+                      py: 1.5,
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: "divider",
+                      bgcolor: "grey.50",
+                    }}
+                  >
                     <Typography variant="default">
                       기관에서 분석에 필요한 파일을 첨부해주세요.
                       <br></br>각 참여기관마다 사용하는 데이터베이스(Oracle, PostgreSQL등)가 다르므로 해당 데이터베이스에 맞는
@@ -660,13 +676,13 @@ export default function ResearchWriteView() {
                       showDeleteButton={true}
                       onDelete={handleExistingAnalysisFileDelete}
                     />
-                    <div className="pt5"></div>
+                    <Box className="pt-2" />
                   </>
                 )}
                 <FileContainer files={analysisFiles} showDeleteButton={true} onDelete={handleAnalysisFileDelete} />
-                <div className="pt5"></div>
+                <Box className="pt-2" />
                 <FileDropZone onDrop={handleAnalysisFileDrop} acceptExtensions={ANALYSIS_QUERY_ACCEPT} />
-              </div>
+              </Box>
             </Box>
           </Box>
         </Stack>
@@ -677,11 +693,11 @@ export default function ResearchWriteView() {
       {/* ==============================
           하단 버튼 영역
       ============================== */}
-      <div className="btn_container btn_right">
-        <Button variant="outlined" size="medium" className="btn_outline" onClick={onCancel}>
+      <Box className={`btn_container btn_right ${styles.bottomActions}`}>
+        <AppButton variant="outlined" size="medium" onClick={onCancel}>
           취소
-        </Button>
-        <Button
+        </AppButton>
+        <AppButton
           variant="contained"
           size="medium"
           onClick={async () => {
@@ -690,13 +706,12 @@ export default function ResearchWriteView() {
           disabled={createMutation.isPending || updateMutation.isPending}
         >
           {isEditMode ? (updateMutation.isPending ? "수정 중..." : "수정") : createMutation.isPending ? "등록 중..." : "등록"}
-        </Button>
+        </AppButton>
 
         {isEditMode && researchDetail?.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE && (
-          <Button
+          <AppButton
             variant="containedGray"
             size="medium"
-            className="btn_outline"
             onClick={async () => {
               const result = await confirmModal.open({
                 title: "과제 삭제",
@@ -711,9 +726,9 @@ export default function ResearchWriteView() {
             }}
           >
             삭제
-          </Button>
+          </AppButton>
         )}
-      </div>
+      </Box>
 
       {/* ==============================
           참여기관 영역
@@ -722,21 +737,21 @@ export default function ResearchWriteView() {
         <>
           <SpaceBox gap={CONTENT_GAP.XLARGE} />
 
-          <div>
-            <div className="tbl_info">
-              <div className="total">
-                <p className="cases">
-                  참여기관<span className="count">{partners.length}</span>건
-                </p>
-              </div>
-              <div className="tbl_controller">
-                <Button variant="containedLight" size="medium" onClick={handleAddPartners}>
+          <Box>
+            <Box className="tbl_info">
+              <Box className="total">
+                <Box component="p" className="cases">
+                  참여기관<Box component="span" className="count">{partners.length}</Box>건
+                </Box>
+              </Box>
+              <Box className="tbl_controller">
+                <AppButton variant="containedLight" size="medium" onClick={handleAddPartners}>
                   참여기관 추가
-                </Button>
-              </div>
-            </div>
+                </AppButton>
+              </Box>
+            </Box>
 
-            <div className="ag-theme-cdm w-full" style={{ height: `${gridHeight}px` }}>
+            <Box className="ag-theme-cdm w-full" sx={{ height: `${gridHeight}px` }}>
               <AgGridReact
                 rowData={partners}
                 columnDefs={colDefs}
@@ -745,10 +760,10 @@ export default function ResearchWriteView() {
                 getRowId={(params) => getPartnerKey(params.data)}
                 overlayNoRowsTemplate={`<span style="padding:8px;">등록된 기관이 없습니다.</span>`}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
         </>
       )}
-    </div>
+    </Box>
   );
 }

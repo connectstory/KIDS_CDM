@@ -17,8 +17,12 @@ import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import ModalHost from "@/components/modal";
 import TreeMenu from "@/components/tree-menu/TreeMenu";
 import type { TreeItem } from "@/components/tree-menu/TreeNode";
+import styles from "./AdminAppLayout.module.scss";
 
-function findMenuSnByPathname(menuAuthList: Array<{ menuSn?: unknown; menuUrl?: unknown }>, pathname: string): number | undefined {
+function findMenuSnByPathname(
+  menuAuthList: Array<{ menuSn?: unknown; menuUrl?: unknown }>,
+  pathname: string
+): number | undefined {
   let best: { menuSn: number; urlLen: number } | null = null;
   for (const item of menuAuthList) {
     const url = typeof item.menuUrl === "string" ? item.menuUrl : "";
@@ -58,7 +62,7 @@ export default function AdminAppLayout() {
       }
     }
     dispatch(fetchAdminMe());
-  }, []);
+  }, [dispatch]);
 
   const extendInFlightRef = useRef(false);
   const lastExtendAtRef = useRef(0);
@@ -132,26 +136,26 @@ export default function AdminAppLayout() {
   };
 
   return (
-    <div id="wrap">
+    <div className={styles.wrap}>
       {/* S T A R T :: header */}
-      <header id="header">
-        <div className="inner">
-          <h1 className={`logo ${appData.isSidebarExtend ? "" : "collapsed"}`}>
+      <header className={styles.header}>
+        <div className={styles.inner}>
+          <h1 className={`${styles.logo} ${appData.isSidebarExtend ? "" : styles.collapsed}`}>
             <button type="button" style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}>
               <img src={adminLogo} alt="한국의약품안전관리원" />
-              <span className="logo_text">통합관리시스템</span>
+              <span className={styles.logoText}>통합관리시스템</span>
             </button>
           </h1>
 
-          <div className="sidebar_controller">
+          <div className={styles.sidebarController}>
             <button type="button" onClick={onSidebarExtend}>
               <span className="blind">메뉴바</span>
             </button>
           </div>
 
-          <div className="util_group">
-            <div className="user_info">
-              <div className="user_name">
+          <div className={styles.utilGroup}>
+            <div className={styles.userInfo}>
+              <div className={styles.userName}>
                 <div>
                   {sessionData.userNo && (
                     <p>
@@ -160,8 +164,8 @@ export default function AdminAppLayout() {
                   )}
                 </div>
               </div>
-              <p className="access mr-3">{new Date().toLocaleString()}</p>
-              <Button className="btn_logout" size="small" variant="outlined" onClick={handleLogout}>
+              <p className={`${styles.access} mr-3`}>{new Date().toLocaleString()}</p>
+              <Button className={styles.btnLogout} size="small" variant="outlined" onClick={handleLogout}>
                 로그아웃
               </Button>
             </div>
@@ -171,10 +175,10 @@ export default function AdminAppLayout() {
       {/* E N D :: header */}
 
       {/* S T A R T :: container */}
-      <div id="container" className={`sub_container ${appData.isSidebarExtend ? "" : "collapsed"}`}>
+      <div className={`${styles.container} sub_container ${appData.isSidebarExtend ? "" : styles.collapsed}`}>
         {/* S T A R T :: aside */}
-        <aside className={`aside ${appData.isSidebarExtend ? "" : "collapsed"}`}>
-          <div className="aside_inner">
+        <aside className={`${styles.aside} ${appData.isSidebarExtend ? "" : styles.collapsed}`}>
+          <div className={styles.asideInner}>
             <TreeMenu data={adminTreeData} />
           </div>
         </aside>

@@ -53,15 +53,15 @@
   cursor: pointer;
   border-radius: 4px;
   color: #fff;
-}
 
-.toggleBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
 
-.toggleBtn:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
 }
 
 /* MUI SvgIcon 크기는 font-size 기준 */
@@ -95,16 +95,16 @@
   font: inherit;
   color: inherit;
   box-sizing: border-box;
-}
 
-.navButton:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 
-.navButton:focus-visible {
-  outline: 2px solid rgb(10, 108, 112);
-  outline-offset: -2px;
+  &:focus-visible {
+    outline: 2px solid rgb(10, 108, 112);
+    outline-offset: -2px;
+  }
 }
 
 .parentItem {
@@ -127,9 +127,11 @@
   flex: 1;
 }
 
-.dimWhenCollapsed .parentLabel,
-.dimWhenCollapsed .childLabel {
-  opacity: 0;
+.dimWhenCollapsed {
+  .parentLabel,
+  .childLabel {
+    opacity: 0;
+  }
 }
 
 .expandIcon {
@@ -165,26 +167,26 @@
   padding: 15px 16px 15px 26px;
   border-top: 1px solid #8a949e;
   background-color: #f0f9f9;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+
+    .childLabel {
+      font-weight: 700;
+    }
+  }
 }
 
 .childRowCollapsed {
   padding-left: 12.8px;
 }
 
-.childRow:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-.childRow:hover .childLabel {
-  font-weight: 700;
-}
-
-.childRowSelected .childLabel {
-  font-weight: 700;
-}
-
 .childRowSelected {
   background-color: rgba(0, 0, 0, 0.04);
+
+  .childLabel {
+    font-weight: 700;
+  }
 }
 
 .childLabel {

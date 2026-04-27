@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { matchPath, useLocation } from "react-router-dom";
-import styles from "./TreeMenu.module.css";
+import styles from "./TreeMenu.module.scss";
 import TreeNode, { type TreeItem } from "./TreeNode";
 
 function normalizePath(s: string): string {

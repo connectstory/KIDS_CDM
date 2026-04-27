@@ -255,7 +255,7 @@ export default function AnalysisDataManagementWrite({
             분석 DATASET 필수 양식
           </Typography>
         </Box>
-        <Box className="w-full p-3 rounded-md border-1 border-gray-300">
+        <Box sx={{ width: "100%", p: 2, borderRadius: 1, border: 1, borderColor: "divider" }}>
           <FileContainer
             files={[
               {
@@ -296,7 +296,7 @@ export default function AnalysisDataManagementWrite({
                 <Typography className="required">분석 DATASET 첨부</Typography>
               </Box>
               <Box className="form_container-row-content w-full">
-                <Stack className="w100" direction="column" spacing={CONTENT_GAP.XSMALL}>
+                <Stack className="w-full" direction="column" spacing={CONTENT_GAP.XSMALL}>
                   {/* 파일 리스트 (기존 + 새로 첨부) */}
                   <FileContainer
                     files={displayDatasetFiles}
@@ -322,7 +322,7 @@ export default function AnalysisDataManagementWrite({
                 <Typography className="required">VDI 신청서 첨부</Typography>
               </Box>
               <Box className="form_container-row-content w-full">
-                <Stack className="w100" direction="column" spacing={CONTENT_GAP.XSMALL}>
+                <Stack className="w-full" direction="column" spacing={CONTENT_GAP.XSMALL}>
                   {/* 파일 리스트 (기존 + 새로 첨부) */}
                   <FileContainer
                     files={displayVdiFiles}

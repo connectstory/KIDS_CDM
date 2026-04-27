@@ -1,7 +1,8 @@
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { MSG } from "@/constants/string";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
 import { resolveModal } from "@/utils/modalPromise";
@@ -26,74 +27,114 @@ export default function AnalysisResultModal() {
     dispatch(closeModal(ModalNames.AnalysisResultUpload));
   };
 
+  const labelCellSx = {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    width: "100%",
+    minWidth: "10rem",
+    maxWidth: "10rem",
+    px: 2,
+    py: 1.5,
+    bgcolor: "grey.200",
+    textAlign: "left",
+  } as const;
+
   return (
     <BaseModal open={modal.open} onClose={() => handleClose(false)} title={modal.title}>
-      {/* 메시지 출력 */}
-      <div className="h-2"></div>
+      <Box sx={{ height: 8 }} />
 
-      <div className="pb-5">
-        <h5 className="text-xl font-semibold">{modalData && modalData.title}</h5>
-      </div>
+      <Box sx={{ pb: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          {modalData && modalData.title}
+        </Typography>
+      </Box>
 
-      <div className="w-full border-y border-gray-300">
-        <div className="flex w-full border-b border-gray-300">
-          <div className="flex flex-col justify-center w-full min-w-[10rem] max-w-[10rem] px-3 py-2 bg-gray-200 text-left">
-            <p className="w-full font-semibold">
-              분석결과 자료<span className="px-1 text-red-500">*</span>
-            </p>
-          </div>
-          <div className="flex items-center w-full pl-3 py-2">
-            {/* 파일 리스트 */}
-            <div className="w-full bg-white rounded-lg p-3 border border-dashed border-gray-300 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-              <input ref={uploadAnalyticalRef} className="hidden" type="file" multiple name="uploadAnalytical"></input>
-              <div
-                className="text-center"
-                onClick={() => {
-                  uploadAnalyticalRef.current?.click();
-                }}
+      <Box sx={{ width: "100%", borderTop: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ display: "flex", width: "100%", borderBottom: 1, borderColor: "divider" }}>
+          <Box sx={labelCellSx}>
+            <Typography component="p" sx={{ width: "100%", fontWeight: 600, m: 0 }}>
+              분석결과 자료
+              <Typography component="span" sx={{ px: 0.5, color: "error.main" }}>
+                *
+              </Typography>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", width: "100%", pl: 2, py: 1.5 }}>
+            <Box
+              onClick={() => uploadAnalyticalRef.current?.click()}
+              sx={{
+                width: "100%",
+                bgcolor: "background.paper",
+                borderRadius: 2,
+                p: 2,
+                border: "1px dashed",
+                borderColor: "divider",
+                cursor: "pointer",
+                textAlign: "center",
+                transition: (t) => t.transitions.create(["border-color", "background-color"]),
+                "&:hover": {
+                  borderColor: "primary.main",
+                  bgcolor: "action.hover",
+                },
+              }}
+            >
+              <input ref={uploadAnalyticalRef} style={{ display: "none" }} type="file" multiple name="uploadAnalytical" />
+              <Box
+                component="svg"
+                sx={{ mx: "auto", height: 40, width: 40, color: "text.disabled", display: "block" }}
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 48 48"
               >
-                <svg className="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <p className="mt-1 text-sm text-gray-600">파일을 드래그하거나 클릭하여 업로드</p>
-                <p className="text-xs text-gray-500">PNG, JPG, PDF (최대 10MB)</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex w-full">
-          <div className="flex flex-col justify-center w-full min-w-[10rem] max-w-[10rem] px-3 py-2 bg-gray-200 text-left">
-            <p className="w-full font-semibold">
-              결과 설명<span className="px-1 text-red-500">*</span>
-            </p>
-          </div>
-          <div className="flex items-center w-full pl-3 py-2">
-            <textarea
-              className="w-full h-[6rem]"
+                <path
+                  d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                파일을 드래그하거나 클릭하여 업로드
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                PNG, JPG, PDF (최대 10MB)
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+        <Box sx={{ display: "flex", width: "100%" }}>
+          <Box sx={labelCellSx}>
+            <Typography component="p" sx={{ width: "100%", fontWeight: 600, m: 0 }}>
+              결과 설명
+              <Typography component="span" sx={{ px: 0.5, color: "error.main" }}>
+                *
+              </Typography>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", width: "100%", pl: 2, py: 1.5 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={4}
               placeholder={MSG.COMMENT_CONTENT_REQUIRED}
               // value={condition}
               // onChange={(e) => setCondition(e.target.value)}
-            ></textarea>
-          </div>
-        </div>
-      </div>
+            />
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="h-10"></div>
+      <Box sx={{ height: 20 }} />
 
-      {/* 버튼 */}
-      <div className="flex justify-end gap-3">
-        <button className="px-4 py-2 bg-gray-300 rounded" onClick={() => handleClose(false)}>
+      <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
+        <Button variant="outlined" color="primary" onClick={() => handleClose(false)}>
           취소
-        </button>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => handleClose(true)}>
+        </Button>
+        <Button variant="contained" color="primary" onClick={() => handleClose(true)}>
           확인
-        </button>
-      </div>
+        </Button>
+      </Stack>
     </BaseModal>
   );
 }

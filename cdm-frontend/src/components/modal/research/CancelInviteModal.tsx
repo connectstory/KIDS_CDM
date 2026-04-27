@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { MSG, STRINGS } from "@/constants/string";
 import { CONTENT_GAP } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { ResearchPartnerResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";

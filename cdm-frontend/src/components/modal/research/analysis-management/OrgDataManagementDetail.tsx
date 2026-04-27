@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { MSG } from "@/constants/string";
 import { AnalysisResultStatus, CONTENT_GAP, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy, getFilePreviewUrl } from "@/api/commonApi";
 import type { RootState } from "@/store";
 import {

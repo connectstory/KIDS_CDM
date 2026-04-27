@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { AsmtAccountRequest } from "@/interfaces/researchInterface";
 import type { RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";

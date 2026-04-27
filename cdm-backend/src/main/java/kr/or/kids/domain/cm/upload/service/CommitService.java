@@ -523,7 +523,8 @@ public class CommitService {
             List<Map<String, String>> sampleRows
     ) {
         if (!append) {
-            jdbcTemplate.execute("TRUNCATE TABLE " + targetTable);
+            // thexfiles 여러 기관에서 CSV 파일을 업로드하는 중에 동시에 동일 테이블에 대해 TRUNCATE를 수행하면 오류가 발생하므로 DELETE로 대체, 그러나 DELETE하면 전체 데이터가 삭제되므로 문제가 발생할 수 있음. 다른 기관의 데이터가 삭제될 수 있음.
+            jdbcTemplate.execute("DELETE FROM " + targetTable);
         }
         String insertSql = buildInsertSql(targetTable, expectedCols);
 

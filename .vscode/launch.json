@@ -1,0 +1,53 @@
+{
+  "version": "0.1.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug: CdmApplication",
+      "request": "launch",
+      "mainClass": "kr.or.kids.CdmApplication",
+      "args": "--spring.profiles.active=local",
+      "envFile": "${workspaceFolder}/cdm-backend/.env",
+      "cwd": "${workspaceFolder}/cdm-backend",
+      "vmArgs": "-Dspring.profiles.active=local",
+      "console": "internalConsole",
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot - Local",
+      "request": "launch",
+      "mainClass": "kr.or.kids.CdmApplication",
+      "args": "--spring.profiles.active=local",
+      "envFile": "${workspaceFolder}/cdm-backend/.env",
+      "cwd": "${workspaceFolder}/cdm-backend"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot - Dev",
+      "request": "launch",
+      "mainClass": "kr.or.kids.CdmApplication",
+      "args": "--spring.profiles.active=dev",
+      "envFile": "${workspaceFolder}/cdm-backend/.env",
+      "cwd": "${workspaceFolder}/cdm-backend"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot - Prod",
+      "request": "launch",
+      "mainClass": "kr.or.kids.CdmApplication",
+      "args": "--spring.profiles.active=prod",
+      "envFile": "${workspaceFolder}/cdm-backend/.env",
+      "cwd": "${workspaceFolder}/cdm-backend"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-CdmApplication<cdm-backend>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "kr.or.kids.CdmApplication",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

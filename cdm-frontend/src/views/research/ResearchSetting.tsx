@@ -12,9 +12,11 @@ export default function ResearchSettingView() {
   };
 
   return (
-    <div>
+    <Box>
       <Helmet>
-        <title>{`CDM - 연구과제 계정 현황`}</title>
+        <title>
+          {settingTabIndex === 0 ? `CDM - VDI 계정 현황` : `CDM - 연구과제 담당자 설정`}
+        </title>
       </Helmet>
       <Box>
         <Box className="tab_container">
@@ -29,6 +31,6 @@ export default function ResearchSettingView() {
           {settingTabIndex === 1 && <ContentEmailSetting />}
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 }

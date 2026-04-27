@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, Chip, Divider, Tab, Tabs, Typography } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useQueryClient } from "@tanstack/react-query";
-import { AllCommunityModule, type ColDef, type ICellRendererParams, ModuleRegistry } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { AnalysisResultStatus, CONTENT_GAP, ProgressStatusType, RsltGroupStcdType } from "@/constants/types";
-import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { ModalNames } from "@/interfaces/modalInterface";
 import type { AnalysisDataResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
@@ -18,14 +18,13 @@ import { analysisDataKeys } from "@/hooks/research/researchQueryKeys";
 import { useAnalysisDataList, useCheckAllStatusCompleted, useResearchDetail } from "@/hooks/research/useResearchQueries";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { useModal } from "@/hooks/useModal";
+import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 import BaseModal from "@/components/modal/BaseModal";
-import Styles from "./AnalysisManagementModal.module.css";
+import Styles from "./AnalysisManagementModal.module.scss";
 import MetaDataManagementDetail from "./MetaDataManagementDetail";
 import MetaDataManagementVote from "./MetaDataManagementVote";
 import MetaDataManagementWrite from "./MetaDataManagementWrite";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 type ViewType = "none" | "write" | "detail";
 
@@ -59,7 +58,7 @@ export default function MetaDataManagementModal() {
   const [currentViewType, setCurrentViewType] = useState<ViewType>("none");
   const [currentAnalysisDatas, setCurrentAnalysisDatas] = useState<AnalysisDataResponse | null>(null);
   const [analysisDatas, setAnalysisDatas] = useState<AnalysisDataResponse[]>([]);
-  const [rsltGroupStcd] = useState(RsltGroupStcdType.ANALYSIS_META);
+  const rsltGroupStcd = RsltGroupStcdType.ANALYSIS_META;
   const [analysisTabIndex, setAnalysisTabIndex] = useState(0);
   const [newlyCreatedAsmtMetaRsltSn, setNewlyCreatedAsmtMetaRsltSn] = useState<number | null>(null);
 
@@ -79,7 +78,12 @@ export default function MetaDataManagementModal() {
   /* ------------------------------
    * 분석 데이터 목록 조회
    * ------------------------------ */
-  const { data: analysisDatasList, refetch } = useAnalysisDataList(
+  const {
+    data: analysisDatasList,
+    refetch,
+    isLoading: isLoadingAnalysisList,
+    isError: isErrorAnalysisList,
+  } = useAnalysisDataList(
     research?.asmtSn ?? null,
     rsltGroupStcd,
     undefined,
@@ -418,67 +422,92 @@ export default function MetaDataManagementModal() {
                 </p>
               </div>
             </div>
-            <AgGridReact
-              ref={gridRef}
-              rowData={analysisDatas}
-              pinnedTopRowData={
-                research?.instId === session.instId &&
-                research?.asmtPrgrsSttsCd !== ProgressStatusType.COMPLETED &&
-                analysisDatas.length > 0
-                  ? pinnedTopRowData
-                  : []
-              }
-              columnDefs={colDefs}
-              rowHeight={42}
-              rowSelection={{
-                mode: "singleRow",
-                checkboxes: false, // 왼쪽 체크박스 컬럼 제거
-                enableClickSelection: true, // 행 클릭으로 선택 가능
-              }}
-              overlayNoRowsTemplate={"<span>등록된 분석 데이터가 없습니다.</span>"}
-              getRowId={(params) => {
-                return params.data?.asmtMetaRsltSn?.toString() || "";
-              }}
-              getRowHeight={(params) => {
-                // pinned row는 다른 높이 설정 (예: 60px, 필요에 따라 조절 가능)
-                if (params.node.rowPinned === "top") {
-                  return 50;
+            {isLoadingAnalysisList && (
+              <Box sx={{ position: "relative", minHeight: 240 }}>
+                <Loader isLoading={true} />
+              </Box>
+            )}
+            {!isLoadingAnalysisList && isErrorAnalysisList && (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <Typography color="text.secondary">목록을 불러오지 못했습니다.</Typography>
+              </Box>
+            )}
+            {!isLoadingAnalysisList && !isErrorAnalysisList && (
+              <AgGridReact
+                ref={gridRef}
+                rowData={analysisDatas}
+                pinnedTopRowData={
+                  research?.instId === session.instId &&
+                  research?.asmtPrgrsSttsCd !== ProgressStatusType.COMPLETED &&
+                  analysisDatas.length > 0
+                    ? pinnedTopRowData
+                    : []
                 }
-                return 40;
-              }}
-              getRowStyle={(params) => {
-                // pinned row는 스타일 적용 안함
-                if (params.node.rowPinned === "top") {
-                  return { cursor: "default" };
-                }
-                // currentAnalysisDatas와 일치하는 경우 배경색 적용
-                if (params.data && params.data.asmtMetaRsltSn === currentAnalysisDatas?.asmtMetaRsltSn) {
-                  return {
-                    cursor: "pointer",
-                    backgroundColor: "var(--ag-row-hover-color)",
-                  } as any;
-                }
-                return { cursor: "pointer" } as any;
-              }}
-              onRowClicked={(event) => {
-                // pinned row는 클릭 이벤트 무시
-                if (event.node.rowPinned === "top") {
-                  return;
-                }
-                if (event.data) {
-                  handleClickAnalysis(event.data);
-                }
-              }}
-            />
+                columnDefs={colDefs}
+                rowHeight={42}
+                rowSelection={{
+                  mode: "singleRow",
+                  checkboxes: false, // 왼쪽 체크박스 컬럼 제거
+                  enableClickSelection: true, // 행 클릭으로 선택 가능
+                }}
+                overlayNoRowsTemplate={"<span>등록된 분석 데이터가 없습니다.</span>"}
+                getRowId={(params) => {
+                  return params.data?.asmtMetaRsltSn?.toString() || "";
+                }}
+                getRowHeight={(params) => {
+                  // pinned row는 다른 높이 설정 (예: 60px, 필요에 따라 조절 가능)
+                  if (params.node.rowPinned === "top") {
+                    return 50;
+                  }
+                  return 40;
+                }}
+                getRowStyle={(params) => {
+                  // pinned row는 스타일 적용 안함
+                  if (params.node.rowPinned === "top") {
+                    return { cursor: "default" };
+                  }
+                  // currentAnalysisDatas와 일치하는 경우 배경색 적용
+                  if (params.data && params.data.asmtMetaRsltSn === currentAnalysisDatas?.asmtMetaRsltSn) {
+                    return {
+                      cursor: "pointer",
+                      backgroundColor: "var(--ag-row-hover-color)",
+                    } as any;
+                  }
+                  return { cursor: "pointer" } as any;
+                }}
+                onRowClicked={(event) => {
+                  // pinned row는 클릭 이벤트 무시
+                  if (event.node.rowPinned === "top") {
+                    return;
+                  }
+                  if (event.data) {
+                    handleClickAnalysis(event.data);
+                  }
+                }}
+              />
+            )}
           </Box>
           <Divider orientation="vertical" flexItem />
           <Box ref={rightContainerRef} className={Styles.analysis_container_right}>
             {"none" === currentViewType && (
               <Box className="w-full h-full flex justify-center items-center">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center m-auto h-[120px] w-[120px] p-14 bg-gray-100 rounded-full ">
-                    <i className="fa-solid fa-file-arrow-up text-7xl text-gray-300"></i>
-                  </div>
+                <Box sx={{ textAlign: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      m: "auto",
+                      height: 120,
+                      width: 120,
+                      p: 7,
+                      bgcolor: "grey.100",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    <Box component="i" className="fa-solid fa-file-arrow-up" sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }} />
+                  </Box>
                   <SpaceBox gap={CONTENT_GAP.LARGE} />
                   <Typography variant="h5">분석결과가 없습니다.</Typography>
                   <SpaceBox gap={CONTENT_GAP.XSMALL} />
@@ -487,7 +516,7 @@ export default function MetaDataManagementModal() {
                       ? "메타분석 결과가 없습니다. 메타분석 결과가 등록되면 알림을 받으실 수 있습니다."
                       : "메타분석 결과를 작성하고 자료를 첨부해주세요."}
                   </Typography>
-                </div>
+                </Box>
               </Box>
             )}
             {"write" === currentViewType && (

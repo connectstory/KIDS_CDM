@@ -6,7 +6,7 @@ import { koKR } from "@mui/x-date-pickers/locales";
 import type { Dayjs } from "dayjs";
 import "dayjs/locale/ko";
 import { STRINGS } from "@/constants/string";
-import styles from "./SearchArea.module.css";
+import styles from "./SearchArea.module.scss";
 
 export type SearchAreaOption = { value: string; label: string };
 

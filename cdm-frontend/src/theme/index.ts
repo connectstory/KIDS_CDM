@@ -10,6 +10,24 @@ export const theme = createTheme({
     text: {
       primary: "#1e2124", // 전역 기본 텍스트 색상 (CSS 변수 --main-font-color와 동일)
     },
+    /** 연구 도메인 통계·투표·상태 칩 (`CHIP_COLORS` 단일 출처) */
+    research: {
+      voteApprove: "#1E7F43",
+      votePending: "#B26A00",
+      voteNeutral: "#5F6368",
+      voteReject: "#D93025",
+      voteDanger: "#B00020",
+      chipApproveBg: "#E6F4EA",
+      chipRejectBg: "#FDECEA",
+      chipNeutralBg: "#F1F3F4",
+      chipPendingBg: "#FEF7E0",
+      chipModifyBg: "#FFF7ED",
+      chipModifyText: "#C2410C",
+      chipProgressBg: "#E8F0FE",
+      chipProgressText: "#1A73E8",
+      chipRegisteredBg: "#F5F3FF",
+      chipRegisteredText: "#5B21B6",
+    },
   },
   typography: {
     fontSize: GLOBAL_FONT_SIZE,

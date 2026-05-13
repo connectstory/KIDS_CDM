@@ -1,9 +1,10 @@
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import { AllCommunityModule, type ColDef, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
+import { Helmet } from "react-helmet";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { BOARD_CONFIG } from "@/config/boardConfig";
 import { CONTENT_GAP } from "@/constants/types.ts";
 import {
   fetchBoardList,
@@ -13,12 +14,11 @@ import {
   fetchInstUldPrgrStats,
   fetchTblUldStats,
 } from "@/api/communityApi";
+import type { RootState } from "@/store";
+import { cdmTableDisplayName } from "@/utils/cdmTableUtils";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { usePageAccessHistory } from "@/hooks/usePageAccessHistory";
 import { SpaceBox } from "@/components/SpaceBox.tsx";
-import { cdmTableDisplayName } from "@/utils/cdmTableUtils";
-import { BOARD_CONFIG } from "@/config/boardConfig";
-import { Helmet } from "react-helmet";
 
 const ROW_HEIGHT = 42;
 const HEADER_HEIGHT = 42;
@@ -62,7 +62,7 @@ export default function PartnerDashboardView() {
   const tableStatsQuery = useQuery({
     queryKey: ["dashboard", "tblUldStats", instId],
     queryFn: () => fetchTblUldStats(instId!),
-    enabled: !!instId,  // instId 없으면 호출 안 함
+    enabled: !!instId, // instId 없으면 호출 안 함
     staleTime: 1000 * 60,
   });
 
@@ -182,19 +182,29 @@ export default function PartnerDashboardView() {
           <div className="border-t border-slate-800">
             <div className="flex bg-gray-100 text-center border-b border-slate-300">
               {/* 총계 - 병합 */}
-              <div className="flex-1 flex items-center justify-center font-semibold border-r border-zinc-200" style={{ minHeight: "64px" }}>
+              <div
+                className="flex-1 flex items-center justify-center font-semibold border-r border-zinc-200"
+                style={{ minHeight: "64px" }}
+              >
                 총계
               </div>
               {/* 참여요청 - 병합 */}
-              <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "64px" }}>
+              <div
+                className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                style={{ minHeight: "64px" }}
+              >
                 참여요청
               </div>
               {/* 기관분석 - 서브헤더 포함 */}
               <div className="flex-[3] flex flex-col border-r border-slate-300">
                 <div className="flex items-center justify-center py-1 font-semibold border-b border-slate-300">기관분석</div>
                 <div className="flex">
-                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">진행중</div>
-                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">검토요청</div>
+                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">
+                    진행중
+                  </div>
+                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">
+                    검토요청
+                  </div>
                   <div className="flex-1 flex items-center justify-center py-1 font-semibold">검토완료</div>
                 </div>
               </div>
@@ -202,7 +212,9 @@ export default function PartnerDashboardView() {
               <div className="flex-[2] flex flex-col border-r border-slate-300">
                 <div className="flex items-center justify-center py-1 font-semibold border-b border-slate-300">메타분석</div>
                 <div className="flex">
-                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">검토요청</div>
+                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">
+                    검토요청
+                  </div>
                   <div className="flex-1 flex items-center justify-center py-1 font-semibold">검토완료</div>
                 </div>
               </div>
@@ -213,14 +225,14 @@ export default function PartnerDashboardView() {
             </div>
             <div className="flex text-center border-b border-zinc-200">
               {[
-                { value: asmtStats.totalCnt,             status: null,  border: true },
-                { value: asmtStats.reqCnt,               status: "01",  border: true }, // 참여요청
-                { value: asmtStats.instProgressCnt,      status: "02",  border: true }, // 진행중(통합,기관분석)
-                { value: asmtStats.instReviewReqCnt,     status: "02",  border: true }, // 진행중(통합,기관분석)
-                { value: asmtStats.instReviewCompleteCnt,status: "02",  border: true }, // 진행중(통합,기관분석)
-                { value: asmtStats.metaReviewReqCnt,     status: "03",  border: true }, // 진행중(메타분석)
-                { value: asmtStats.metaReviewCompleteCnt,status: "03",  border: true }, // 진행중(메타분석)
-                { value: asmtStats.closeCnt,             status: "04",  border: false }, // 마감
+                { value: asmtStats.totalCnt, status: null, border: true },
+                { value: asmtStats.reqCnt, status: "01", border: true }, // 참여요청
+                { value: asmtStats.instProgressCnt, status: "02", border: true }, // 진행중(통합,기관분석)
+                { value: asmtStats.instReviewReqCnt, status: "02", border: true }, // 진행중(통합,기관분석)
+                { value: asmtStats.instReviewCompleteCnt, status: "02", border: true }, // 진행중(통합,기관분석)
+                { value: asmtStats.metaReviewReqCnt, status: "03", border: true }, // 진행중(메타분석)
+                { value: asmtStats.metaReviewCompleteCnt, status: "03", border: true }, // 진행중(메타분석)
+                { value: asmtStats.closeCnt, status: "04", border: false }, // 마감
               ].map(({ value, status, border }, idx) => (
                 <div
                   key={`${status ?? "total"}-${idx}`}
@@ -237,23 +249,34 @@ export default function PartnerDashboardView() {
           <div className="border-t border-slate-800">
             <div className="flex bg-gray-100 text-center border-b border-slate-300">
               {/* 총계 - 병합 */}
-              <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "64px" }}>
+              <div
+                className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                style={{ minHeight: "64px" }}
+              >
                 총계
               </div>
               {/* 참여요청 - 병합 */}
-              <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "64px" }}>
+              <div
+                className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                style={{ minHeight: "64px" }}
+              >
                 참여요청
               </div>
               {/* 진행중 - 서브헤더 포함 */}
               <div className="flex-[2] flex flex-col border-r border-slate-300">
                 <div className="flex items-center justify-center py-1 font-semibold border-b border-slate-300">진행중</div>
                 <div className="flex">
-                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">통합/기관</div>
+                  <div className="flex-1 flex items-center justify-center py-1 font-semibold border-r border-slate-300">
+                    통합/기관
+                  </div>
                   <div className="flex-1 flex items-center justify-center py-1 font-semibold">메타분석</div>
                 </div>
               </div>
               {/* 마감 - 병합 */}
-              <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "64px" }}>
+              <div
+                className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                style={{ minHeight: "64px" }}
+              >
                 마감
               </div>
               {/* 취소 - 병합 */}
@@ -270,10 +293,7 @@ export default function PartnerDashboardView() {
                 { value: createdStats.closeCnt, status: "04", border: true },
                 { value: createdStats.cancelCnt, status: "05", border: false },
               ].map(({ value, status, border }) => (
-                <div
-                  key={status ?? "total"}
-                  className={`flex-1 py-2 text-center${border ? " border-r border-slate-200" : ""}`}
-                >
+                <div key={status ?? "total"} className={`flex-1 py-2 text-center${border ? " border-r border-slate-200" : ""}`}>
                   {status ? (
                     <button
                       type="button"
@@ -282,7 +302,10 @@ export default function PartnerDashboardView() {
                     >
                       {safe(value)}
                     </button>
-                  ) : safe(value)}건
+                  ) : (
+                    safe(value)
+                  )}
+                  건
                 </div>
               ))}
             </div>
@@ -300,25 +323,46 @@ export default function PartnerDashboardView() {
             <div className="py-2 font-semibold text-gray-800">업로드 진행 현황</div>
             <div className="border-t border-slate-800">
               <div className="flex bg-gray-100 text-center border-b border-slate-300">
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   총계
                 </div>
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   참여요청
                 </div>
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   진행중
                 </div>
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   완료
                 </div>
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   참여취소
                 </div>
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   등록
                 </div>
-                <div className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300" style={{ minHeight: "42px" }}>
+                <div
+                  className="flex-1 flex items-center justify-center font-semibold border-r border-slate-300"
+                  style={{ minHeight: "42px" }}
+                >
                   참여재요청
                 </div>
                 <div className="flex-1 flex items-center justify-center font-semibold" style={{ minHeight: "42px" }}>
@@ -341,11 +385,14 @@ export default function PartnerDashboardView() {
                       <button
                         type="button"
                         className="cursor-pointer text-blue-600 hover:underline bg-transparent border-0 p-0"
-                        onClick={() => navigate(`${routes.CDM.DISCLOSURES_CUSTOMER}?uldPrgrSttsCd=${stts}&page=1`)}
+                        onClick={() => navigate(`${routes.CDM.DISCLOSURES}?uldPrgrSttsCd=${stts}&page=1`)}
                       >
                         {safe(value)}
                       </button>
-                    ) : safe(value)}건
+                    ) : (
+                      safe(value)
+                    )}
+                    건
                   </div>
                 ))}
               </div>
@@ -393,9 +440,7 @@ export default function PartnerDashboardView() {
               </div>
               <div className="flex text-center border-b border-zinc-200">
                 <div className="flex-1 py-2 border-r border-zinc-200">{safe(cdmStats.uldNocs).toLocaleString()}건</div>
-                <div className="flex-1 py-2 text-red-500 font-semibold">
-                  {Number(safe(cdmStats.errRt)).toFixed(2)}%
-                </div>
+                <div className="flex-1 py-2 text-red-500 font-semibold">{Number(safe(cdmStats.errRt)).toFixed(2)}%</div>
               </div>
             </div>
           </div>

@@ -92,7 +92,7 @@ export default function SiteMapView() {
             </li>
             <li className="flex items-center gap-2 py-2 border-b border-gray-200">
               <span className="w-1 h-1 bg-gray-400 inline-block"></span>
-              <Link to={`${root}/taskproposal/admin/taskproposalList`}>과제제안</Link>
+              <Link to={routes.COMMUNITY.PROPOSAL.ADMIN_LIST}>과제제안</Link>
             </li>
           </ul>
         </section>

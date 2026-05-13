@@ -37,7 +37,7 @@ module.exports = [
     menuLv: 3,
     menuSeq: 21,
     taskSeCd: "PP",
-    menuUrl: "/cm/cdm/DisclosureList",
+    menuUrl: "/cm/cdm/disclosures",
   },
   {
     menuSn: 22,
@@ -145,7 +145,7 @@ module.exports = [
     menuLv: 3,
     menuSeq: 46,
     taskSeCd: "PP",
-    menuUrl: "/cm/community/faq/admin/faqList",
+    menuUrl: "/cm/community/faq/admin/list",
   },
   {
     menuSn: 5,
@@ -163,7 +163,7 @@ module.exports = [
     menuLv: 3,
     menuSeq: 51,
     taskSeCd: "PP",
-    menuUrl: "/cm/community/researchProject/admin/qnaList",
+    menuUrl: "/cm/community/researchProject/admin/qna/list",
   },
   {
     menuSn: 52,
@@ -172,7 +172,7 @@ module.exports = [
     menuLv: 3,
     menuSeq: 52,
     taskSeCd: "PP",
-    menuUrl: "/cm/community/taskproposal/admin/taskproposalList",
+    menuUrl: "/cm/community/proposal/admin/list",
   },
   {
     menuSn: 53,
@@ -181,7 +181,7 @@ module.exports = [
     menuLv: 3,
     menuSeq: 53,
     taskSeCd: "PP",
-    menuUrl: "/cm/community/freeboard/admin/freeBoardList",
+    menuUrl: "/cm/community/freeboard/admin/freeboard/list",
   },
   {
     menuSn: 54,
@@ -190,7 +190,7 @@ module.exports = [
     menuLv: 3,
     menuSeq: 54,
     taskSeCd: "PP",
-    menuUrl: "/cm/community/qna/admin/qnaList",
+    menuUrl: "/cm/community/qna/admin/qna/list",
   },
   {
     menuSn: 6,

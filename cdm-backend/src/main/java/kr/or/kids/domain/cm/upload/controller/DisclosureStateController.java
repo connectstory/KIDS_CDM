@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import kr.or.kids.global.common.CustomUserDetails;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,16 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import kr.or.kids.domain.cm.common.mapper.CommonAuthrtMapper;
-import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.common.dto.ApiResponse;
-import kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO;
-import kr.or.kids.domain.cm.upload.mapper.DisclosurePartnerMapper;
+import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.upload.service.DisclosurePartnerService;
 import kr.or.kids.domain.cm.upload.service.DisclosureService;
 import kr.or.kids.domain.cm.upload.util.UploadAuthUtil;
 import kr.or.kids.domain.cm.upload.util.UploadNonFatal;
-
+import kr.or.kids.global.common.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,23 +44,14 @@ public class DisclosureStateController {
   private static final String JSON_KEY_PBLNT_PRGRS_STTS_CD = "pblntPrgrsSttsCd";
 
   private final DisclosureService disclosureService;
+  private final DisclosureController disclosureController;
   private final kr.or.kids.domain.cm.upload.service.UploadStatsService uploadStatsService;
   private final DisclosurePartnerService disclosurePartnerService;
-  private final DisclosurePartnerMapper disclosurePartnerMapper;
-  private final CommonAuthrtMapper commonAuthrtMapper;
-  private static final String TEN_ZEROS = "0000000000";
   private static final String CLOSE_CANCEL_REASON = "마감에 의한 취소";
   private static final String MSG_LOGIN_REQUIRED = "로그인이 필요합니다.";
 
   
-  /**
-   * confirmUploadStats 처리를 수행한다.
-   *
-   * @param du du
-   * @param pblntSn pblntSn
-   * @param request request
-   * @return 처리 결과
-   */
+  // 업로드 현황 확정
   @PostMapping("/{pblntSn}/upload-stats/confirm")
   public ResponseEntity<ApiResponse<Void>> confirmUploadStats( @AuthenticationPrincipal CustomUserDetails du, @PathVariable Long pblntSn, @RequestBody Map<String, Object> request ) {
     if (du == null) {
@@ -87,77 +74,15 @@ public class DisclosureStateController {
     uploadStatsService.confirmUploadStats( user, pblntSn, ptcpInstSn );
     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "업로드가 확정되었습니다.", null );
   }
-
-  
-  /**
-   * 조회 결과를 반환한다.
-   *
-   * @param du du
-   * @param httpRequest httpRequest
-   * @return 처리 결과
-   */
-  @GetMapping("/{pblntSn}/status")
-  public ResponseEntity<ApiResponse<Map<String, Object>>> getDisclosureStatus( @AuthenticationPrincipal CustomUserDetails du, @PathVariable Long pblntSn ) {
-    if (du == null) {
-      return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-    }
-
-    if (pblntSn == null) {
-      return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_NO_PBLNT_SN, null );
-    }
-    if ( !canAccessPblntSn( du, pblntSn ) ) {
-      return ApiResponse.error( HttpStatus.FORBIDDEN, "해당 공시에 대한 조회 권한이 없습니다.", null );
-    }
-    String pblntPrgrsSttsCd = disclosureService.getStatus( pblntSn );
-    return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "공시 상태 조회 성공", Map.of( JSON_KEY_PBLNT_SN, pblntSn, JSON_KEY_PBLNT_PRGRS_STTS_CD, pblntPrgrsSttsCd ) );
-  }
-
-  
-  /**
-   * 데이터를 수정한다.
-   *
-   * @param du du
-   * @param request request
-   * @param httpRequest httpRequest
-   * @return 처리 결과
-   */
-  @PostMapping("/{pblntSn}/status")
-  public ResponseEntity<ApiResponse<Void>> updateDisclosureStatus( @AuthenticationPrincipal CustomUserDetails du, @PathVariable Long pblntSn, @RequestBody Map<String, Object> request ) {
-    if (du == null) {
-      return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-    }
-
-    UserVO user = UploadAuthUtil.toUserVO( du );
-    if (user == null) {
-      return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_LOGIN_REQUIRED, null );
-    }
-
-    if (pblntSn == null) {
-      return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_NO_PBLNT_SN, null );
-    }
-    if ( !UploadAuthUtil.isAdmin( du ) ) {
-      return ApiResponse.error( HttpStatus.FORBIDDEN, "공시 상태는 관리자만 변경할 수 있습니다.", null );
-    }
-
-    Object statusObj = request != null ? request.get( JSON_KEY_PBLNT_PRGRS_STTS_CD ) : null;
-    String pblntPrgrsSttsCd = statusObj != null ? String.valueOf( statusObj ).trim() : null;
-    disclosureService.updateStatus( user, pblntSn, pblntPrgrsSttsCd );
-    return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "공시 상태가 변경되었습니다.", null );
-  }
-
-  /**
-   * 구 클라이언트 호환: {@code GET /disclosures/status?pblntSn=}. 신규는 {@code GET /disclosures/{pblntSn}/status} 권장.
-   */
+  // 구 클라이언트 호환: {@code GET /disclosures/status?pblntSn=}. 신규는 {@code GET /disclosures/{pblntSn}/status} 권장.
   @GetMapping( value = "/status", params = "pblntSn" )
   public ResponseEntity<ApiResponse<Map<String, Object>>> getDisclosureStatusLegacyQuery(
       @AuthenticationPrincipal CustomUserDetails du,
       @RequestParam( "pblntSn" ) Long pblntSn ) {
-    return getDisclosureStatus( du, pblntSn );
+    return disclosureController.getDisclosureStatus( du, pblntSn );
   }
 
-  /**
-   * {@code pblntSn} 없이 {@code /disclosures/status}만 호출한 경우 안내 응답.
-   */
+  // {@code pblntSn} 없이 {@code /disclosures/status}만 호출한 경우 안내 응답.
   @GetMapping( value = "/status", params = "!pblntSn" )
   public ResponseEntity<ApiResponse<Map<String, Object>>> getDisclosureStatusLegacyMissingPblntSn() {
     return ApiResponse.error(
@@ -166,9 +91,7 @@ public class DisclosureStateController {
         null );
   }
 
-  /**
-   * 구 클라이언트 호환: {@code POST /disclosures/status?pblntSn=} 또는 본문에 {@code pblntSn}. 신규는 {@code POST /disclosures/{pblntSn}/status} 권장.
-   */
+  // 구 클라이언트 호환: {@code POST /disclosures/status?pblntSn=} 또는 본문에 {@code pblntSn}. 신규는 {@code POST /disclosures/{pblntSn}/status} 권장.
   @PostMapping( "/status" )
   public ResponseEntity<ApiResponse<Void>> updateDisclosureStatusLegacy(
       @AuthenticationPrincipal CustomUserDetails du,
@@ -178,17 +101,11 @@ public class DisclosureStateController {
     if ( pblntSn == null ) {
       return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_NO_PBLNT_SN, null );
     }
-    return updateDisclosureStatus( du, pblntSn, request != null ? request : new HashMap<>() );
+    return disclosureController.updateDisclosureStatus( du, pblntSn, request != null ? request : new HashMap<>() );
   }
 
   
-  /**
-   * checkAndCompleteDisclosure 처리를 수행한다.
-   *
-   * @param du du
-   * @param pblntSn pblntSn
-   * @return 처리 결과
-   */
+  // 공시 완료 체크
   @PostMapping("/{pblntSn}/check-and-complete")
   public ResponseEntity<ApiResponse<Map<String, Object>>> checkAndCompleteDisclosure( @AuthenticationPrincipal CustomUserDetails du, @PathVariable Long pblntSn ) {
     if (du == null) {
@@ -237,13 +154,7 @@ public class DisclosureStateController {
   }
 
   
-  /**
-   * closeDisclosureAndCancelUnregisteredPartners 처리를 수행한다.
-   *
-   * @param du du
-   * @param pblntSn pblntSn
-   * @return 처리 결과
-   */
+  // 공시 마감 및 미등록 참여기관 취소
   @PostMapping("/{pblntSn}/close")
   public ResponseEntity<ApiResponse<Map<String, Object>>> closeDisclosureAndCancelUnregisteredPartners(
           @AuthenticationPrincipal CustomUserDetails du,
@@ -320,39 +231,5 @@ public class DisclosureStateController {
       return UploadNonFatal.tryParseLong( (String) ptcpInstSnObj );
     }
     return null;
-  }
-
-  private boolean canAccessPblntSn( CustomUserDetails du, Long pblntSn ) {
-    if ( UploadAuthUtil.isAdmin( du ) ) {
-      return true;
-    }
-    String userInstId = UploadAuthUtil.resolvePartnerInstIdForAccess( du, commonAuthrtMapper );
-    if ( userInstId == null || userInstId.isBlank() ) {
-      return false;
-    }
-    List<TbCmMUldPrstVO> partners = disclosurePartnerMapper.findByPblntSn( pblntSn );
-    if ( partners == null || partners.isEmpty() ) {
-      return false;
-    }
-    for ( TbCmMUldPrstVO row : partners ) {
-      String iid = row.getInstId();
-      if ( iid != null && !iid.isBlank() && isSameInst( userInstId, iid.trim() ) ) {
-        return true;
-      }
-      String br = row.getBrno();
-      if ( br != null && !br.isBlank() && isSameInst( userInstId, br.trim() ) ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isSameInst( String a, String b ) {
-    if (a == null || b == null) {
-      return false;
-    }
-    String na = (TEN_ZEROS + a.trim()).replaceFirst( "^0+(?!$)", "" );
-    String nb = (TEN_ZEROS + b.trim()).replaceFirst( "^0+(?!$)", "" );
-    return na.equals( nb ) || (TEN_ZEROS + a.trim()).substring( Math.max( 0, (TEN_ZEROS + a.trim()).length() - 10 ) ).equals( (TEN_ZEROS + b.trim()).substring( Math.max( 0, (TEN_ZEROS + b.trim()).length() - 10 ) ) );
   }
 }

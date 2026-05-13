@@ -8,8 +8,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO;
@@ -25,6 +27,7 @@ import kr.or.kids.domain.cm.upload.mapper.DisclosurePartnerMapper;
 import kr.or.kids.domain.cm.upload.service.DisclosurePartnerCloseDataCleanupService;
 import kr.or.kids.domain.cm.upload.service.DisclosurePartnerService;
 import kr.or.kids.domain.cm.upload.util.UploadNonFatal;
+import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -57,6 +60,8 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
   private static final String KEY_TNOCS = "tnocs";
   private static final String KEY_PERIOD_SCALE_LIST = "periodScaleList";
   private static final String KEY_CATALOG_LIST = "catalogList";
+
+  private static final String MSG_PARTNER_LIST_FORBIDDEN = "참여기관 목록 조회 권한이 없습니다.";
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -108,6 +113,24 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
       
       return response;
     } ).collect( Collectors.toList() );
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<DisclosurePartnerResponse> findByPblntSnForDisclosureMember( Long pblntSn, DisclosureMemberVO memberAndInst ) {
+    boolean admin = Boolean.TRUE.equals( memberAndInst.getIsAdmin() );
+    boolean isPartner = memberAndInst.getPartner() != null;
+    if (!admin && !isPartner) {
+      throw new ResponseStatusException( HttpStatus.FORBIDDEN, MSG_PARTNER_LIST_FORBIDDEN );
+    }
+    List<DisclosurePartnerResponse> data = findByPblntSn( pblntSn );
+    if (!admin && isPartner) {
+      Long selfPtcpInstSn = memberAndInst.getPartner().getPtcpInstSn();
+      return data.stream()
+          .filter( row -> selfPtcpInstSn != null && selfPtcpInstSn.equals( row.getPtcpInstSn() ) )
+          .collect( Collectors.toList() );
+    }
+    return data;
   }
 
   private void removePartnersNotInRequest( Long pblntSn, List<TbCmMUldPrstVO> existingPartners, Set<String> requestedInstIds ) {

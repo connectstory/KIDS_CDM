@@ -16,20 +16,34 @@
     <result property="delYn" column="del_yn"/>
     <result property="rgtrId" column="rgtr_id"/>
     <result property="rgtrNm" column="rgtrNm"/>
+    <result property="uldInstPrgrsSttsCd" column="uld_inst_prgrs_stts_cd"/>
+    <result property="uldTypeCd" column="uld_type_cd"/>
     <result property="regYmd" column="reg_dt"/>
     <result property="mdfrId" column="mdfr_id"/>
     <result property="mdfcnDt" column="mdfcn_dt"/>
   </resultMap>
 
-  <select id="search" parameterType="kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest" resultMap="TbCmMUldPblntVOMap">
+  <!-- 등록자명: emp/mbr 다건 매칭 시 JOIN으로 행이 늘어나 selectOne/목록 중복이 나지 않도록 스칼라 서브쿼리로 조회 -->
+  <sql id="rgtrNmSelectPblnt">
+      COALESCE(
+        NULLIF(TRIM((SELECT emp.emp_nm FROM kids_own.tb_pp_m_emp_info emp WHERE TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, '')) LIMIT 1)), ''),
+        NULLIF(TRIM((SELECT mbr.encpt_mbr_flnm FROM kids_own.TB_PP_M_MBR_INFO mbr WHERE TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, '')) LIMIT 1)), ''),
+        pblnt.rgtr_id)
+  </sql>
+  <sql id="rgtrNmSelectHist">
+      COALESCE(
+        NULLIF(TRIM((SELECT emp.emp_nm FROM kids_own.tb_pp_m_emp_info emp WHERE TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, '')) LIMIT 1)), ''),
+        NULLIF(TRIM((SELECT mbr.encpt_mbr_flnm FROM kids_own.TB_PP_M_MBR_INFO mbr WHERE TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, '')) LIMIT 1)), ''),
+        h.rgtr_id)
+  </sql>
+
+  <select id="searchDisclosureList" parameterType="kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest" resultMap="TbCmMUldPblntVOMap">
     SELECT DISTINCT
       pblnt.pblnt_sn, pblnt.pblnt_se_cd, pblnt.ttl_nm, pblnt.pblnt_cn,
       pblnt.pblnt_bgng_ymd, pblnt.pblnt_end_ymd, pblnt.pblnt_prgrs_stts_cd,
       pblnt.del_yn, pblnt.rgtr_id, pblnt.reg_dt, pblnt.mdfr_id, pblnt.mdfcn_dt,
-      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), pblnt.rgtr_id) AS "rgtrNm"
+      <include refid="rgtrNmSelectPblnt"/> AS "rgtrNm"
     FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
-    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
-    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
     <if test="instIdList != null and instIdList.size() > 0">
       INNER JOIN kids_own.TB_CM_M_ULD_PRST prst
         ON pblnt.pblnt_sn = prst.pblnt_sn
@@ -121,7 +135,7 @@
     LIMIT #{limit} OFFSET #{offset}
   </select>
 
-  <select id="count" parameterType="kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest" resultType="int">
+  <select id="countDisclosureList" parameterType="kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest" resultType="int">
     SELECT COUNT(DISTINCT pblnt.pblnt_sn)
     FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
     <if test="instIdList != null and instIdList.size() > 0">
@@ -213,15 +227,121 @@
     </where>
   </select>
 
+  <!-- 파트너(기관) 공시 목록: 로그인 기관 PRST 행만 INNER JOIN -->
+  <select id="searchDisclosureListByPartnerInst" resultMap="TbCmMUldPblntVOMap">
+    SELECT DISTINCT
+      pblnt.pblnt_sn, pblnt.pblnt_se_cd, pblnt.ttl_nm, pblnt.pblnt_cn,
+      pblnt.pblnt_bgng_ymd, pblnt.pblnt_end_ymd, pblnt.pblnt_prgrs_stts_cd,
+      pblnt.del_yn, pblnt.rgtr_id, pblnt.reg_dt, pblnt.mdfr_id, pblnt.mdfcn_dt,
+      TRIM(COALESCE(prst.uld_inst_prgrs_stts_cd, '')) AS uld_inst_prgrs_stts_cd,
+      TRIM(COALESCE(prst.uld_type_cd, '')) AS uld_type_cd,
+      <include refid="rgtrNmSelectPblnt"/> AS "rgtrNm"
+    FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
+    INNER JOIN kids_own.TB_CM_M_ULD_PRST prst
+      ON pblnt.pblnt_sn = prst.pblnt_sn
+      AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+      AND (
+        (
+          prst.inst_id IS NOT NULL AND TRIM(prst.inst_id) != ''
+          AND LPAD(TRIM(prst.inst_id), 10, '0') = LPAD(TRIM(COALESCE(#{instId}, '')), 10, '0')
+        )
+        OR (
+          prst.brno IS NOT NULL AND TRIM(prst.brno) != ''
+          AND LPAD(TRIM(prst.brno), 10, '0') = LPAD(TRIM(COALESCE(#{instId}, '')), 10, '0')
+        )
+      )
+    <where>
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+      <if test="request.pblntSeCd != null and request.pblntSeCd != ''">
+        AND pblnt.pblnt_se_cd = #{request.pblntSeCd}
+      </if>
+      <if test="request.pblntPrgrsSttsCd != null and request.pblntPrgrsSttsCd != ''">
+        AND pblnt.pblnt_prgrs_stts_cd = #{request.pblntPrgrsSttsCd}
+      </if>
+      <if test="request.uldPrgrSttsCd != null and request.uldPrgrSttsCd != ''">
+        AND TRIM(COALESCE(prst.uld_inst_prgrs_stts_cd, '')) = #{request.uldPrgrSttsCd}
+      </if>
+      <if test="request.keyword != null and request.keyword != ''">
+        <choose>
+          <when test="request.searchType == 'title'">
+            AND pblnt.ttl_nm LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'content'">
+            AND pblnt.pblnt_cn LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'both' or request.searchType == null or request.searchType == ''">
+            AND (pblnt.ttl_nm LIKE CONCAT('%', #{request.keyword}, '%') OR pblnt.pblnt_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+      <if test="request.pblntBgngYmd != null and request.pblntBgngYmd != ''">
+        AND pblnt.pblnt_bgng_ymd &gt;= #{request.pblntBgngYmd}
+      </if>
+      <if test="request.pblntEndYmd != null and request.pblntEndYmd != ''">
+        AND pblnt.pblnt_end_ymd &lt;= #{request.pblntEndYmd}
+      </if>
+    </where>
+    ORDER BY pblnt.reg_dt DESC
+    LIMIT #{request.limit} OFFSET #{request.offset}
+  </select>
+
+  <!-- 파트너(기관) 공시 카운트: 동일 스코프 -->
+  <select id="countDisclosureListByPartnerInst" resultType="int">
+    SELECT COUNT(DISTINCT pblnt.pblnt_sn)
+    FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
+    INNER JOIN kids_own.TB_CM_M_ULD_PRST prst
+      ON pblnt.pblnt_sn = prst.pblnt_sn
+      AND (prst.del_yn IS NULL OR prst.del_yn = 'N')
+      AND (
+        (
+          prst.inst_id IS NOT NULL AND TRIM(prst.inst_id) != ''
+          AND LPAD(TRIM(prst.inst_id), 10, '0') = LPAD(TRIM(COALESCE(#{instId}, '')), 10, '0')
+        )
+        OR (
+          prst.brno IS NOT NULL AND TRIM(prst.brno) != ''
+          AND LPAD(TRIM(prst.brno), 10, '0') = LPAD(TRIM(COALESCE(#{instId}, '')), 10, '0')
+        )
+      )
+    <where>
+      AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
+      <if test="request.pblntSeCd != null and request.pblntSeCd != ''">
+        AND pblnt.pblnt_se_cd = #{request.pblntSeCd}
+      </if>
+      <if test="request.pblntPrgrsSttsCd != null and request.pblntPrgrsSttsCd != ''">
+        AND pblnt.pblnt_prgrs_stts_cd = #{request.pblntPrgrsSttsCd}
+      </if>
+      <if test="request.uldPrgrSttsCd != null and request.uldPrgrSttsCd != ''">
+        AND TRIM(COALESCE(prst.uld_inst_prgrs_stts_cd, '')) = #{request.uldPrgrSttsCd}
+      </if>
+      <if test="request.keyword != null and request.keyword != ''">
+        <choose>
+          <when test="request.searchType == 'title'">
+            AND pblnt.ttl_nm LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'content'">
+            AND pblnt.pblnt_cn LIKE CONCAT('%', #{request.keyword}, '%')
+          </when>
+          <when test="request.searchType == 'both' or request.searchType == null or request.searchType == ''">
+            AND (pblnt.ttl_nm LIKE CONCAT('%', #{request.keyword}, '%') OR pblnt.pblnt_cn LIKE CONCAT('%', #{request.keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+      <if test="request.pblntBgngYmd != null and request.pblntBgngYmd != ''">
+        AND pblnt.pblnt_bgng_ymd &gt;= #{request.pblntBgngYmd}
+      </if>
+      <if test="request.pblntEndYmd != null and request.pblntEndYmd != ''">
+        AND pblnt.pblnt_end_ymd &lt;= #{request.pblntEndYmd}
+      </if>
+    </where>
+  </select>
+
   <select id="findById" parameterType="long" resultMap="TbCmMUldPblntVOMap">
     SELECT
       pblnt.pblnt_sn, pblnt.pblnt_se_cd, pblnt.ttl_nm, pblnt.pblnt_cn,
       pblnt.pblnt_bgng_ymd, pblnt.pblnt_end_ymd, pblnt.pblnt_prgrs_stts_cd,
       pblnt.del_yn, pblnt.rgtr_id, pblnt.reg_dt, pblnt.mdfr_id, pblnt.mdfcn_dt,
-      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), pblnt.rgtr_id) AS "rgtrNm"
+      <include refid="rgtrNmSelectPblnt"/> AS "rgtrNm"
     FROM kids_own.TB_CM_M_ULD_PBLNT pblnt
-    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
-    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(pblnt.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
     WHERE pblnt.pblnt_sn = #{pblntSn}
       AND (pblnt.del_yn IS NULL OR pblnt.del_yn = 'N')
   </select>
@@ -593,11 +713,9 @@
       h.err_nocs       AS "errNocs",
       h.err_rt         AS "errRt",
       h.rgtr_id        AS "rgtrId",
-      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), h.rgtr_id) AS "rgtrNm",
+      <include refid="rgtrNmSelectHist"/> AS "rgtrNm",
       h.reg_dt         AS "regDt"
     FROM kids_own.TB_CM_E_ULD_STATS_HIST h
-    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
-    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
     WHERE h.pblnt_sn = #{pblntSn}
       <if test="ptcpInstSn != null">
       AND h.ptcp_inst_sn = #{ptcpInstSn}
@@ -617,12 +735,10 @@
       h.err_nocs       AS "errNocs",
       h.err_rt         AS "errRt",
       h.rgtr_id        AS "rgtrId",
-      COALESCE(NULLIF(TRIM(emp.emp_nm), ''), NULLIF(TRIM(mbr.encpt_mbr_flnm), ''), h.rgtr_id) AS "rgtrNm",
+      <include refid="rgtrNmSelectHist"/> AS "rgtrNm",
       h.reg_dt         AS "regDt"
     FROM kids_own.TB_CM_E_ULD_STATS_HIST h
     LEFT JOIN kids_own.TB_CM_M_ULD_PBLNT pblnt ON pblnt.pblnt_sn = h.pblnt_sn
-    LEFT JOIN kids_own.tb_pp_m_emp_info emp ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(emp.emp_no, ''))
-    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr ON TRIM(COALESCE(h.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
     WHERE h.ptcp_inst_sn = #{ptcpInstSn}
     ORDER BY h.reg_dt DESC
   </select>

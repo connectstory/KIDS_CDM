@@ -124,6 +124,13 @@
   font-weight: 400 !important;
 }
 
+.ag-theme-cdm .cdm-date-2line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+}
+
 .ag-center-cols-container,
 .ag-center-cols-viewport {
   /* min-height: 100% !important; */

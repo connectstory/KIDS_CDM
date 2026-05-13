@@ -65,7 +65,7 @@ export default function QnaDetailView() {
       });
 
       showAlert({ message: "삭제되었습니다.", severity: "success" });
-      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaList`);
+      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/list`);
     },
     onError: () => {
       showAlert({ message: "삭제 중 오류가 발생했습니다.", severity: "error" });
@@ -197,7 +197,7 @@ export default function QnaDetailView() {
       {/* ===== 하단 버튼 ===== */}
       <div className="w-full flex justify-end gap-1">
         {!ansData && (
-          <Button variant="contained" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaAnswer/${id}`)}>
+          <Button variant="contained" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/answer/${id}`)}>
             답변등록
           </Button>
         )}
@@ -213,7 +213,7 @@ export default function QnaDetailView() {
           삭제
         </Button>
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaList`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/list`)}>
           목록
         </Button>
       </div>
@@ -292,7 +292,7 @@ export default function QnaDetailView() {
 
           {/* ===== 답변 하단 버튼 ===== */}
           <div className="w-full flex justify-end gap-1">
-            <Button variant="contained" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaAnswer/${id}`)}>
+            <Button variant="contained" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/answer/${id}`)}>
               답변수정
             </Button>
 

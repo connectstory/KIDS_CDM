@@ -132,7 +132,7 @@ export default function QnaWriteView() {
       skipBlockRef.current = true;
       setShouldBlock(false);
 
-      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qnaList`, { replace: true });
+      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qna/list`, { replace: true });
     },
     onError: () => {
       showAlert({
@@ -408,7 +408,7 @@ export default function QnaWriteView() {
           onClick={() => {
             skipBlockRef.current = true;
             setShouldBlock(false);
-            navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qnaList`);
+            navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qna/list`);
           }}
           disabled={saveMutation.isPending}
         >

@@ -88,7 +88,7 @@ setAnsCn(answer.ansCn || "");
         message: isEditMode ? "답변이 수정되었습니다." : "답변이 등록되었습니다.",
         severity: "success",
       });
-      navigate(`${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalDetail/${id}`);
+      navigate(`${routes.COMMUNITY.ROOT}/proposal/admin/detail/${id}`);
     },
     onError: () => {
       showAlert({
@@ -422,7 +422,7 @@ setAnsCn(answer.ansCn || "");
           {saveButtonLabel}
         </Button>
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalDetail/${id}`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/admin/detail/${id}`)}>
           취소
         </Button>
       </div>

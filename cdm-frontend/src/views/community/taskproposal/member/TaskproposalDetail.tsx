@@ -91,7 +91,7 @@ export default function TaskproposalDetailView() {
       });
 
       showAlert({ message: "삭제되었습니다.", severity: "success" });
-      navigate(`${routes.COMMUNITY.ROOT}/taskproposal/member/taskproposalList`);
+      navigate(`${routes.COMMUNITY.ROOT}/proposal/member/list`);
     },
     onError: () => {
       showAlert({ message: "삭제 중 오류가 발생했습니다.", severity: "error" });
@@ -250,7 +250,7 @@ export default function TaskproposalDetailView() {
             <Button
               variant="contained"
               disabled={!isAuthor}
-              onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/taskproposalWrite/${id}`)}
+              onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/write/${id}`)}
             >
               제안수정
             </Button>
@@ -269,7 +269,7 @@ export default function TaskproposalDetailView() {
           </>
         )}
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/member/taskproposalList`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/member/list`)}>
           목록
         </Button>
       </div>

@@ -229,12 +229,12 @@ export const adminMenus: MenuItemType[] = [
       {
         id: "5-1",
         label: "연구과제",
-        path: `${ROUTES.CM.AD.ROOT}/community/researchProject/admin/qnaList`,
+        path: `${ROUTES.CM.AD.ROOT}/community/researchProject/admin/qna/list`,
       },
       {
         id: "5-2",
         label: "과제제안",
-        path: `${ROUTES.CM.AD.ROOT}/community/taskproposal/admin/taskproposalList`,
+        path: ROUTES.CM.AD.COMMUNITY.PROPOSAL.ADMIN_LIST,
       },
       { id: "5-3", label: "자유게시판", path: ROUTES.CM.AD.COMMUNITY.FREEBOARD.ADMIN_LIST },
       { id: "5-4", label: "Q&A", path: ROUTES.CM.AD.COMMUNITY.QNA.ADMIN_LIST },
@@ -283,8 +283,8 @@ export const potalMenus: CollapsibleNavItem[] = [
     key: "7",
     label: "커뮤니티",
     children: [
-      { key: `${ROUTES.CM.MB.ROOT}/community/researchProject/member/qnaList`, label: "연구과제" },
-      { key: `${ROUTES.CM.MB.ROOT}/community/taskproposal/member/taskproposalList`, label: "과제제안" },
+      { key: `${ROUTES.CM.MB.ROOT}/community/researchProject/member/qna/list`, label: "연구과제" },
+      { key: ROUTES.CM.MB.COMMUNITY.PROPOSAL.MEMBER_LIST, label: "과제제안" },
       { key: ROUTES.CM.MB.COMMUNITY.FREEBOARD.MEMBER_LIST, label: "자유게시판" },
       { key: ROUTES.CM.MB.COMMUNITY.QNA.MEMBER_LIST, label: "Q&A" },
     ],

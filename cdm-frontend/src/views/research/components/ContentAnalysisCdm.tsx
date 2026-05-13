@@ -14,7 +14,11 @@ import { Box, Stack, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { STRINGS } from "@/constants/string";
-import { AnalysisResultStatus, CdmUploadType, RsltGroupStcdType } from "@/constants/types";
+import {
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
+  CDM_UPLOAD_TYPE as CdmUploadType,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { getFileDownloadUrl, getFilePreviewUrl } from "@/api/commonApi";
 import {

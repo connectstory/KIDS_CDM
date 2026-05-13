@@ -1,29 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Chip, MenuItem, Select, Stack } from "@mui/material";
+import { Box, Fade, MenuItem, Select, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { AllCommunityModule, type ColDef, type ICellRendererParams, ModuleRegistry } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import { Helmet } from "react-helmet";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CONTENT_GAP } from "@/constants/types";
 import type { DisclosureListResponse, DisclosureSearchRequest } from "@/interfaces/disclosureInterface";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { PartnerResponse } from "@/interfaces/researchInterface";
-import { DisclosureAPI } from "@/api/disclosureApi";
-import type { RootState } from "@/store";
-import { setPblntSn } from "@/store/sessionSlice";
-import { formatDateFromYYYYMMDD, formatDateToYYYYMMDD } from "@/utils/dateUtils";
+import { DisclosureAPI, normalizePblntStcd } from "@/api/disclosureApi";
+import { buildPath, getDisclosurePblntStatusConfig } from "@/utils/common";
+import { formatDateToYYYYMMDD } from "@/utils/dateUtils";
 import { useCmRoutes, useIsAdminCmShell } from "@/hooks/useCmRoutes";
 import { useModal } from "@/hooks/useModal";
 import CdmPagination from "@/components/CdmPagination";
 import CdmPaginationMove from "@/components/CdmPaginationMove";
+import Loader from "@/components/Loader";
 import { SearchArea } from "@/components/SearchArea";
 import { SpaceBox } from "@/components/SpaceBox";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
+import { AppButton, AppStatusChip } from "@/components/ui";
 
 /** URL 쿼리 키 */
 const Q = {
@@ -75,7 +73,7 @@ function parseSearchParamsFromURL(searchParams: URLSearchParams): SearchState {
     enddate: endDateStr && dayjs(endDateStr).isValid() ? dayjs(endDateStr) : null,
     viewCount: searchParams.get(Q.LENGTH) ?? defaultSearchState.viewCount,
     currentPage: page ? Math.max(1, parseInt(page, 10) || 1) : defaultSearchState.currentPage,
-    instIds: "", // searchParams.get(Q.INST_IDS) ?? defaultSearchState.instIds,
+    instIds: searchParams.get(Q.INST_IDS) ?? defaultSearchState.instIds,
   };
 }
 
@@ -124,16 +122,31 @@ const DISCLOSURE_SEARCH_TYPE_OPTIONS = [
   { value: "03", label: "공시명+내용" },
 ];
 
+type DisclosureRow = {
+  pblntSn: number;
+  pblntDvcd: string | null;
+  ttlNm: string | null;
+  period: { pblntBgngYmd: string | null; pblntEndYmd: string | null };
+  pblntStcd: string | null;
+  rgtrId: string | null;
+  rgtrNm?: string | null;
+  cdmPartnersCount?: number;
+  statusPartnersCount?: number;
+};
+
+function formatYmdToDot(ymd: string | null | undefined): string {
+  if (!ymd) return "-";
+  const d = dayjs(ymd);
+  return d.isValid() ? d.format("YYYY.MM.DD") : "-";
+}
+
 export default function CDMUploadNotice() {
   const routes = useCmRoutes();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const AddPartnersModal = useModal(ModalNames.AddPartners);
   const [urlSearchParams, setUrlSearchParams] = useSearchParams();
 
   const isAdminShell = useIsAdminCmShell();
-
-  const session = useSelector((state: RootState) => state.session);
 
   const appliedState = useMemo(() => parseSearchParamsFromURL(urlSearchParams), [urlSearchParams]);
   const [formState, setFormState] = useState<SearchState>(() => parseSearchParamsFromURL(new URLSearchParams(urlSearchParams)));
@@ -196,7 +209,7 @@ export default function CDMUploadNotice() {
   const total = response?.data?.total || 0;
   const currentPage = response?.data?.page || 1;
   const pageLength = response?.data?.length || 10;
-  const totalPages = Math.ceil(total / pageLength);
+  const totalPages = pageLength > 0 ? Math.ceil(total / pageLength) : 0;
 
   const applySearchParams = (state: SearchState, pageOverride?: number) => {
     setUrlSearchParams(buildURLSearchParams(state, pageOverride), { replace: false });
@@ -230,32 +243,20 @@ export default function CDMUploadNotice() {
   };
 
   const handleOpenPartnerModal = async () => {
-    try {
-      const result = (await AddPartnersModal.open({
-        title: "참여기관 추가",
-        data: selectedPartners,
-      })) as PartnerResponse[];
+    const result = (await AddPartnersModal.open({
+      title: "참여기관 추가",
+      data: selectedPartners,
+    })) as { status: boolean; data: PartnerResponse[] };
 
-      if (result && Array.isArray(result)) {
-        setSelectedPartners(result);
-      }
-    } catch {}
+    if (!result?.status || !Array.isArray(result.data)) return;
+
+    if (Array.isArray(result.data)) {
+      setSelectedPartners(result.data);
+    }
   };
 
   const handleRemovePartner = (brno: string) => {
     setSelectedPartners((prev) => prev.filter((p) => p.brno !== brno));
-  };
-
-  type DisclosureRow = {
-    pblntSn: number;
-    pblntDvcd: string | null;
-    ttlNm: string | null;
-    period: { pblntBgngYmd: string | null; pblntEndYmd: string | null };
-    pblntStcd: string | null;
-    rgtrId: string | null;
-    rgtrNm?: string | null;
-    cdmPartnersCount?: number;
-    statusPartnersCount?: number;
   };
 
   const rowData: DisclosureRow[] = useMemo(
@@ -289,7 +290,7 @@ export default function CDMUploadNotice() {
       {
         headerName: "구분",
         field: "pblntDvcd",
-        width: 100,
+        width: 80,
         cellRenderer: (p: ICellRendererParams<DisclosureRow>) => {
           return DisclosureAPI.convertType(p.value) || "-";
         },
@@ -304,20 +305,21 @@ export default function CDMUploadNotice() {
         headerClass: "ag-header-center",
         field: "period",
         cellDataType: false,
-        width: 170,
+        width: 120,
         cellStyle: () => ({
           textAlign: "center",
           whiteSpace: "normal",
           lineHeight: "1.2",
           padding: 0,
         }),
-        cellRenderer: (p: ICellRendererParams<DisclosureRow>) => {
-          const period = p.value;
-          if (period?.pblntBgngYmd && period?.pblntEndYmd) {
-            return `${formatDateFromYYYYMMDD(period.pblntBgngYmd)} ~ ${formatDateFromYYYYMMDD(period.pblntEndYmd)}`;
-          }
-          return "-";
-        },
+        cellRenderer: (p: ICellRendererParams<DisclosureRow>) => (
+          <Box className="ag-cell-center-vertical">
+            <Box>
+              <Box component="p">{formatYmdToDot(p.value?.pblntBgngYmd)} ~</Box>
+              <Box component="p">{formatYmdToDot(p.value?.pblntEndYmd)}</Box>
+            </Box>
+          </Box>
+        ),
       },
       {
         headerName: "기관(등록/대상)",
@@ -338,18 +340,17 @@ export default function CDMUploadNotice() {
         width: 110,
         cellStyle: () => ({ textAlign: "center" }),
         cellRenderer: (p: ICellRendererParams<DisclosureRow>) => {
-          const raw = p.data?.pblntStcd != null ? String(p.data.pblntStcd).trim() : "";
-          if (!raw) return "-";
-          const text = DisclosureAPI.convertStatus(raw);
-          const n = DisclosureAPI.normalizePblntStcd(raw);
-          let chipColor: "default" | "primary" | "success" | "error" | "warning" = "default";
-          if (n === "03") chipColor = "error";
-          else if (n === "02") chipColor = "primary";
-          else chipColor = "default";
+          const statusCode = normalizePblntStcd(p.data?.pblntStcd);
+          if (!statusCode) return "-";
+          const statusConfig = getDisclosurePblntStatusConfig(statusCode);
           return (
-            <div className="ag-cell-center-vertical">
-              <Chip label={text} size="small" color={chipColor} />
-            </div>
+            <Box className="ag-cell-center-vertical">
+              <AppStatusChip
+                size="small"
+                label={statusConfig?.label ?? DisclosureAPI.convertStatus(statusCode)}
+                chipStyle={statusConfig?.chipStyle ?? {}}
+              />
+            </Box>
           );
         },
       },
@@ -369,8 +370,27 @@ export default function CDMUploadNotice() {
     []
   );
 
+  if (isLoading) {
+    return (
+      <Box sx={{ position: "relative", minHeight: "400px" }}>
+        <Loader isLoading={true} />
+      </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box sx={{ py: 4, textAlign: "center" }}>
+        <Helmet>
+          <title>CDM - CDM 업로드 공시</title>
+        </Helmet>
+        <Typography color="text.secondary">목록을 불러오지 못했습니다.</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <div className="">
+    <Box>
       <Helmet>
         <title>CDM - CDM 업로드 공시</title>
       </Helmet>
@@ -413,80 +433,78 @@ export default function CDMUploadNotice() {
 
       <SpaceBox gap={CONTENT_GAP.MEDIUM} />
 
-      <div>
-        <div className="tbl_info">
-          <div className="total">
-            <p className="cases" style={{ whiteSpace: "nowrap" }}>
-              전체<span className="count">{total}</span>건
-            </p>
-          </div>
-          <div className="view_count">
-            <label htmlFor="viewCountSelect" style={{ whiteSpace: "nowrap" }}>
-              조회건수
-            </label>
-            <Select
-              id="viewCountSelect"
-              size="small"
-              value={viewCount}
-              onChange={(e) => {
-                const nextViewCount = e.target.value;
-                setFormState((s) => ({ ...s, viewCount: nextViewCount, currentPage: 1 }));
-                applySearchParams({ ...appliedState, viewCount: nextViewCount, currentPage: 1 }, 1);
-              }}
-            >
-              <MenuItem value="10">10개씩</MenuItem>
-              <MenuItem value="30">30개씩</MenuItem>
-              <MenuItem value="50">50개씩</MenuItem>
-            </Select>
-          </div>
-          {isAdminShell && (
-            <div className="tbl_controller">
-              <Button variant="contained" size="medium" onClick={() => navigate(routes.CDM.DISCLOSURE_CREATE)}>
-                등록
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {isLoading && <div style={{ textAlign: "center", padding: "40px" }}>로딩 중...</div>}
-
-        {isError && <div style={{ textAlign: "center", padding: "40px", color: "red" }}>오류가 발생했습니다.</div>}
-
-        {!isLoading && !isError && (
-          <>
-            <div className="ag-theme-cdm w-full" style={{ display: "flex", flexDirection: "column" }}>
-              <AgGridReact
-                rowData={rowData}
-                columnDefs={colDefs}
-                domLayout="autoHeight"
-                rowHeight={44}
-                headerHeight={44}
-                overlayNoRowsTemplate={`<span style="padding:8px;">검색된 공시가 없습니다.</span>`}
-                onRowClicked={(event) => {
-                  if (event.data?.pblntSn) {
-                    dispatch(setPblntSn(event.data.pblntSn));
-                    const detailRoute = isAdminShell
-                      ? routes.CDM.DISCLOSURE_DETAIL_ADMIN
-                      : routes.CDM.DISCLOSURE_DETAIL_CUSTOMER;
-                    navigate(`${detailRoute}?pblntSn=${event.data.pblntSn}`);
-                  }
+      <Fade in timeout={280}>
+        <Box>
+          <Box className="tbl_info">
+            <Box className="total">
+              <Box component="p" className="cases" sx={{ whiteSpace: "nowrap" }}>
+                전체
+                <Box component="span" className="count">
+                  {total}
+                </Box>
+                건
+              </Box>
+            </Box>
+            <Box className="view_count">
+              <Box component="label" htmlFor="viewCountSelect" sx={{ whiteSpace: "nowrap" }}>
+                조회건수
+              </Box>
+              <Select
+                id="viewCountSelect"
+                size="small"
+                value={viewCount}
+                onChange={(e) => {
+                  const nextViewCount = e.target.value;
+                  setFormState((s) => ({ ...s, viewCount: nextViewCount, currentPage: 1 }));
+                  applySearchParams({ ...appliedState, viewCount: nextViewCount, currentPage: 1 }, 1);
                 }}
-                rowStyle={{ cursor: "pointer" }}
-              />
-            </div>
-
-            {totalPages > 0 && (
-              <>
-                <div style={{ marginTop: "16px" }} />
-                <Stack direction="row" className="paging_wrap">
-                  <CdmPagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} />
-                  <CdmPaginationMove currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-                </Stack>
-              </>
+              >
+                <MenuItem value="10">10개씩</MenuItem>
+                <MenuItem value="30">30개씩</MenuItem>
+                <MenuItem value="50">50개씩</MenuItem>
+              </Select>
+            </Box>
+            {isAdminShell && (
+              <Box className="tbl_controller">
+                <AppButton variant="contained" size="medium" onClick={() => navigate(routes.CDM.DISCLOSURE_CREATE)}>
+                  등록
+                </AppButton>
+              </Box>
             )}
-          </>
-        )}
-      </div>
-    </div>
+          </Box>
+
+          <Box className="ag-theme-cdm w-full" sx={{ display: "flex", flexDirection: "column" }}>
+            <AgGridReact
+              rowData={rowData}
+              columnDefs={colDefs}
+              domLayout="autoHeight"
+              rowHeight={44}
+              headerHeight={44}
+              overlayNoRowsTemplate={`<span style="padding:8px;">검색된 공시가 없습니다.</span>`}
+              onRowClicked={(event) => {
+                if (event.data?.pblntSn) {
+                  navigate(
+                    buildPath(routes.CDM.DISCLOSURE_DETAIL, {
+                      pblntSn: event.data.pblntSn,
+                    })
+                  );
+                }
+              }}
+              rowStyle={{ cursor: "pointer" }}
+            />
+          </Box>
+
+          {totalPages > 0 && (
+            <>
+              <Box sx={{ mt: 2 }} />
+              <Stack direction="row" className="relative">
+                <CdmPagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} />
+                <CdmPaginationMove currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+              </Stack>
+            </>
+          )}
+        </Box>
+      </Fade>
+    </Box>
   );
 }

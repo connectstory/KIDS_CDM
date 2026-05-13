@@ -1,7 +1,7 @@
 import { ROUTES } from "@/router/routes";
 import axios, { AxiosError } from "axios";
 import { MSG } from "@/constants/string";
-import { type HTTP_ERROR_TYPE, HttpErrorType } from "@/constants/types";
+import { type HttpErrorTypeValue, HTTP_ERROR_TYPE } from "@/constants/types";
 import { SESSION_PP_AUTH_KEY, SESSION_TOKEN_KEY, clearSessionStorage } from "@/store/sessionSlice";
 
 const axiosInstance = axios.create({
@@ -74,16 +74,16 @@ function handleUnauthorizedRedirect(): boolean {
   return false;
 }
 
-const STATUS_ERROR_MAP: Record<number, [HTTP_ERROR_TYPE, string]> = {
-  400: [HttpErrorType.BAD_REQUEST, MSG.BAD_REQUEST],
-  401: [HttpErrorType.UNAUTHORIZED, MSG.UNAUTHORIZED],
-  403: [HttpErrorType.FORBIDDEN, MSG.FORBIDDEN],
-  404: [HttpErrorType.NOT_FOUND, MSG.NOT_FOUND],
-  500: [HttpErrorType.SERVER_ERROR, MSG.SERVER_ERROR],
+const STATUS_ERROR_MAP: Record<number, [HttpErrorTypeValue, string]> = {
+  400: [HTTP_ERROR_TYPE.BAD_REQUEST, MSG.BAD_REQUEST],
+  401: [HTTP_ERROR_TYPE.UNAUTHORIZED, MSG.UNAUTHORIZED],
+  403: [HTTP_ERROR_TYPE.FORBIDDEN, MSG.FORBIDDEN],
+  404: [HTTP_ERROR_TYPE.NOT_FOUND, MSG.NOT_FOUND],
+  500: [HTTP_ERROR_TYPE.SERVER_ERROR, MSG.SERVER_ERROR],
 };
 
 function toHttpError(status: number | undefined, error: AxiosError): HttpError {
-  const [type, message] = STATUS_ERROR_MAP[status ?? 0] ?? [HttpErrorType.UNKNOWN_ERROR, MSG.UNKNOWN_ERROR];
+  const [type, message] = STATUS_ERROR_MAP[status ?? 0] ?? [HTTP_ERROR_TYPE.UNKNOWN_ERROR, MSG.UNKNOWN_ERROR];
   return new HttpError(type, message, error);
 }
 
@@ -91,10 +91,10 @@ function toHttpError(status: number | undefined, error: AxiosError): HttpError {
 // S6671: Promise.reject 이유는 Error 인스턴스여야 함
 // =======================================
 export class HttpError extends Error {
-  type: HTTP_ERROR_TYPE;
+  type: HttpErrorTypeValue;
   original: AxiosError;
 
-  constructor(type: HTTP_ERROR_TYPE, message: string, original: AxiosError) {
+  constructor(type: HttpErrorTypeValue, message: string, original: AxiosError) {
     super(message);
     this.name = "HttpError";
     this.type = type;
@@ -213,7 +213,7 @@ axiosInstance.interceptors.response.use(
     }
 
     if (!error.response) {
-      return Promise.reject(new HttpError(HttpErrorType.NETWORK_ERROR, MSG.NETWORK_ERROR, error));
+      return Promise.reject(new HttpError(HTTP_ERROR_TYPE.NETWORK_ERROR, MSG.NETWORK_ERROR, error));
     }
 
     return Promise.reject(toHttpError(status, error));

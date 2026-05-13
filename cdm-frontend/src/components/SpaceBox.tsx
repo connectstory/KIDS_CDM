@@ -1,8 +1,8 @@
 import { Box, type StackProps } from "@mui/material";
-import { CONTENT_GAP, type CONTENT_GAP_TYPE } from "@/constants/types";
+import { CONTENT_GAP, type ContentGapValue } from "@/constants/types";
 
 type SpaceBoxProps = StackProps & {
-  gap?: CONTENT_GAP_TYPE; // spacing 값 (MUI spacing scale)
+  gap?: ContentGapValue; // spacing 값 (MUI spacing scale)
 };
 
 export function SpaceBox({ gap = CONTENT_GAP.MEDIUM }: SpaceBoxProps) {

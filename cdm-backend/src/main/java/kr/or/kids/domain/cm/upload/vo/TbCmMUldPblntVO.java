@@ -23,6 +23,10 @@ public class TbCmMUldPblntVO {
   private String delYn; 
   private String rgtrId; 
   private String rgtrNm; 
+  /** 파트너 목록 조회 시에만 채움 (TB_CM_M_ULD_PRST.uld_inst_prgrs_stts_cd) */
+  private String uldInstPrgrsSttsCd;
+  /** 파트너 목록 조회 시에만 채움 (TB_CM_M_ULD_PRST.uld_type_cd) */
+  private String uldTypeCd;
   private LocalDateTime regYmd; 
   private String mdfrId; 
   private LocalDateTime mdfcnDt; 

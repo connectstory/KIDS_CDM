@@ -309,7 +309,7 @@ export default function AdminTaskproposalListView() {
           rowStyle={{ cursor: "pointer" }}
           onRowClicked={(e) => {
             if (e.data?.asmtPrpSn) {
-              navigate(`${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalDetail/${e.data.asmtPrpSn}`);
+              navigate(`${routes.COMMUNITY.ROOT}/proposal/admin/detail/${e.data.asmtPrpSn}`);
             }
           }}
         />

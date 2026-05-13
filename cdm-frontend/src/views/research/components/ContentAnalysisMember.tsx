@@ -13,7 +13,11 @@ import { Box, Typography } from "@mui/material";
 import { type ColDef, type ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useParams } from "react-router-dom";
-import { CdmUploadType, ParticipationCdmStatus, RsltGroupStcdType } from "@/constants/types";
+import {
+  CDM_UPLOAD_TYPE as CdmUploadType,
+  PARTICIPATION_CDM_STATUS as ParticipationCdmStatus,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { OrgAnalysisDataResponse } from "@/interfaces/researchInterface";
 import { getResearchAnalysisStatusConfig } from "@/utils/common";

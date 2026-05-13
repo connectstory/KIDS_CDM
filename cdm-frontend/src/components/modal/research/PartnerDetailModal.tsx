@@ -6,7 +6,7 @@ import { AgGridReact } from "ag-grid-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { CONTENT_GAP, type PROGRESS_STATUS_TYPE, ProgressStatusType } from "@/constants/types";
+import { CONTENT_GAP, type ProgressStatusTypeValue, PROGRESS_STATUS } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { OpinionListResponse, ResearchPartnerResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
@@ -198,7 +198,7 @@ export default function PartnerDetailModal() {
   const rows: Row[] = excludeOpinionList ?? [];
 
   /** 참여요청(REQUEST_INVITE) 또는 참여취소(CANCEL_INVITE) 상태일 때 통합분석결과 제외 신청 이력·공유파일 섹션 숨김 */
-  const hideSectionsStatuses: PROGRESS_STATUS_TYPE[] = [ProgressStatusType.REQUEST_INVITE, ProgressStatusType.CANCEL_INVITE];
+  const hideSectionsStatuses: ProgressStatusTypeValue[] = [PROGRESS_STATUS.REQUEST_INVITE, PROGRESS_STATUS.CANCEL_INVITE];
   const isRequestOrCancelInviteStatus =
     partnerDetail &&
     (partnerDetail.uldTypeCd === CdmUploadStatus.CDM

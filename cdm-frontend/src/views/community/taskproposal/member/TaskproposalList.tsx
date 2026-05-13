@@ -313,7 +313,7 @@ export default function MemberTaskproposalListView() {
           <Button
             variant="contained"
             size="medium"
-            onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/taskproposalWrite`)}
+            onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/write`)}
           >
             등록
           </Button>
@@ -332,7 +332,7 @@ export default function MemberTaskproposalListView() {
           onRowClicked={(e) => {
             const data = e.data;
             if (!data) return;
-            navigate(`${routes.COMMUNITY.ROOT}/taskproposal/member/taskproposalDetail/${data.asmtPrpSn}`);
+            navigate(`${routes.COMMUNITY.ROOT}/proposal/member/detail/${data.asmtPrpSn}`);
           }}
         />
       </div>

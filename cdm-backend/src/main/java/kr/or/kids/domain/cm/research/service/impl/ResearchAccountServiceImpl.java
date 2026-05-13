@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import kr.or.kids.domain.cm.research.service.support.ResearchMemberResolver;
 import kr.or.kids.domain.cm.common.vo.TbCmMAsmtPersonVO;
 import kr.or.kids.domain.cm.research.dto.AsmtAccountRequest;
 import kr.or.kids.domain.cm.research.dto.AsmtAccountResponse;
@@ -17,7 +18,6 @@ import kr.or.kids.domain.cm.research.dto.AsmtPersonResponse;
 import kr.or.kids.domain.cm.research.dto.EmpOptionResponse;
 import kr.or.kids.domain.cm.research.mapper.ResearchMapper;
 import kr.or.kids.domain.cm.research.service.ResearchAccountService;
-import kr.or.kids.domain.cm.research.service.support.ResearchMemberResolver;
 import kr.or.kids.domain.cm.research.vo.ResearchMemberVO;
 import kr.or.kids.domain.cm.research.vo.TbCmMAsmtAccountVO;
 import kr.or.kids.global.common.CustomUserDetails;

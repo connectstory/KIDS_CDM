@@ -1,4 +1,4 @@
-import { AnalysisResultStatus } from "@/constants/types";
+import { ANALYSIS_RESULT_STATUS as AnalysisResultStatus } from "@/constants/types";
 import type { AnalysisDataResponse } from "@/interfaces/researchInterface";
 
 /** 결과제출·검토요청·검토진행 중인 이력이 있는지 (신규 등록 버튼 비활성·경고용) */

@@ -4,7 +4,7 @@ import { type ColDef, type ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { CdmUploadType, ParticipationStatus } from "@/constants/types";
+import { CDM_UPLOAD_TYPE, PARTICIPATION_STATUS } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { ResearchPartnerResponse } from "@/interfaces/researchInterface";
 import { CdmUploadStatus, getCdmParticipationStatusConfig, getOrgParticipationStatusConfig } from "@/utils/common";
@@ -16,7 +16,7 @@ import { AppButton, AppStatusChip } from "@/components/ui";
 /** 참여진행상태 정렬: 미참여(02)는 항상 마지막(오름차순 기준; desc는 그리드가 반전) */
 function participationProgressStatusSortRank(code: string | null | undefined): number {
   const c = (code ?? "").trim();
-  if (c === ParticipationStatus.NOT_PARTICIPATING) return 10_000;
+  if (c === PARTICIPATION_STATUS.NOT_PARTICIPATING) return 10_000;
   const n = Number.parseInt(c, 10);
   return Number.isNaN(n) ? 9_000 : n;
 }
@@ -31,7 +31,7 @@ export default function ContentMembersView() {
    * React Query로 데이터 조회
    * ------------------------------ */
   const asmtSnNumber = asmtSn ? Number(asmtSn) : null;
-  const { data: partners = [], isLoading, isError, refetch } = useResearchPartners(asmtSnNumber);
+  const { data: partners = [], isLoading, isError } = useResearchPartners(asmtSnNumber);
 
   type PartnerRow = {
     instId: string;
@@ -95,7 +95,7 @@ export default function ContentMembersView() {
           },
           cellRenderer: (p: ICellRendererParams<PartnerRow>) => {
             const statusConfig =
-              p.data?.uldTypeCd === CdmUploadType.CDM
+              p.data?.uldTypeCd === CDM_UPLOAD_TYPE.CDM
                 ? getCdmParticipationStatusConfig(p.value)
                 : getOrgParticipationStatusConfig(p.value);
             return (
@@ -227,9 +227,6 @@ export default function ContentMembersView() {
         <Typography color="text.secondary" sx={{ mb: 2 }}>
           참여기관 조회에 실패했습니다.
         </Typography>
-        <AppButton variant="outlined" size="small" onClick={() => void refetch()}>
-          다시 시도
-        </AppButton>
       </Box>
     );
   }

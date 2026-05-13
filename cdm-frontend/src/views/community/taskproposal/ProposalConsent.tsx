@@ -105,7 +105,7 @@ export default function ProposalConsentView() {
       <div className="w-full flex justify-center mt-6 mb-6">
         <Button 
           variant="contained" 
-          onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/taskproposalWrite`)}
+          onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/write`)}
         >
           다음
         </Button>

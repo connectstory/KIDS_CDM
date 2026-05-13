@@ -1,10 +1,10 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { StdSeCdType } from "@/constants/types";
+import { useNavigate, useParams } from "react-router-dom";
+import { STD_SE_CD_TYPE } from "@/constants/types";
 import { deleteValidateRule, fetchValidateRuleDetail } from "@/api/validateRuleApi.ts";
-import { convertStdSeCd } from "@/utils/common";
+import { buildPath, convertStdSeCd } from "@/utils/common";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 
@@ -14,8 +14,7 @@ export default function ValidateRuleDetailView() {
   const queryClient = useQueryClient();
   const { showAlert } = useGlobalAlert();
 
-  const [searchParams] = useSearchParams();
-  const vrfcSn = searchParams.get("vrfcSn");
+  const { vrfcSn } = useParams<{ vrfcSn?: string }>();
 
   const { data: ruleData, isLoading } = useQuery({
     queryKey: ["validateRuleDetail", vrfcSn],
@@ -30,8 +29,8 @@ export default function ValidateRuleDetailView() {
       showAlert({ message: "CDM 표준화 정보가 삭제되었습니다.", severity: "success" });
       queryClient.removeQueries({ queryKey: ["validateRuleList"] });
       const params = new URLSearchParams(globalThis.location.search);
-      params.delete("vrfcSn");
-      navigate(`${routes.CDM.VALIDATE_RULE_LIST}?${params.toString()}`);
+      const qs = params.toString();
+      navigate(qs ? `${routes.CDM.VALIDATE_RULE_LIST}?${qs}` : routes.CDM.VALIDATE_RULE_LIST);
     },
     onError: (e) => {
       showAlert({ message: "CDM 표준화 정보 삭제 중 오류가 발생했습니다.", severity: "error" });
@@ -61,10 +60,10 @@ export default function ValidateRuleDetailView() {
   }
 
   const stdSeCd = ruleData.stdSeCd;
-  const isAccuracy = stdSeCd === StdSeCdType.ACCURACY;
-  const isUniqueness = stdSeCd === StdSeCdType.UNIQUENESS;
-  const isConsistency = stdSeCd === StdSeCdType.CONSISTENCY;
-  const isValidity = stdSeCd === StdSeCdType.VALIDITY;
+  const isAccuracy = stdSeCd === STD_SE_CD_TYPE.ACCURACY;
+  const isUniqueness = stdSeCd === STD_SE_CD_TYPE.UNIQUENESS;
+  const isConsistency = stdSeCd === STD_SE_CD_TYPE.CONSISTENCY;
+  const isValidity = stdSeCd === STD_SE_CD_TYPE.VALIDITY;
 
   const showRef = isUniqueness || isConsistency || isValidity;
   const showRefDetail = isConsistency || isValidity;
@@ -308,7 +307,12 @@ export default function ValidateRuleDetailView() {
       </Box>
 
       <div className="w-full flex justify-end mt-8 mb-12">
-        <Button variant="contained" size="medium" onClick={() => navigate(`${routes.CDM.VALIDATE_RULE_EDIT}?vrfcSn=${vrfcSn}`)}>
+        <Button
+          variant="contained"
+          size="medium"
+          disabled={!vrfcSn}
+          onClick={() => (vrfcSn ? navigate(buildPath(routes.CDM.VALIDATE_RULE_EDIT, { vrfcSn })) : undefined)}
+        >
           수정
         </Button>
         <div className="pl5" />

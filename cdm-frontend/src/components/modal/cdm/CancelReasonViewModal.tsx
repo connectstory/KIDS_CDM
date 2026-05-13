@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { MSG } from "@/constants/string";
+import { CONTENT_GAP } from "@/constants/types";
 import type { DisclosurePartnerResponse } from "@/interfaces/disclosureInterface.ts";
 import { ModalNames } from "@/interfaces/modalInterface.ts";
-import { DisclosureAPI } from "@/api/disclosureApi";
 import { closeModal } from "@/store/modalSlice";
 import { resolveModal } from "@/utils/modalPromise";
+import { useUpdateDisclosureCancelReason } from "@/hooks/disclosure/useDisclosureMutations";
+import { useDisclosureCancelReason } from "@/hooks/disclosure/useDisclosureQueries";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
+import { SpaceBox } from "@/components/SpaceBox";
 import BaseModal from "@/components/modal/BaseModal";
 
 interface CancelReasonViewModalData {
@@ -23,47 +26,40 @@ export default function CancelReasonViewModal() {
 
   const [cancelReason, setCancelReason] = useState<string>("");
   const [originalCancelReason, setOriginalCancelReason] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [saving, setSaving] = useState<boolean>(false);
   const [reasonError, setReasonError] = useState<string>("");
 
+  const pblntSn = useMemo(() => modalData?.pblntSn ?? null, [modalData?.pblntSn]);
+  const ptcpInstSn = useMemo(() => modalData?.partner?.ptcpInstSn ?? null, [modalData?.partner?.ptcpInstSn]);
+
+  const {
+    data: fetchedCancelReason = "",
+    isFetching: loading,
+    isError: isLoadError,
+    error: loadError,
+  } = useDisclosureCancelReason(pblntSn, ptcpInstSn, Boolean(modal?.open && pblntSn && ptcpInstSn));
+
+  const updateCancelReasonMutation = useUpdateDisclosureCancelReason();
+  const saving = updateCancelReasonMutation.isPending;
+
   useEffect(() => {
-    if (modal?.open && modalData?.partner && modalData?.pblntSn) {
-      loadCancelReason();
-    } else {
+    if (!modal?.open) {
       setCancelReason("");
+      setOriginalCancelReason("");
+      setReasonError("");
+      return;
     }
-  }, [modal?.open, modalData?.partner?.ptcpInstSn, modalData?.pblntSn]);
 
-  const loadCancelReason = async () => {
-    if (!modalData?.partner || !modalData?.pblntSn) return;
+    setCancelReason(fetchedCancelReason || "");
+    setOriginalCancelReason(fetchedCancelReason || "");
+    setReasonError("");
+  }, [modal?.open, fetchedCancelReason]);
 
-    setLoading(true);
-    try {
-      const response = await DisclosureAPI.getCancelReason(modalData.pblntSn, modalData.partner.ptcpInstSn);
-      const reason = response.data?.data?.cancelReason || "";
-      if (reason) {
-        setCancelReason(reason);
-        setOriginalCancelReason(reason);
-      } else {
-        setCancelReason("");
-        setOriginalCancelReason("");
-      }
-    } catch (error: any) {
-      // 404 에러인 경우 취소사유가 없는 것으로 처리
-      if (error?.response?.status === 404) {
-        setCancelReason("");
-        setOriginalCancelReason("");
-      } else {
-        const errorMessage = error?.response?.data?.message || error?.message || "알 수 없는 오류";
-        showAlert({ message: `취소사유를 불러오는 중 오류가 발생했습니다: ${errorMessage}`, severity: "error" });
-        setCancelReason("");
-        setOriginalCancelReason("");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (!modal?.open) return;
+    if (!isLoadError) return;
+    const errorMessage = (loadError as any)?.response?.data?.message || loadError?.message || "알 수 없는 오류";
+    showAlert({ message: `취소사유를 불러오는 중 오류가 발생했습니다: ${errorMessage}`, severity: "error" });
+  }, [isLoadError, loadError, modal?.open, showAlert]);
 
   const handleClose = () => {
     setCancelReason("");
@@ -90,23 +86,25 @@ export default function CancelReasonViewModal() {
       return;
     }
 
-    setSaving(true);
     setReasonError("");
 
     try {
-      await DisclosureAPI.updateCancelReason(modalData.pblntSn, modalData.partner.ptcpInstSn, cancelReason.trim());
+      await updateCancelReasonMutation.mutateAsync({
+        pblntSn: modalData.pblntSn,
+        ptcpInstSn: modalData.partner.ptcpInstSn,
+        cancelReason: cancelReason.trim(),
+        successMessage: "취소사유가 수정되었습니다.",
+      });
 
       setOriginalCancelReason(cancelReason.trim());
-      showAlert({ message: "취소사유가 수정되었습니다.", severity: "success" });
       //창닫기
       resolveModal(ModalNames.CancelReasonView, null);
       dispatch(closeModal(ModalNames.CancelReasonView));
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "알 수 없는 오류";
       setReasonError(errorMessage);
-      showAlert({ message: `취소사유 수정 중 오류가 발생했습니다: ${errorMessage}`, severity: "error" });
     } finally {
-      setSaving(false);
+      // 상태는 mutation에서 관리 (isPending)
     }
   };
 
@@ -123,9 +121,8 @@ export default function CancelReasonViewModal() {
             variant="contained"
             onClick={handleSave}
             disabled={saving || loading || !cancelReason.trim() || cancelReason.trim() === originalCancelReason}
-            sx={{ backgroundColor: "#f39800", "&:hover": { backgroundColor: "#e68900" } }}
           >
-            {saving ? "저장 중..." : "저장"}
+            확인
           </Button>
           <Button variant="outlined" onClick={handleClose}>
             닫기
@@ -134,20 +131,20 @@ export default function CancelReasonViewModal() {
       }
     >
       <Box>
-        {/* 기관정보 - 간소화 */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ fontSize: "13px", color: "#666", mb: 0.5 }}>
-            {modalData?.partner?.instNm || ""}
-          </Typography>
-        </Box>
+        <Stack direction="column" spacing={CONTENT_GAP.XSMALL}>
+          <Typography variant="h5">{modalData?.partner?.instNm || ""}</Typography>
+        </Stack>
 
-        {/* 취소사유 */}
+        <SpaceBox gap={CONTENT_GAP.LARGE} />
+
+        {/* <Box className="form_container"> */}
         <TextField
           error={reasonError.length > 0}
           helperText={reasonError}
           fullWidth
           multiline
-          rows={5}
+          minRows={4}
+          label="취소사유"
           placeholder="취소사유를 입력하여 주시기 바랍니다."
           value={loading ? "로딩 중..." : cancelReason}
           onChange={(e) => {
@@ -155,13 +152,8 @@ export default function CancelReasonViewModal() {
             setReasonError("");
           }}
           disabled={loading || saving}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              fontSize: "13px",
-              backgroundColor: "#fff",
-            },
-          }}
         />
+        {/* </Box> */}
       </Box>
     </BaseModal>
   );

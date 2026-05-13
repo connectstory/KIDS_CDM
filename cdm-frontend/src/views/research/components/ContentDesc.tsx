@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import { useDispatch, useSelector } from "react-redux";
 import { STRINGS } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
-import { type PROGRESS_STATUS_TYPE, ProgressStatusType, RoleType } from "@/constants/types";
+import { type ProgressStatusTypeValue, PROGRESS_STATUS, ROLE_TYPE } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { ResearchDetailResponse, ResearchFileItem } from "@/interfaces/researchInterface";
 import { downloadFileViaProxy } from "@/api/commonApi";
@@ -30,17 +30,17 @@ function researchFileToFileData(f: ResearchFileItem): FileData {
 }
 
 const PROGRESS_STEPS = [
-  ProgressStatusType.REQUEST_INVITE,
-  ProgressStatusType.IN_PROGRESS_ANALYSIS,
-  ProgressStatusType.IN_PROGRESS_META,
-  ProgressStatusType.COMPLETED,
+  PROGRESS_STATUS.REQUEST_INVITE,
+  PROGRESS_STATUS.IN_PROGRESS_ANALYSIS,
+  PROGRESS_STATUS.IN_PROGRESS_META,
+  PROGRESS_STATUS.COMPLETED,
 ] as const;
 
 const STEP_SECTION_IDS: Record<(typeof PROGRESS_STEPS)[number], string | null> = {
-  [ProgressStatusType.REQUEST_INVITE]: "content-request-invite",
-  [ProgressStatusType.IN_PROGRESS_ANALYSIS]: "content-analysis",
-  [ProgressStatusType.IN_PROGRESS_META]: "content-meta",
-  [ProgressStatusType.COMPLETED]: "content-status-btn",
+  [PROGRESS_STATUS.REQUEST_INVITE]: "content-request-invite",
+  [PROGRESS_STATUS.IN_PROGRESS_ANALYSIS]: "content-analysis",
+  [PROGRESS_STATUS.IN_PROGRESS_META]: "content-meta",
+  [PROGRESS_STATUS.COMPLETED]: "content-status-btn",
 };
 
 /** ResearchDetail: 주관 분석 탭 / 참여기관 기관·CDM 분석 블록 중 DOM에 있는 첫 섹션으로 스크롤 */
@@ -62,7 +62,7 @@ function scrollToFirstVisibleAnalysisSection() {
   }
 }
 
-function ProgressStepper({ currentStatus }: { currentStatus: PROGRESS_STATUS_TYPE }) {
+function ProgressStepper({ currentStatus }: { currentStatus: ProgressStatusTypeValue }) {
   const theme = useTheme();
   const inactiveChipStyle = useMemo(
     () => ({ bgcolor: theme.palette.grey[300], color: theme.palette.grey[600] }),
@@ -90,7 +90,7 @@ function ProgressStepper({ currentStatus }: { currentStatus: PROGRESS_STATUS_TYP
         };
 
         const sectionId = STEP_SECTION_IDS[stepType];
-        const isAnalysisProgressStep = stepType === ProgressStatusType.IN_PROGRESS_ANALYSIS;
+        const isAnalysisProgressStep = stepType === PROGRESS_STATUS.IN_PROGRESS_ANALYSIS;
         const isClickable = isCurrentStep && (Boolean(sectionId) || isAnalysisProgressStep);
 
         return (
@@ -259,13 +259,13 @@ export default function ContentDescView({ research }: { research: ResearchDetail
             <Typography variant="h6">{STRINGS.STATUS}</Typography>
           </Box>
           <Box className="form_container-row-content">
-            {research.asmtPrgrsSttsCd !== ProgressStatusType.CANCELLED ? (
+            {research.asmtPrgrsSttsCd !== PROGRESS_STATUS.CANCELLED ? (
               <ProgressStepper currentStatus={convertResearchStatus(research.asmtPrgrsSttsCd)} />
             ) : (
               <AppStatusChip
                 size="small"
-                label={getStatusConfig(ProgressStatusType.CANCELLED)?.label}
-                chipStyle={getStatusConfig(ProgressStatusType.CANCELLED)?.chipStyle ?? {}}
+                label={getStatusConfig(PROGRESS_STATUS.CANCELLED)?.label}
+                chipStyle={getStatusConfig(PROGRESS_STATUS.CANCELLED)?.chipStyle ?? {}}
               />
             )}
           </Box>
@@ -273,7 +273,7 @@ export default function ContentDescView({ research }: { research: ResearchDetail
       </Stack>
 
       {/* 취소사유 (상태가 취소일 때만 표시) */}
-      {research.asmtPrgrsSttsCd === ProgressStatusType.CANCELLED && (
+      {research.asmtPrgrsSttsCd === PROGRESS_STATUS.CANCELLED && (
         <Stack direction="row" className="form_container-row">
           <Box className="form_container-column">
             <Box className="form_container-row-label">
@@ -352,7 +352,7 @@ export default function ContentDescView({ research }: { research: ResearchDetail
       </Stack>
 
       {/* 과제 내용 8 */}
-      {(research.instId === session.instId || session.userType === RoleType.ADMIN) && (
+      {(research.instId === session.instId || session.userType === ROLE_TYPE.ADMIN) && (
         <>
           <Stack direction="row" className="form_container-row">
             <Box className="form_container-column">
@@ -374,8 +374,8 @@ export default function ContentDescView({ research }: { research: ResearchDetail
                   {research.asmtMetaRsltSttsCd === null && (
                     <AppStatusChip
                       size="small"
-                      label={getStatusConfig(ProgressStatusType.NOT_REGISTERED)?.label}
-                      chipStyle={getStatusConfig(ProgressStatusType.NOT_REGISTERED)?.chipStyle ?? {}}
+                      label={getStatusConfig(PROGRESS_STATUS.NOT_REGISTERED)?.label}
+                      chipStyle={getStatusConfig(PROGRESS_STATUS.NOT_REGISTERED)?.chipStyle ?? {}}
                     />
                   )}
                   {research.asmtMetaRsltSttsCd && (

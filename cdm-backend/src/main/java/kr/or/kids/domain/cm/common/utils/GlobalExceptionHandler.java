@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,6 +40,24 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
     logger.warn("Invalid Request: {}", e.getMessage());
     return ApiResponse.error( HttpStatus.BAD_REQUEST, "잘못된 요청입니다." );
+  }
+
+  /** {@link ResponseStatusException}은 RuntimeException 이므로 전용 처리(상태·메시지 유지). */
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<ApiResponse<Void>> handleResponseStatusException( ResponseStatusException e ) {
+    HttpStatus status = e.getStatus();
+    if (status == null) {
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+    String message = e.getReason() != null && !e.getReason().isBlank()
+        ? e.getReason()
+        : status.getReasonPhrase();
+    if (status.is4xxClientError()) {
+      logger.warn( "Client error ({}): {}", status.value(), message );
+    } else {
+      logger.error( "ResponseStatus ({}): {}", status.value(), message );
+    }
+    return ApiResponse.error( status, message, null );
   }
 
   // NullPointerException 처리

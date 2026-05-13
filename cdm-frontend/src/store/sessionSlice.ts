@@ -28,7 +28,6 @@ function getStoredSession(): Partial<SessionData> | null {
       mbrTypeCd: parsed.mbrTypeCd as string | undefined,
       instId: parsed.instId as string | undefined,
       instNm: parsed.instNm as string | undefined,
-      pblntSn: typeof parsed.pblntSn === "number" ? parsed.pblntSn : undefined,
       authrtTypeCd: parsed.authrtTypeCd as AuthrtType | undefined,
       authorities: Array.isArray(parsed.authorities) ? (parsed.authorities as string[]) : [],
       empNo: parsed.empNo as string | undefined,
@@ -54,7 +53,6 @@ function saveSessionToStorage(data: SessionData) {
       mbrTypeCd: data.mbrTypeCd,
       instId: data.instId,
       instNm: data.instNm,
-      pblntSn: data.pblntSn,
       authrtTypeCd: data.authrtTypeCd,
       authorities: data.authorities,
       empNo: data.empNo,
@@ -121,7 +119,6 @@ const initialState: SessionData = {
   mbrTypeCd: stored?.mbrTypeCd ?? undefined,
   instId: stored?.instId ?? undefined,
   instNm: stored?.instNm ?? undefined,
-  pblntSn: stored?.pblntSn ?? undefined,
   authrtTypeCd: stored?.authrtTypeCd ?? undefined,
   authorities: stored?.authorities ?? [],
   isLoading: false,
@@ -169,7 +166,6 @@ const sessionSlice = createSlice({
         state.mbrTypeCd = action.payload.mbrTypeCd ?? undefined;
         state.instId = action.payload.instId ?? undefined;
         state.instNm = action.payload.instNm ?? undefined;
-        state.pblntSn = action.payload.pblntSn ?? undefined;
         state.authrtTypeCd = action.payload.authrtTypeCd ?? undefined;
         state.empNo = action.payload.empNo ?? undefined;
         state.empNm = action.payload.empNm ?? undefined;
@@ -191,7 +187,6 @@ const sessionSlice = createSlice({
       state.mbrTypeCd = undefined;
       state.instId = undefined;
       state.instNm = undefined;
-      state.pblntSn = undefined;
       state.authrtTypeCd = undefined;
       state.authorities = [];
       state.empNo = undefined;
@@ -201,11 +196,6 @@ const sessionSlice = createSlice({
       state.menuAuthList = [];
       state.menuAuthMap = {};
       clearSessionStorage();
-    },
-
-    setPblntSn: (state, action: PayloadAction<number | undefined>) => {
-      state.pblntSn = action.payload;
-      saveSessionToStorage(state);
     },
   },
 
@@ -265,6 +255,6 @@ const sessionSlice = createSlice({
   },
 });
 
-export const { logout, loadSession, setPblntSn } = sessionSlice.actions;
+export const { logout, loadSession } = sessionSlice.actions;
 
 export default sessionSlice.reducer;

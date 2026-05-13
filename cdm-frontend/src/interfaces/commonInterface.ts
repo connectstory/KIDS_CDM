@@ -1,4 +1,4 @@
-import type { AuthrtType, HTTP_ERROR_TYPE } from "@/constants/types";
+import type { AuthrtType, HttpErrorTypeValue } from "@/constants/types";
 import type { MenuAuthItem } from "@/interfaces/menuAuthInterface";
 
 export interface AppData {
@@ -19,7 +19,6 @@ export interface SessionData {
   mbrTypeCd: string | undefined;
   instId: string | undefined;
   instNm: string | undefined;
-  pblntSn: number | undefined;
   authrtTypeCd: AuthrtType | undefined; // ← string → AuthrtType ("M" | "E" | "U")
   authorities: string[];
   /** 직원 정보 (이메일 매칭 시 로그인 응답에서 설정) */
@@ -45,7 +44,7 @@ export interface ApiResponse<T> {
 // API 에러 인터페이스
 //----------------------------------
 export interface ApiError {
-  type: HTTP_ERROR_TYPE;
+  type: HttpErrorTypeValue;
   message: string;
   original?: unknown;
 }

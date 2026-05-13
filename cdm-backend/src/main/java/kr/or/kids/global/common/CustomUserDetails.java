@@ -50,4 +50,8 @@ public class CustomUserDetails {
   public String getMbrId() {
     return (mbrId != null && !mbrId.isBlank()) ? mbrId : empNo;
   }
+
+  public boolean isAdmin() {
+    return "A".equals( userType );
+  }
 }

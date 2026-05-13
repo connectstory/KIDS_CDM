@@ -302,7 +302,7 @@ export default function AdminQnaListView() {
           onRowClicked={(e) => {
             const data = e.data;
             if (!boardType || !data?.qstnSn) return;
-            navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaDetail/${data.qstnSn}`);
+            navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/detail/${data.qstnSn}`);
           }}
         />
       </div>

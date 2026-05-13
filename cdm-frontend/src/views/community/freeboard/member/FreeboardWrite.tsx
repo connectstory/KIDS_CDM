@@ -241,7 +241,7 @@ export default function FreeBoardWriteView() {
       setShouldBlock(false);
 
       setTimeout(() => {
-        navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeBoardList`, { replace: true });
+        navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeboard/list`, { replace: true });
       }, 100);
     },
     onError: () => {
@@ -478,7 +478,7 @@ export default function FreeBoardWriteView() {
           onClick={() => {
             skipBlockRef.current = true;
             setShouldBlock(false);
-            navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeBoardList`);
+            navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeboard/list`);
           }}
           disabled={saveMutation.isPending}
         >

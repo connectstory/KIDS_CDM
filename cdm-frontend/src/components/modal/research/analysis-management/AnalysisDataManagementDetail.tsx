@@ -17,7 +17,12 @@ import { useParams } from "react-router-dom";
 import { DATASET_EXTS } from "@/constants/researchFileUpload";
 import { MSG } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
-import { AnalysisResultStatus, CONTENT_GAP, RoleType, RsltGroupStcdType } from "@/constants/types";
+import {
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
+  CONTENT_GAP,
+  ROLE_TYPE as RoleType,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy } from "@/api/commonApi";
 import type { RootState } from "@/store";

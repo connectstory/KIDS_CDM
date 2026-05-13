@@ -23,7 +23,16 @@ public interface DisclosureMapper {
      * @param request request
      * @return 처리 결과
      */
-    List<TbCmMUldPblntVO> search( DisclosureSearchRequest request );
+    List<TbCmMUldPblntVO> searchDisclosureList( DisclosureSearchRequest request );
+
+    /**
+     * 파트너(기관) 기준: 해당 기관이 참여중인 공시만 조회한다.
+     *
+     * @param instId instId(기관 식별값: brno/inst_id)
+     * @param request request
+     * @return 처리 결과
+     */
+    List<TbCmMUldPblntVO> searchDisclosureListByPartnerInst( @Param("instId") String instId, @Param("request") DisclosureSearchRequest request );
 
     /**
      * 대상 건수를 반환한다.
@@ -31,7 +40,16 @@ public interface DisclosureMapper {
      * @param request request
      * @return 처리 결과
      */
-    int count( DisclosureSearchRequest request );
+    int countDisclosureList( DisclosureSearchRequest request );
+
+    /**
+     * 파트너(기관) 기준: 해당 기관이 참여중인 공시만 카운트한다.
+     *
+     * @param instId instId(기관 식별값: brno/inst_id)
+     * @param request request
+     * @return 처리 결과
+     */
+    int countDisclosureListByPartnerInst( @Param("instId") String instId, @Param("request") DisclosureSearchRequest request );
 
     /**
      * 대상 데이터를 조회한다.

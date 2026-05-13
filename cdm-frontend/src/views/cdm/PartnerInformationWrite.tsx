@@ -39,10 +39,10 @@ import {
   updateCdmCurrentInfo,
   updatePeriodScale,
 } from "@/api/pstinfoApi";
+import { buildPath } from "@/utils/common";
 import { normalizeCdmSeCode } from "@/utils/cdmTableUtils";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
-import tempCsvUrl from "./temp.csv?url";
 
 /* ================================================================
  * 타입
@@ -117,6 +117,7 @@ const filterNoKorean = (value: string) => value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]
 const filterNumberOnly = (value: string) => value.replace(/[^0-9]/g, "");
 
 const DATA_TYPES = ["VARCHAR", "INTEGER", "BIGINT", "NUMERIC", "DATE", "TIMESTAMP", "BOOLEAN", "TEXT", "CHAR"];
+const CDM_TABLE_TEMPLATE_CSV_URL = "/disclosure/cdm_table_from.csv";
 
 /** CSV data_type → Select 옵션 값 */
 const DATA_TYPE_ALIASES: Record<string, string> = {
@@ -401,8 +402,6 @@ export default function PartnerInformationWrite() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isStatusLocked, setIsStatusLocked] = useState(false);
 
-  const debugLog = useCallback((..._args: unknown[]) => {}, []);
-
   const [catalogCdmType, setCatalogCdmType] = useState("01");
   const [catalogTblSeCd, setCatalogTblSeCd] = useState("01");
 
@@ -524,19 +523,11 @@ export default function PartnerInformationWrite() {
     setVerInfoNm(p.verInfoNm || "");
     setLastUpdtYmd(toDayjs(p.lastUpdtYmd));
     setUpdtCycleCnt(p.updtCycleCnt != null ? String(p.updtCycleCnt) : "");
-    const rawUldType = (raw?.uldTypeCd ?? raw?.uld_type_cd) as string | number | null | undefined;
     const rawStts = (raw?.uldInstPrgrsSttsStcd ?? raw?.uld_inst_prgrs_stts_cd) as string | number | null | undefined;
     const sttsNorm = normalizeCdmSeCode(rawStts);
     // 초안 저장도 uld_type_cd=02 이므로, 폼 전체 잠금은 전송(확정) 후 진행상태 03(완료)일 때만
     const locked = sttsNorm === "03";
     setIsStatusLocked(locked);
-    debugLog("statusDetail loaded", {
-      rawUldType,
-      normalizedUldType: normalizeCdmSeCode(rawUldType),
-      rawStts,
-      sttsNorm,
-      locked,
-    });
   }, [statusDetail]);
 
   useEffect(() => {
@@ -987,14 +978,12 @@ export default function PartnerInformationWrite() {
     if (isStatusLocked) return;
     try {
       setIsSaving(true);
-      debugLog("click SAVE", { pblntSn, ptcpInstSn, isStatusLocked, isSaving, isConfirming });
       const ok = await persistPartnerInformation();
       if (ok) {
         showAlert({ message: "저장되었습니다.", severity: "success" });
       }
     } finally {
       setIsSaving(false);
-      debugLog("SAVE finished", { isStatusLocked, isSaving: false, isConfirming });
     }
   };
 
@@ -1007,7 +996,6 @@ export default function PartnerInformationWrite() {
 
     try {
       setIsConfirming(true);
-      debugLog("click SEND", { pblntSn, ptcpInstSn, isStatusLocked, isSaving, isConfirming });
 
       const ok = await persistPartnerInformation();
       if (!ok) return;
@@ -1022,18 +1010,16 @@ export default function PartnerInformationWrite() {
 
       await queryClient.invalidateQueries({ queryKey: ["cdm-status-detail", pblntSn, ptcpInstSn] });
       setIsStatusLocked(true);
-      debugLog("SEND confirmed -> locked", { nextLocked: true });
 
       showAlert({
         message: "전송되었습니다. 전송 후에는 편집이 불가능합니다.",
         severity: "warning",
       });
-      navigate(`${routes.CDM.DISCLOSURE_DETAIL}?pblntSn=${pblntSn}`);
+      navigate(buildPath(routes.CDM.DISCLOSURE_DETAIL, { pblntSn }));
     } catch (error: any) {
       showAlert({ message: error?.response?.data?.message || "전송 중 오류가 발생했습니다.", severity: "error" });
     } finally {
       setIsConfirming(false);
-      debugLog("SEND finished", { isStatusLocked, isSaving, isConfirming: false });
     }
   };
 
@@ -1414,7 +1400,7 @@ export default function PartnerInformationWrite() {
                   템플릿 로딩
                 </Button>
                 <Link
-                  href={tempCsvUrl}
+                  href={CDM_TABLE_TEMPLATE_CSV_URL}
                   download="temp.csv"
                   target="_blank"
                   rel="noopener noreferrer"

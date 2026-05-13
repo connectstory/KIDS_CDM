@@ -3,7 +3,12 @@ import { Box, Button, Chip, Divider, List, ListItem, ListItemText, Stack, Typogr
 import { useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { STRINGS } from "@/constants/string";
-import { AnalysisResultStatus, CONTENT_GAP, CdmUploadType, RsltGroupStcdType } from "@/constants/types";
+import {
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
+  CONTENT_GAP,
+  CDM_UPLOAD_TYPE as CdmUploadType,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { OpinionItemResponse } from "@/interfaces/researchInterface";
 import {

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CommonAPI } from "@/api";
-import { DisclosureAPI } from "@/api/disclosureApi";
 import { Box, Button, IconButton, InputBase, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { AllCommunityModule, type ColDef, ModuleRegistry } from "ag-grid-community";
@@ -8,13 +7,14 @@ import { AgGridReact } from "ag-grid-react";
 import { useDispatch, useSelector } from "react-redux";
 import { ModalNames } from "@/interfaces/modalInterface.ts";
 import type { PartnerResponse } from "@/interfaces/researchInterface";
+import { DisclosureAPI } from "@/api/disclosureApi";
 import { type RootState } from "@/store";
 import { closeModal } from "@/store/modalSlice";
 import { resolveModal } from "@/utils/modalPromise";
+import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import BaseModal from "@/components/modal/BaseModal";
 import BaseModalStyles from "../BaseModal.module.css";
 import AddPartnersModalStyles from "./AddPartnersModal.module.css";
-import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -152,7 +152,7 @@ export default function AddPartnersModal() {
       if (excludedPartnerKeys.has(itemKey)) return false;
       // 왼쪽 목록에서 본인(현재 로그인 기관) 제외
       if (currentInstId && itemKey === currentInstId) return false;
-      if (item.brno === "0000000000" || item.instId === "0000000000") return false;
+      if (item.brno === "101822113" || item.instId === "101822113") return false;
 
       return !rightItems.some((r) => getPartnerKey(r) === itemKey);
     });
@@ -284,9 +284,7 @@ export default function AddPartnersModal() {
         existingKeys.add(k);
       }
       if (blocked > 0) {
-        queueMicrotask(() =>
-          showAlert({ message: MSG_ALREADY_IN_PROGRESS_DISCLOSURE, severity: "warning" })
-        );
+        queueMicrotask(() => showAlert({ message: MSG_ALREADY_IN_PROGRESS_DISCLOSURE, severity: "warning" }));
       }
       return additions.length > 0 ? [...prev, ...additions] : prev;
     });
@@ -303,13 +301,13 @@ export default function AddPartnersModal() {
 
   const handleCancel = () => {
     // 취소 시 원래 데이터를 반환
-    resolveModal(ModalNames.AddPartners, initialPartners);
+    resolveModal(ModalNames.AddPartners, { status: false, data: initialPartners });
     dispatch(closeModal(ModalNames.AddPartners));
   };
 
   const handleConfirm = () => {
     // 확인 시 현재 rightItems를 반환
-    resolveModal(ModalNames.AddPartners, rightItems);
+    resolveModal(ModalNames.AddPartners, { status: true, data: rightItems });
     dispatch(closeModal(ModalNames.AddPartners));
   };
 

@@ -7,18 +7,18 @@ import { koKR } from "@mui/x-date-pickers/locales";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
+import { Helmet } from "react-helmet";
 import { useBlocker, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useCmRoutes } from "@/hooks/useCmRoutes";
+import { BOARD_CONFIG, type BoardType } from "@/config/boardConfig";
 import { MSG, STRINGS } from "@/constants/string";
 import { ModalNames } from "@/interfaces/modalInterface.ts";
 import { fetchBoardDetail, insertBoard, updateBoard } from "@/api/communityApi";
+import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { useModal } from "@/hooks/useModal";
 import FileContainer, { type FileData } from "@/components/FileContainer";
 import type { SmartEditorHandle } from "@/components/SmartEditor";
 import SmartEditor from "@/components/SmartEditor";
-import { BOARD_CONFIG, type BoardType } from "@/config/boardConfig";
-import { Helmet } from "react-helmet";
 
 export default function BuildInfoWriteView() {
   const routes = useCmRoutes();
@@ -350,7 +350,7 @@ export default function BuildInfoWriteView() {
     // 공지사항 게시판일 때만 공지 관련 필드 추가
     if (isNoticeBoard) {
       // 공개이더라도 시작일/종료일 중 하나라도 없으면 비공개로 처리
-      const effectiveFixYn = (isPublic === "Y" && startDate && endDate) ? "Y" : "N";
+      const effectiveFixYn = isPublic === "Y" && startDate && endDate ? "Y" : "N";
       formData.append("fixYn", effectiveFixYn);
 
       if (effectiveFixYn === "Y") {
@@ -389,7 +389,7 @@ export default function BuildInfoWriteView() {
   return (
     <div className="">
       <Helmet>
-        <title>{`CDM - ${BOARD_CONFIG[boardType!]?.title ?? ''}`}</title>
+        <title>{`CDM - ${BOARD_CONFIG[boardType!]?.title ?? ""}`}</title>
       </Helmet>
       <div className="h-5"></div>
 
@@ -453,7 +453,7 @@ export default function BuildInfoWriteView() {
                       onChange={(v) => setStartDate(v)}
                       maxDate={endDate ?? undefined}
                       slotProps={{
-                        textField: { size: "small", sx: { width: 180 } },
+                        textField: { size: "small", sx: { width: 190 } },
                         calendarHeader: { format: "YYYY년 M월" },
                       }}
                       disabled={!isFixedNotice}
@@ -466,7 +466,7 @@ export default function BuildInfoWriteView() {
                       onChange={(v) => setEndDate(v)}
                       minDate={startDate ?? undefined}
                       slotProps={{
-                        textField: { size: "small", sx: { width: 180 } },
+                        textField: { size: "small", sx: { width: 190 } },
                         calendarHeader: { format: "YYYY년 M월" },
                       }}
                       disabled={!isFixedNotice}
@@ -484,12 +484,7 @@ export default function BuildInfoWriteView() {
                 <Typography className="required">내용</Typography>
               </Box>
               <Box className="form_container-row-content">
-                <SmartEditor
-                  ref={editorRef}
-                  value={content}
-                  onChange={(val) => setContent(val)}
-                  height={200}
-                />
+                <SmartEditor ref={editorRef} value={content} onChange={(val) => setContent(val)} height={200} />
               </Box>
             </Box>
           </Stack>

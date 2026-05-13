@@ -3,7 +3,7 @@ import { Box, Button, Divider, Stack, TextField, Typography } from "@mui/materia
 import { useParams } from "react-router-dom";
 import { DATASET_ACCEPT, DATASET_EXTS, VDI_ACCEPT } from "@/constants/researchFileUpload";
 import { MSG, STRINGS } from "@/constants/string";
-import { CONTENT_GAP, RsltGroupStcdType } from "@/constants/types";
+import { CONTENT_GAP, RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
 import { downloadAnalysisDatasetTemplate, downloadVdiApplicationTemplate, getFileDownloadUrl } from "@/api/commonApi";
 import { formatFileSize, getFileExtension } from "@/utils/common";
 import { useCreateAnalysisData, useUpdateAnalysisData } from "@/hooks/research/useResearchMutations";

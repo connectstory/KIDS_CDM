@@ -1,22 +1,28 @@
 package kr.or.kids.domain.cm.upload.controller;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
-import kr.or.kids.global.common.CustomUserDetails;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.kids.domain.cm.common.dto.ApiResponse;
+import kr.or.kids.domain.cm.upload.service.support.DisclosureMemberResolver;
+import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
 import kr.or.kids.domain.cm.upload.dto.CdmValidateProgress;
 import kr.or.kids.domain.cm.upload.dto.CdmValidateRequest;
 import kr.or.kids.domain.cm.upload.service.CdmValidateService;
-import kr.or.kids.domain.cm.upload.service.DisclosureService;
-
+import kr.or.kids.global.common.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Map;
 
 /**
  * 업로드 관련 API 요청을 처리한다.
@@ -31,7 +37,7 @@ import java.util.Map;
 public class CdmValidateController {
 
     private final CdmValidateService cdmValidateService;
-    private final DisclosureService disclosureService;
+    private final DisclosureMemberResolver disclosureMemberResolver;
 
     /**
      * startValidation 처리를 수행한다.
@@ -61,7 +67,8 @@ public class CdmValidateController {
                         "참여기관일련번호(ptcpInstSn)는 필수입니다. 자신이 올린 데이터만 집계됩니다.", null);
             }
 
-            String userId = du.getInstId();
+            DisclosureMemberVO member = disclosureMemberResolver.resolve( pblntSn, du );
+            String userId = member.getInstBrno();
 
             CdmValidateRequest effectiveRequest = new CdmValidateRequest(
                     request.ptcpInstSn(),
@@ -74,6 +81,9 @@ public class CdmValidateController {
 
             return ApiResponse.ok(ApiResponse.STATUS_SUCCESS, "CDM 검증이 시작되었습니다.",
                     Map.of("taskId", taskId));
+        } catch (IllegalArgumentException e) {
+
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage(), null);
         } catch (IllegalStateException e) {
 
             return ApiResponse.error(HttpStatus.BAD_REQUEST, "요청을 처리할 수 없습니다.");

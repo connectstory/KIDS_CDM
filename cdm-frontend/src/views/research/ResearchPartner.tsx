@@ -7,7 +7,7 @@ import "dayjs/locale/ko";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { CONTENT_GAP, CdmUploadType, ProgressStatusType } from "@/constants/types";
+import { CONTENT_GAP, CDM_UPLOAD_TYPE as CdmUploadType, PROGRESS_STATUS as ProgressStatusType } from "@/constants/types";
 import type { ResearchListResponse } from "@/interfaces/researchInterface";
 import { buildPath, getCdmParticipationStatusConfig, getOrgParticipationStatusConfig, getStatusConfig } from "@/utils/common";
 import { useResearchListByPartner } from "@/hooks/research/useResearchQueries";

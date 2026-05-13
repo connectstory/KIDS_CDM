@@ -122,6 +122,12 @@ export function formatDate(date: string | null | undefined): string {
   return dayjs(date).format("YYYY년 MM월 DD일");
 }
 
+export function formatDateComma(date: string | null | undefined): string {
+  if (!date) return "-";
+
+  return dayjs(date).format("YYYY.MM.DD");
+}
+
 export function formatDateTime(date: string | null | undefined): string {
   if (!date) return "-";
 
@@ -131,5 +137,11 @@ export function formatDateTime(date: string | null | undefined): string {
 export function formatDateTimeComma(date: string | null | undefined): string {
   if (!date) return "-";
 
-  return dayjs(date).format("YYYY.MM.DD. HH:mm");
+  return dayjs(date).format("YYYY.MM.DD HH:mm");
+}
+
+export function formatDateTime2Line(date: string | null | undefined): string {
+  if (!date) return "-";
+
+  return dayjs(date).format("YYYY.MM.DD HH:mm");
 }

@@ -13,7 +13,24 @@ export interface DisclosureListResponse {
   regYmd: string; // 등록일자 (ISO 8601 format)
   completedPartnersCount?: number; // 등록한 기관 수(파일·현황 등 임의 형태 1회 이상 등록)
   totalPartnersCount?: number; // 전체 대상 기관 수(참여취소·삭제 제외)
+  /** 파트너 목록 (TB_CM_M_ULD_PRST.uld_inst_prgrs_stts_cd) */
+  uldInstPrgrsSttsCd?: string | null;
+  /** 파트너 목록 (TB_CM_M_ULD_PRST.uld_type_cd) */
+  uldTypeCd?: string | null;
+  /** Jackson snake 등으로 올 때 대비 (선택) */
+  uld_inst_prgrs_stts_cd?: string | null;
+  uld_type_cd?: string | null;
 }
+
+/** 파트너 공시 목록 그리드 행 (목록 API + 기간 셀 묶음) */
+export type DisclosureListPartnerGridRow = Pick<
+  DisclosureListResponse,
+  "pblntSn" | "pblntDvcd" | "ttlNm" | "pblntStcd" | "rgtrId" | "rgtrNm"
+> & {
+  period: Pick<DisclosureListResponse, "pblntBgngYmd" | "pblntEndYmd">;
+  uldTypeCd: string | null;
+  uldInstPrgrsSttsCd: string | null;
+};
 
 export interface DisclosureDetailResponse {
   pblntSn: number; // 공시일련번호

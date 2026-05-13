@@ -272,7 +272,7 @@ export default function MemberFreeBoardListView() {
           <Button
             variant="contained"
             size="medium"
-            onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeboardWrite`)}
+            onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeboard/write`)}
           >
             등록
           </Button>
@@ -291,7 +291,7 @@ export default function MemberFreeBoardListView() {
           onRowClicked={(e) => {
             const data = e.data;
             if (!data?.pstSn) return;
-            navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeboardDetail/${data.pstSn}`);
+            navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/member/freeboard/detail/${data.pstSn}`);
           }}
         />
       </div>

@@ -114,7 +114,7 @@ export default function QnaWriteView() {
         severity: "success",
       });
 
-      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaDetail/${id}`);
+      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/detail/${id}`);
     },
     onError: () => {
       showAlert({
@@ -427,7 +427,7 @@ export default function QnaWriteView() {
           {saveButtonLabel}
         </Button>
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qnaDetail/${id}`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/qna/detail/${id}`)}>
           취소
         </Button>
       </div>

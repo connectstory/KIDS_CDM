@@ -8,6 +8,7 @@ import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerResponse;
 import kr.or.kids.domain.cm.upload.dto.PartnerStatusInfoHistoryRow;
+import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
 
 /**
  * 업로드 도메인 서비스 계약을 정의한다.
@@ -22,6 +23,16 @@ public interface DisclosurePartnerService {
    * @return 처리 결과
    */
   List<DisclosurePartnerResponse> findByPblntSn( Long pblntSn );
+
+  /**
+   * 공시 참여기관 목록을 요청자 권한에 맞게 조회한다.
+   * 관리자(플랫폼 관리자·공시 등록자)는 전체, 참여기관은 본인 행만 반환한다.
+   *
+   * @param pblntSn 공시 일련번호
+   * @param memberAndInst 공시·요청자 컨텍스트 ({@code DisclosureMemberResolver#resolve} 결과)
+   * @return 접근 가능한 참여기관 목록
+   */
+  List<DisclosurePartnerResponse> findByPblntSnForDisclosureMember( Long pblntSn, DisclosureMemberVO memberAndInst );
 
   
   /**

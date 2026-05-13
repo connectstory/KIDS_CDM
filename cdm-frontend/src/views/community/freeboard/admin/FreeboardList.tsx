@@ -277,7 +277,7 @@ export default function AdminFreeBoardListView() {
           onRowClicked={(e) => {
             const data = e.data;
             if (!data?.pstSn) return;
-            navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/admin/freeboardDetail/${data.pstSn}`);
+            navigate(`${routes.COMMUNITY.ROOT}/${resolvedBoardType}/admin/freeboard/detail/${data.pstSn}`);
           }}
         />
       </div>

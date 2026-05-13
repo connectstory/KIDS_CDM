@@ -12,11 +12,11 @@ import { AgGridReact } from "ag-grid-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
-  AnalysisResultStatus,
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
   CONTENT_GAP,
-  type PROGRESS_STATUS_TYPE,
-  ProgressStatusType,
-  RsltGroupStcdType,
+  type ProgressStatusTypeValue,
+  PROGRESS_STATUS as ProgressStatusType,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
 } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { AnalysisDataResponse } from "@/interfaces/researchInterface";
@@ -238,12 +238,12 @@ export default function AnalysisDataManagementModal() {
             );
           }
 
-          let status: PROGRESS_STATUS_TYPE = params.data?.asmtMetaRsltSttsCd as PROGRESS_STATUS_TYPE;
+          let status: ProgressStatusTypeValue = params.data?.asmtMetaRsltSttsCd as ProgressStatusTypeValue;
           if (params.data?.asmtMetaRsltSttsCd === AnalysisResultStatus.COMPLETED) {
             if (params.data?.opinionList && params.data?.opinionList.length > 0) {
               // 의견 개수가 있다면 마지막 의견 상태를 이용해서 상태 표시 처리
               const lastOpinion = params.data?.opinionList[params.data?.opinionList.length - 1];
-              status = lastOpinion?.utlzAgreSeCd as PROGRESS_STATUS_TYPE;
+              status = lastOpinion?.utlzAgreSeCd as ProgressStatusTypeValue;
             }
           }
 

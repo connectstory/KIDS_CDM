@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.kids.domain.cm.common.dto.ApiResponse;
+import kr.or.kids.domain.cm.research.service.support.ResearchMemberResolver;
 import kr.or.kids.domain.cm.research.dto.AnalysisDataDetailResponse;
 import kr.or.kids.domain.cm.research.dto.AnalysisDataRequest;
 import kr.or.kids.domain.cm.research.dto.AnalysisDataResponse;
@@ -25,7 +26,6 @@ import kr.or.kids.domain.cm.research.dto.OpinionListResponse;
 import kr.or.kids.domain.cm.research.dto.OpinionRequest;
 import kr.or.kids.domain.cm.research.dto.OrgAnalysisDataResponse;
 import kr.or.kids.domain.cm.research.service.ResearchAnalysisService;
-import kr.or.kids.domain.cm.research.service.support.ResearchMemberResolver;
 import kr.or.kids.domain.cm.research.vo.ResearchMemberVO;
 import kr.or.kids.global.common.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

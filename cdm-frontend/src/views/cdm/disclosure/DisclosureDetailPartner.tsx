@@ -8,24 +8,24 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, Chip, FormControl, MenuItem, Select, Stack, Typography } from "@mui/material";
-import Skeleton from "@mui/material/Skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import dayjs from "dayjs";
 import { Helmet } from "react-helmet";
 import { useSelector } from "react-redux";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { CONTENT_GAP } from "@/constants/types";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { CONTENT_GAP, DISCLOSURE_PARTNER_PROGRESS_STATUS, DISCLOSURE_PBLNT_STATUS_CODE } from "@/constants/types";
 import type { DisclosurePartnerResponse } from "@/interfaces/disclosureInterface.ts";
 import { ModalNames } from "@/interfaces/modalInterface.ts";
 import { DisclosureAPI } from "@/api/disclosureApi";
 import type { RootState } from "@/store";
-import { formatDateFromYYYYMMDD } from "@/utils/dateUtils";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 import { useModal } from "@/hooks/useModal";
 import FileContainer, { type FileData } from "@/components/FileContainer";
+import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 
 /**
@@ -459,6 +459,7 @@ export default function DisclosureDetailCustomer() {
   // --- 라우팅·전역 ---
   const routes = useCmRoutes();
   const navigate = useNavigate();
+  const { pblntSn: pblntSnFromRoute } = useParams<{ pblntSn: string }>();
   const [searchParams] = useSearchParams();
   /** 라우트 재진입 시 `location.key`로 쿼리 무효화/재조회 트리거 */
   const location = useLocation();
@@ -498,23 +499,12 @@ export default function DisclosureDetailCustomer() {
   /** 관리자가 고객용 상세 URL로 들어와도 하단 운영 버튼(수집현황·공시시작) 사용 가능 */
   const isAdminUser = session.mbrTypeCd === "A";
 
-  // --- 공시일련번호 `pblntSn` 확정 (우선순위: URL 쿼리 > Redux `session.pblntSn` > localStorage `pblntSn`) ---
+  // --- 공시일련번호 `pblntSn` 확정 (우선순위: path param > legacy query > localStorage) ---
   const pblntSnFromUrl = searchParams.get("pblntSn");
-  const pblntSnFromStore = session.pblntSn;
   const pblntSnFromStorage = readLocalStorageString("pblntSn");
-
-  // 공시번호를 안전하게 문자열로 변환
-  const pblntSnFromStoreStr = pblntSnFromStore
-    ? typeof pblntSnFromStore === "string"
-      ? pblntSnFromStore
-      : typeof pblntSnFromStore === "number"
-        ? String(pblntSnFromStore)
-        : String(pblntSnFromStore)
-    : null;
-
-  const pblntSn = pblntSnFromUrl || pblntSnFromStoreStr || pblntSnFromStorage;
-  /** 숫자 공시 PK — API·쿼리키에 사용 (`NaN` 가능성은 상위에서 방어) */
-  const pblntSnNumber = pblntSn ? parseInt(pblntSn, 10) : null;
+  const pblntSn = pblntSnFromRoute || pblntSnFromUrl || pblntSnFromStorage;
+  /** 숫자 공시 PK (라우팅/스토리지에서 문자열로 들어오므로 필요 시만 변환) */
+  const pblntSnId = useMemo(() => (pblntSn ? Number(pblntSn) : NaN), [pblntSn]);
 
   // --- React Query: 공시 상세 (`DisclosureAPI.getDisclosureById`) ---
   const {
@@ -523,9 +513,9 @@ export default function DisclosureDetailCustomer() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["disclosure", pblntSnNumber],
-    queryFn: () => DisclosureAPI.getDisclosureById(pblntSnNumber!),
-    enabled: !!pblntSnNumber,
+    queryKey: ["disclosure", pblntSn],
+    queryFn: () => DisclosureAPI.getDisclosureById(String(pblntSn!)),
+    enabled: !!pblntSn,
     staleTime: 0,
     refetchOnMount: "always" as const,
   });
@@ -549,14 +539,14 @@ export default function DisclosureDetailCustomer() {
     isLoading: isLoadingPartners,
     error: partnersError,
   } = useQuery({
-    queryKey: ["disclosure-partners", pblntSnNumber],
+    queryKey: ["disclosure-partners", pblntSn],
     queryFn: async () => {
-      if (!pblntSnNumber) {
+      if (!pblntSn) {
         return [];
       }
 
       try {
-        const response = await DisclosureAPI.getPartnersByPblntSn(pblntSnNumber);
+        const response = await DisclosureAPI.getPartnersByPblntSn(String(pblntSn));
 
         // 응답 데이터가 배열인지 확인
         const partnersData = response.data?.data;
@@ -570,7 +560,7 @@ export default function DisclosureDetailCustomer() {
         return [];
       }
     },
-    enabled: !!pblntSnNumber && !isLoading && !!disclosure,
+    enabled: !!pblntSn && !isLoading && !!disclosure,
     retry: false,
     staleTime: 0,
     refetchOnMount: "always" as const,
@@ -603,12 +593,15 @@ export default function DisclosureDetailCustomer() {
     isError: isErrorFiles,
     error: errorFiles,
   } = useQuery({
-    queryKey: ["disclosure-files", pblntSnNumber, currentPtcpInstSn],
+    queryKey: ["disclosure-files", pblntSn, currentPtcpInstSn],
     queryFn: async () => {
-      const res = await DisclosureAPI.getFilesByPblntSn(pblntSnNumber!, currentPtcpInstSn);
+      const res = await DisclosureAPI.getFilesByPblntSn(
+        String(pblntSn!),
+        currentPtcpInstSn != null ? String(currentPtcpInstSn) : null
+      );
       return res;
     },
-    enabled: !!pblntSnNumber && !!disclosure,
+    enabled: !!pblntSn && !!disclosure,
     staleTime: 0,
     refetchOnMount: "always" as const,
   });
@@ -649,28 +642,28 @@ export default function DisclosureDetailCustomer() {
     writeLocalStorageString(STORAGE_KEY, derived);
   }, [myPartner, hasCdmUploadForPtcpInstSn, filesResponse?.data?.data]);
 
-  useEffect(() => {}, [pblntSnNumber, isLoadingPartners, partners, partnersError, filterInstId, myPartner.length]);
+  useEffect(() => {}, [pblntSnId, isLoadingPartners, partners, partnersError, filterInstId, myPartner.length]);
 
   /**
    * 라우트 `location.key` 변경 시 — 재진입 시 그리드/상세가 stale하지 않도록 disclosure·partners 강제 갱신
    * (같은 라우트에서 컴포넌트가 remount 되지 않는 케이스 대비)
    */
   useEffect(() => {
-    if (!pblntSnNumber) return;
-    queryClient.invalidateQueries({ queryKey: ["disclosure", pblntSnNumber], exact: true });
-    queryClient.invalidateQueries({ queryKey: ["disclosure-partners", pblntSnNumber], exact: true });
-    queryClient.refetchQueries({ queryKey: ["disclosure", pblntSnNumber], exact: true });
-    queryClient.refetchQueries({ queryKey: ["disclosure-partners", pblntSnNumber], exact: true });
-  }, [location.key, pblntSnNumber, queryClient]);
+    if (Number.isNaN(pblntSnId)) return;
+    queryClient.invalidateQueries({ queryKey: ["disclosure", pblntSn], exact: true });
+    queryClient.invalidateQueries({ queryKey: ["disclosure-partners", pblntSn], exact: true });
+    queryClient.refetchQueries({ queryKey: ["disclosure", pblntSn], exact: true });
+    queryClient.refetchQueries({ queryKey: ["disclosure-partners", pblntSn], exact: true });
+  }, [location.key, pblntSn, pblntSnId, queryClient]);
 
   /** 동일하게 `location.key` 변경 시 첨부파일 쿼리만 재조회 */
   useEffect(() => {
-    if (!pblntSnNumber || currentPtcpInstSn == null) return;
+    if (Number.isNaN(pblntSnId) || currentPtcpInstSn == null) return;
     queryClient.refetchQueries({
-      queryKey: ["disclosure-files", pblntSnNumber, currentPtcpInstSn],
+      queryKey: ["disclosure-files", pblntSn, currentPtcpInstSn],
       exact: true,
     });
-  }, [location.key, pblntSnNumber, currentPtcpInstSn, queryClient]);
+  }, [location.key, pblntSn, pblntSnId, currentPtcpInstSn, queryClient]);
 
   /** 참여기관 목록 쿼리 실패 시 토스트 */
   useEffect(() => {
@@ -690,7 +683,7 @@ export default function DisclosureDetailCustomer() {
    */
   const handlePartnerRefuse = useCallback(
     async (ptcpInstSn?: number | null) => {
-      if (!pblntSnNumber) {
+      if (Number.isNaN(pblntSnId)) {
         showAlert({ message: "공시번호가 없습니다.", severity: "error" });
         return;
       }
@@ -710,10 +703,15 @@ export default function DisclosureDetailCustomer() {
         });
         if (result && typeof result === "object" && "reason" in result && (result as { reason?: string }).reason) {
           const modalResult = result as { ptcpInstSn: number; processType: string; reason: string };
-          if (modalResult.processType === "04") {
-            await DisclosureAPI.requestPartnerStatus(pblntSnNumber, modalResult.ptcpInstSn, "04", modalResult.reason);
-            await queryClient.invalidateQueries({ queryKey: ["disclosure-partners", pblntSnNumber] });
-            await queryClient.refetchQueries({ queryKey: ["disclosure-partners", pblntSnNumber] });
+          if (modalResult.processType === DISCLOSURE_PARTNER_PROGRESS_STATUS.CANCELLED) {
+            await DisclosureAPI.requestPartnerStatus(
+              pblntSnId,
+              modalResult.ptcpInstSn,
+              DISCLOSURE_PARTNER_PROGRESS_STATUS.CANCELLED,
+              modalResult.reason
+            );
+            await queryClient.invalidateQueries({ queryKey: ["disclosure-partners", pblntSn] });
+            await queryClient.refetchQueries({ queryKey: ["disclosure-partners", pblntSn] });
             showAlert({ message: "참여가 거부 처리되었습니다.", severity: "success" });
           }
         }
@@ -727,7 +725,7 @@ export default function DisclosureDetailCustomer() {
         }
       }
     },
-    [pblntSnNumber, myPartner, queryClient, showAlert, commentForReasonModal]
+    [pblntSn, pblntSnId, myPartner, queryClient, showAlert, commentForReasonModal]
   );
 
   /**
@@ -737,7 +735,7 @@ export default function DisclosureDetailCustomer() {
    */
   const handlePartnerRequest = useCallback(
     async (ptcpInstSn?: number | null, status?: string) => {
-      if (!pblntSnNumber) {
+      if (Number.isNaN(pblntSnId)) {
         showAlert({ message: "공시번호가 없습니다.", severity: "error" });
         return;
       }
@@ -750,18 +748,18 @@ export default function DisclosureDetailCustomer() {
         return;
       }
       try {
-        await DisclosureAPI.requestPartnerStatus(pblntSnNumber, ptcpInstSn, status);
+        await DisclosureAPI.requestPartnerStatus(pblntSnId, ptcpInstSn, status);
         // 캐시를 무효화하여 자동으로 리프레시되도록 함
-        await queryClient.invalidateQueries({ queryKey: ["disclosure-partners", pblntSnNumber] });
+        await queryClient.invalidateQueries({ queryKey: ["disclosure-partners", pblntSn] });
         // 추가로 명시적으로 리프레시
-        await queryClient.refetchQueries({ queryKey: ["disclosure-partners", pblntSnNumber] });
+        await queryClient.refetchQueries({ queryKey: ["disclosure-partners", pblntSn] });
         showAlert({ message: "상태가 변경되었습니다.", severity: "success" });
       } catch (error: any) {
         const message = error?.response?.data?.message || error?.message || "상태 변경 중 오류가 발생했습니다.";
         showAlert({ message, severity: "error" });
       }
     },
-    [pblntSnNumber, queryClient, showAlert, disclosure?.pblntStcd]
+    [pblntSn, pblntSnId, queryClient, showAlert, disclosure?.pblntStcd]
   );
 
   /**
@@ -814,7 +812,7 @@ export default function DisclosureDetailCustomer() {
    */
   const handleViewCancelReason = useCallback(
     async (ptcpInstSn?: number | null) => {
-      if (!pblntSnNumber) {
+      if (Number.isNaN(pblntSnId)) {
         showAlert({ message: "공시번호가 없습니다.", severity: "error" });
         return;
       }
@@ -836,7 +834,7 @@ export default function DisclosureDetailCustomer() {
           title: "취소사유 조회",
           data: {
             partner: partner,
-            pblntSn: pblntSnNumber,
+            pblntSn: pblntSnId,
           },
         });
       } catch (error: unknown) {
@@ -849,7 +847,7 @@ export default function DisclosureDetailCustomer() {
         }
       }
     },
-    [pblntSnNumber, myPartner, showAlert, cancelReasonViewModal]
+    [pblntSnId, myPartner, showAlert, cancelReasonViewModal]
   );
 
   /**
@@ -859,11 +857,11 @@ export default function DisclosureDetailCustomer() {
   const handleDisclosureStartClick = useCallback(async () => {
     const statusCode = disclosure?.pblntStcd != null ? String(disclosure.pblntStcd) : null;
     const n = DisclosureAPI.normalizePblntStcd(statusCode);
-    if (n === "02") {
+    if (n === DISCLOSURE_PBLNT_STATUS_CODE.IN_PROGRESS) {
       showAlert({ message: "공시는 이미 진행중 상태입니다.", severity: "warning" });
       return;
     }
-    if (n === "03") {
+    if (n === DISCLOSURE_PBLNT_STATUS_CODE.CLOSED) {
       showAlert({ message: "공시가 마감 상태이므로 공시시작을 수행할 수 없습니다.", severity: "warning" });
       return;
     }
@@ -877,19 +875,19 @@ export default function DisclosureDetailCustomer() {
       showAlert({ message: "공시시작일자가 아직 도래하지 않아 공시를 시작할 수 없습니다.", severity: "warning" });
       return;
     }
-    if (!pblntSnNumber) {
+    if (Number.isNaN(pblntSnId)) {
       showAlert({ message: "공시일련번호가 없습니다.", severity: "error" });
       return;
     }
     try {
-      await DisclosureAPI.updateDisclosureStatus(pblntSnNumber, "02");
+      await DisclosureAPI.updateDisclosureStatus(pblntSnId, DISCLOSURE_PBLNT_STATUS_CODE.IN_PROGRESS);
       showAlert({ message: "공시가 진행중 상태로 변경되었습니다.", severity: "success" });
-      queryClient.invalidateQueries({ queryKey: ["disclosure", pblntSnNumber] });
+      queryClient.invalidateQueries({ queryKey: ["disclosure", pblntSn] });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "공시 상태 변경 중 오류가 발생했습니다.";
       showAlert({ message: errorMessage, severity: "error" });
     }
-  }, [disclosure, pblntSnNumber, showAlert, queryClient]);
+  }, [disclosure, pblntSn, pblntSnId, showAlert, queryClient]);
 
   /** 첨부파일 목록 표시용: 바이트 → 읽기 쉬운 문자열 */
   const formatFileSize = (bytes: number | null | undefined): string => {
@@ -934,38 +932,6 @@ export default function DisclosureDetailCustomer() {
     return name;
   };
 
-  /** (참고) 파일구분·업무구분 코드 → 한글 — 고객 첨부 목록 매핑에 사용 가능 */
-  const FILE_SE_CD_MAP: Record<string, string> = {
-    "01": "IRB",
-    "02": "통합분석결과",
-    "03": "기관분석결과",
-    "04": "연구결과",
-    "05": "질의문",
-    "06": "공시등록",
-    "07": "DRB",
-    "08": "CDM",
-  };
-  const ULD_TASK_SE_CD_MAP: Record<string, string> = {
-    "01": "과제",
-    "02": "과제결과",
-    "03": "과제기관",
-    "04": "공시",
-    "05": "공시기관",
-  };
-
-  /** 전체 partners 기준 ptcpInstSn → 기관명 (다른 섹션 확장용; 현재 파일 매핑 등과 연계 가능) */
-  const instSnToNameMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    if (Array.isArray(partners)) {
-      partners.forEach((p: any) => {
-        if (p.ptcpInstSn != null) {
-          map[String(p.ptcpInstSn)] = p.instNm || `기관${p.ptcpInstSn}`;
-        }
-      });
-    }
-    return map;
-  }, [partners]);
-
   /**
    * files — 고객용 첨부파일 카드 데이터 (삭제 버튼 없음, DRB·CDM 행 제외, 다운로드는 atchFileId UUID)
    * 소스: `filesResponse.data.data`
@@ -1002,9 +968,6 @@ export default function DisclosureDetailCustomer() {
         const baseLabel = cleanedLabel || rawLabel;
         const ext = getFileExtension(baseLabel);
         const fileSeCd = file.fileSeCd || "";
-        const uldTaskSeCd = file.uldTaskSeCd || "";
-        const ptcpInstSn = file.ptcpInstSn;
-        const fileSeq = file.fileSeq;
         const fileSize = file.fileSz || null;
 
         const displayName = baseLabel;
@@ -1035,7 +998,11 @@ export default function DisclosureDetailCustomer() {
         return;
       }
 
-      const response = await DisclosureAPI.downloadFile(downloadFileName);
+      if (!pblntSn) {
+        showAlert({ message: "공시번호가 없습니다.", severity: "error" });
+        return;
+      }
+      const response = await DisclosureAPI.downloadFile(downloadFileName, pblntSn);
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -1073,13 +1040,13 @@ export default function DisclosureDetailCustomer() {
   }, []);
 
   // ========== 렌더 분기: 공시번호 없음 / 로딩 / 에러 ==========
-  if (!pblntSnNumber) {
+  if (Number.isNaN(pblntSnId)) {
     return (
       <div className="p-10 text-center text-gray-500">
         <div>공시일련번호가 없습니다.</div>
-        <div className="mt-4 text-sm">공시목록에서 공시를 선택하거나, URL에 ?pblntSn=번호 형식으로 공시번호를 추가해주세요.</div>
+        <div className="mt-4 text-sm">공시목록에서 공시를 선택하거나, URL 경로에 공시번호를 포함해주세요.</div>
         <div className="mt-4">
-          <Button variant="outlined" onClick={() => navigate(routes.CDM.DISCLOSURES_CUSTOMER)}>
+          <Button variant="outlined" onClick={() => navigate(routes.CDM.DISCLOSURES)}>
             목록으로 이동
           </Button>
         </div>
@@ -1090,10 +1057,9 @@ export default function DisclosureDetailCustomer() {
   /** 상세 쿼리 로딩 스켈레톤 */
   if (isLoading) {
     return (
-      <div>
-        <Skeleton variant="text" width="60%" height={40} />
-        <Skeleton variant="rectangular" width="100%" height={400} sx={{ mt: 2 }} />
-      </div>
+      <Box sx={{ position: "relative", minHeight: "400px" }}>
+        <Loader isLoading={true} />
+      </Box>
     );
   }
 
@@ -1156,7 +1122,7 @@ export default function DisclosureDetailCustomer() {
               </Box>
               <Box className="form_container-row-content">
                 {disclosure.pblntBgngYmd && disclosure.pblntEndYmd
-                  ? `${formatDateFromYYYYMMDD(disclosure.pblntBgngYmd)} ~ ${formatDateFromYYYYMMDD(disclosure.pblntEndYmd)}`
+                  ? `${formatDate(disclosure.pblntBgngYmd)} ~ ${formatDate(disclosure.pblntEndYmd)}`
                   : "-"}
               </Box>
             </Box>
@@ -1187,7 +1153,7 @@ export default function DisclosureDetailCustomer() {
                 <Typography variant="h6">등록일시</Typography>
               </Box>
               <Box className="form_container-row-content">
-                {disclosure.regYmd ? dayjs(disclosure.regYmd).format("YYYY.MM.DD HH:mm") : "-"}
+                {formatDateTime(disclosure.regYmd)}
               </Box>
             </Box>
           </Stack>
@@ -1310,7 +1276,7 @@ export default function DisclosureDetailCustomer() {
               disabled={(() => {
                 const statusCode = disclosure?.pblntStcd != null ? String(disclosure.pblntStcd) : null;
                 const n = DisclosureAPI.normalizePblntStcd(statusCode);
-                return n === "02" || n === "03";
+                return n === DISCLOSURE_PBLNT_STATUS_CODE.IN_PROGRESS || n === DISCLOSURE_PBLNT_STATUS_CODE.CLOSED;
               })()}
             >
               공시시작

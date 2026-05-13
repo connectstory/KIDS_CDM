@@ -1,7 +1,7 @@
 // Research 관련 React Query Mutations
 import { ResearchAPI } from "@/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ANALYSIS_RESULT_STATUS } from "@/constants/types";
+import type { AnalysisResultStatusValue } from "@/constants/types";
 import { ANALYSIS_RESULT_REVIEW_IN_PROGRESS_CODES } from "@/constants/types";
 import type { ApiResponse } from "@/interfaces/commonInterface";
 import type {
@@ -531,7 +531,7 @@ export function useUpdateAnalysisDataStatus() {
     {
       asmtSn: number;
       asmtMetaRsltSn: number;
-      asmtMetaRsltSttsCd: ANALYSIS_RESULT_STATUS;
+      asmtMetaRsltSttsCd: AnalysisResultStatusValue;
       rsltGroupCd: string;
     }
   >({

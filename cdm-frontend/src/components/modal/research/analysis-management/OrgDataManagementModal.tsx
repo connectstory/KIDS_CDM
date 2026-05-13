@@ -5,7 +5,12 @@ import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { AnalysisResultStatus, CONTENT_GAP, type PROGRESS_STATUS_TYPE, RsltGroupStcdType } from "@/constants/types";
+import {
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
+  CONTENT_GAP,
+  type ProgressStatusTypeValue,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { AnalysisDataResponse } from "@/interfaces/researchInterface";
 import { type RootState } from "@/store";
@@ -209,12 +214,12 @@ export default function OrgDataManagementModal() {
             );
           }
 
-          let status: PROGRESS_STATUS_TYPE = params.data?.asmtMetaRsltSttsCd as PROGRESS_STATUS_TYPE;
+          let status: ProgressStatusTypeValue = params.data?.asmtMetaRsltSttsCd as ProgressStatusTypeValue;
           if (params.data?.asmtMetaRsltSttsCd === AnalysisResultStatus.COMPLETED) {
             if (params.data?.opinionList && params.data?.opinionList.length > 0) {
               // 의견 개수가 있다면 마지막 의견 상태를 이용해서 상태 표시 처리
               const lastOpinion = params.data?.opinionList[params.data?.opinionList.length - 1];
-              status = lastOpinion?.utlzAgreSeCd as PROGRESS_STATUS_TYPE;
+              status = lastOpinion?.utlzAgreSeCd as ProgressStatusTypeValue;
             }
           }
 

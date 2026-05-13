@@ -1,15 +1,9 @@
 /**
  * 거부사유 등록 모달 컴포넌트
  * 참여기관의 거부사유를 등록하는 모달
- *
- * 주요 기능:
- * - 기관 정보 표시 (기관명, 기관상태)
- * - 처리구분 선택 (참여취소/참여승인)
- * - 거부사유 입력
- * - 저장 및 취소
  */
 import { useState } from "react";
-import { Box, Button, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { MSG } from "@/constants/string";
 import { CONTENT_GAP } from "@/constants/types";
@@ -43,19 +37,19 @@ export default function CommentForReasonModal() {
   /**
    * 상태 코드 포맷팅 함수
    */
-  const formatStatus = (status: string | null | undefined): string => {
-    if (!status) return "-";
-    const statusMap: Record<string, string> = {
-      "01": "참여요청",
-      "02": "진행중",
-      "03": "완료",
-      "04": "참여취소",
-      "05": "등록",
-      "06": "참여재요청",
-      "07": "등록재요청",
-    };
-    return statusMap[status] || status;
-  };
+  // const formatStatus = (status: string | null | undefined): string => {
+  //   if (!status) return "-";
+  //   const statusMap: Record<string, string> = {
+  //     "01": "참여요청",
+  //     "02": "진행중",
+  //     "03": "완료",
+  //     "04": "참여취소",
+  //     "05": "등록",
+  //     "06": "참여재요청",
+  //     "07": "등록재요청",
+  //   };
+  //   return statusMap[status] || status;
+  // };
 
   /**
    * 모달 닫기 핸들러
@@ -111,141 +105,94 @@ export default function CommentForReasonModal() {
       fullWidth={true}
       footer={
         <>
+          <Button variant="contained" onClick={handleSave}>
+            확인
+          </Button>
           <Button variant="outlined" onClick={() => handleClose(false)}>
             취소
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            sx={{ backgroundColor: "#f39800", "&:hover": { backgroundColor: "#e68900" } }}
-          >
-            {partnerRefuseOnly ? "확인" : "저장"}
           </Button>
         </>
       }
     >
       <Box>
-        {/* 기관정보 섹션 */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6" sx={{ color: "#f39800", fontWeight: "bold", mb: 1 }}>
+        <Box>
+          <Typography variant="h5">{modalData?.partner?.instNm || ""}</Typography>
+        </Box>
+
+        {/* <SpaceBox gap={CONTENT_GAP.MEDIUM} /> */}
+
+        {/* <Box className="sub_path">
+          <Typography className="tit" variant="h5">
             기관정보
           </Typography>
-          <Box
-            sx={{
-              border: "1px solid #cfcfcf",
-              padding: "10px",
-              backgroundColor: "#f7f7f7",
-              borderRadius: "4px",
-            }}
-          >
-            {/* 기관명 */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <Typography variant="body2" sx={{ width: "80px", fontSize: "13px", color: "#555" }}>
-                기관명
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                value={modalData?.partner?.instNm || ""}
-                InputProps={{
-                  readOnly: true,
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#fff",
-                    fontSize: "13px",
-                  },
-                }}
-              />
-            </Box>
+        </Box> */}
 
-            {/* 기관상태 (+ 관리자용 처리구분) */}
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1.5,
-                flexDirection: partnerRefuseOnly ? "column" : "row",
-                alignItems: partnerRefuseOnly ? "stretch" : "center",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  flex: partnerRefuseOnly ? undefined : 1,
-                  width: partnerRefuseOnly ? "100%" : undefined,
-                }}
-              >
-                <Typography variant="body2" sx={{ width: "80px", fontSize: "13px", color: "#555", flexShrink: 0 }}>
-                  기관상태
-                </Typography>
+        {/* <Box className="form_container">
+          <Stack direction="row" className="form_container-row">
+            <Box className="form_container-column">
+              <Box className="form_container-row-label">
+                <Typography variant="h6">기관명</Typography>
+              </Box>
+              <Box className="form_container-row-content">
                 <TextField
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  value={modalData?.partner?.instNm || ""}
+                  InputProps={{ readOnly: true }}
+                />
+              </Box>
+            </Box>
+          </Stack>
+
+          <Stack direction="row" className="form_container-row">
+            <Box className="form_container-column">
+              <Box className="form_container-row-label">
+                <Typography variant="h6">기관상태</Typography>
+              </Box>
+              <Box className="form_container-row-content">
+                <TextField
+                  variant="outlined"
                   fullWidth
                   size="small"
                   value={formatStatus(modalData?.partner?.uldInstPrgrsSttsStcd || null)}
-                  InputProps={{
-                    readOnly: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      backgroundColor: "#fff",
-                      fontSize: "13px",
-                    },
-                  }}
+                  InputProps={{ readOnly: true }}
                 />
               </Box>
-              {!partnerRefuseOnly && (
-                <Box sx={{ display: "flex", alignItems: "center", flex: 1 }}>
-                  <Typography variant="body2" sx={{ width: "80px", fontSize: "13px", color: "#555" }}>
-                    처리구분
-                  </Typography>
-                  <Select
-                    fullWidth
-                    size="small"
-                    value={processType}
-                    onChange={(e) => setProcessType(e.target.value)}
-                    sx={{
-                      fontSize: "13px",
-                      backgroundColor: "#fff",
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#cfcfcf",
-                      },
-                    }}
-                  >
+            </Box>
+            {!partnerRefuseOnly && (
+              <Box className="form_container-column">
+                <Box className="form_container-row-label">
+                  <Typography variant="h6">처리구분</Typography>
+                </Box>
+                <Box className="form_container-row-content">
+                  <Select fullWidth size="small" value={processType} onChange={(e) => setProcessType(e.target.value)}>
                     <MenuItem value="04">참여취소</MenuItem>
                     <MenuItem value="02">참여승인</MenuItem>
                   </Select>
                 </Box>
-              )}
-            </Box>
-          </Box>
-        </Box>
+              </Box>
+            )}
+          </Stack>
+        </Box> */}
 
-        <SpaceBox gap={CONTENT_GAP.SMALL} />
+        <SpaceBox gap={CONTENT_GAP.LARGE} />
 
-        {/* 사유정보 섹션 */}
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: "#333" }}>
-            {partnerRefuseOnly ? "참여거부 사유" : "사유"}
-            {partnerRefuseOnly ? " (필수)" : ""}
-          </Typography>
           <TextField
             error={reasonError.length > 0}
             helperText={reasonError}
             fullWidth
             multiline
-            rows={5}
+            minRows={4}
+            label={partnerRefuseOnly ? "참여거부 사유" : "사유"}
+            required={partnerRefuseOnly}
             autoFocus={partnerRefuseOnly}
             placeholder={partnerRefuseOnly ? "참여를 거부하는 사유를 입력해 주세요." : "사유정보를 입력하여 주시기 바랍니다."}
             value={reason}
             onChange={(e) => {
               setReason(e.target.value);
               setReasonError("");
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                fontSize: "13px",
-              },
             }}
           />
         </Box>

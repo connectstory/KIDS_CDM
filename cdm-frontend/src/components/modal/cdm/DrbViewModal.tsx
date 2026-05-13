@@ -41,8 +41,8 @@ interface DisclosureFileRow {
 interface ModalData {
   name: string;
   files?: FileData[];
-  pblntSn?: number;
-  ptcpInstSn?: number;
+  pblntSn?: string;
+  ptcpInstSn?: string;
 }
 
 const DRB_FILE_SE_CD = "07"; // 파일구분코드: 07=DRB (코드모음 그룹ID 0013)
@@ -76,7 +76,7 @@ export default function DrbViewModal() {
         // 다운로드 API는 atch_file_id(UUID) 기준으로 동작하므로 atchFileId가 없는 행은 제외
         return row.fileSeCd === DRB_FILE_SE_CD && !!row.atchFileId;
       })
-      .map((row, index): FileData & { atchFileSn?: string } => {
+      .map((row): FileData & { atchFileSn?: string } => {
         const atchFileSnVal = String(row.atchFileSn ?? "").trim();
         const strgFileNm = String(row.strgFileNm ?? "").trim();
         const originalName = atchFileSnVal !== "" ? atchFileSnVal : strgFileNm || "파일";
@@ -112,7 +112,14 @@ export default function DrbViewModal() {
     }
 
     try {
-      const response = await DisclosureAPI.downloadFile(downloadParam);
+      if (!pblntSn) {
+        showAlert({
+          message: "공시번호가 없습니다.",
+          severity: "error",
+        });
+        return;
+      }
+      const response = await DisclosureAPI.downloadFile(downloadParam, pblntSn);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;

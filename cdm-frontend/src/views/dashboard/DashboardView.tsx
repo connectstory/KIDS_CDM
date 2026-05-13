@@ -15,7 +15,7 @@ import {
   fetchUploadNotice,
 } from "@/api/communityApi";
 import { DisclosureAPI } from "@/api/disclosureApi";
-import { getPblntPrgrsStatusConfig } from "@/utils/common";
+import { buildPath, getPblntPrgrsStatusConfig } from "@/utils/common";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { usePageAccessHistory } from "@/hooks/usePageAccessHistory";
 import { SpaceBox } from "@/components/SpaceBox.tsx";
@@ -348,7 +348,9 @@ export default function CdmDashboardView() {
                 columnDefs={noticeColumns}
                 rowHeight={ROW_H}
                 headerHeight={HEADER_H}
-                onRowClicked={(e) => e.data?.pblntSn && navigate(`${routes.CDM.DISCLOSURE_DETAIL}?pblntSn=${e.data.pblntSn}`)}
+                onRowClicked={(e) =>
+                  e.data?.pblntSn && navigate(buildPath(routes.CDM.DISCLOSURE_DETAIL, { pblntSn: e.data.pblntSn }))
+                }
                 overlayNoRowsTemplate="<span>게시물이 존재하지 않습니다.</span>"
               />
             </div>

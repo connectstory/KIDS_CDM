@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { MSG } from "@/constants/string";
-import { AnalysisResultStatus, CONTENT_GAP, RsltGroupStcdType } from "@/constants/types";
+import { ANALYSIS_RESULT_STATUS as AnalysisResultStatus, CONTENT_GAP, RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { AnalysisDataDetailResponse } from "@/interfaces/researchInterface";
 import { downloadFileViaProxy, getFilePreviewUrl } from "@/api/commonApi";

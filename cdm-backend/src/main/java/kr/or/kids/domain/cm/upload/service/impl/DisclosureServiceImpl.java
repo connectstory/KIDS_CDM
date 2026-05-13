@@ -1,6 +1,8 @@
 package kr.or.kids.domain.cm.upload.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,12 +14,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.common.dto.CaFileItem;
 import kr.or.kids.domain.cm.common.mapper.CommonFileMapper;
+import kr.or.kids.domain.cm.common.service.CaFileUploadService;
+import kr.or.kids.domain.cm.common.service.CommonFileService;
 import kr.or.kids.domain.cm.common.service.FileApiService;
+import kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo;
 import kr.or.kids.domain.cm.common.vo.TbCmMFileUldVO;
+import kr.or.kids.domain.cm.common.vo.UserVO;
+import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
 import kr.or.kids.domain.cm.upload.dto.DisclosureCreateRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosureDetailResponse;
 import kr.or.kids.domain.cm.upload.dto.DisclosureListResponse;
@@ -25,20 +32,14 @@ import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerResponse;
 import kr.or.kids.domain.cm.upload.dto.DisclosureSearchRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosureUpdateRequest;
 import kr.or.kids.domain.cm.upload.mapper.DisclosureMapper;
-import kr.or.kids.domain.cm.upload.util.UploadNonFatal;
+import kr.or.kids.domain.cm.upload.service.DisclosurePartnerService;
 import kr.or.kids.domain.cm.upload.service.DisclosurePblntStartMailService;
 import kr.or.kids.domain.cm.upload.service.DisclosureService;
-import kr.or.kids.domain.cm.upload.service.DisclosurePartnerService;
+import kr.or.kids.domain.cm.upload.util.UploadNonFatal;
 import kr.or.kids.domain.cm.upload.vo.TbCmMUldPblntVO;
 import kr.or.kids.global.type.CmTaskCodeType;
+import kr.or.kids.global.type.KidsTaskCodeType;
 
-/**
- * 업로드 도메인 비즈니스 로직을 구현한다.
- *
- * <pre>
- * 업로드 업무 흐름에 따라 필요한 처리를 수행한다.
- * </pre>
- */
 @Service
 public class DisclosureServiceImpl implements DisclosureService {
 
@@ -63,7 +64,22 @@ public class DisclosureServiceImpl implements DisclosureService {
     }
     return DEFAULT_SYSTEM_USER;
   }
-  private static final String LOG_SEPARATOR = "============================================================";
+
+  private static String resolveAuditUserId( DisclosureMemberVO member ) {
+    if (member == null) {
+      return DEFAULT_SYSTEM_USER;
+    }
+    if (member.getUserNo() != null && !member.getUserNo().isBlank()) {
+      return member.getUserNo().trim();
+    }
+    if (member.getMbrId() != null && !member.getMbrId().isBlank()) {
+      return member.getMbrId().trim();
+    }
+    if (member.getUserNm() != null && !member.getUserNm().isBlank()) {
+      return member.getUserNm().trim();
+    }
+    return DEFAULT_SYSTEM_USER;
+  }
   private static final String KEY_ATCH_FILE_GROUP_ID = "atchFileGroupId";
 
   
@@ -73,10 +89,19 @@ public class DisclosureServiceImpl implements DisclosureService {
   private static final String KEY_ATCH_FILE_ID = "atchFileId";
   private static final String KEY_ATCH_FILE_ID_ALT = "atchfileid";
 
+  private static final String FILE_SE_CD_PBLNT_REGISTER = "06";
+  private static final String MSG_PBLNT_REGISTER_EXT =
+      "첨부파일은 엑셀(.xlsx, .xls), 워드(.doc, .docx), 아래한글(.hwp, .hwpx), PDF(.pdf), R(.r, .rds), CSV(.csv), 파이썬(.py), PKL(.pkl), JSM(.jsm), Parquet(.parquet), 텍스트(.txt)만 등록할 수 있습니다.";
+  private static final Set<String> PBLNT_REGISTER_EXTENSIONS = Set.of(
+      "xlsx", "xls", "doc", "docx", "hwp", "hwpx", "pdf",
+      "r", "rds", "csv", "py", "pkl", "jsm", "parquet", "txt" );
+
   private final DisclosureMapper disclosureMapper;
   private final DisclosurePartnerService disclosurePartnerService;
   private final CommonFileMapper commonFileMapper;
   private final FileApiService fileApiService;
+  private final CaFileUploadService caFileUploadService;
+  private final CommonFileService commonFileService;
   private final DisclosurePblntStartMailService disclosurePblntStartMailService;
   private final DisclosureService disclosureTx;
 
@@ -88,6 +113,8 @@ public class DisclosureServiceImpl implements DisclosureService {
    * @param commonFileMapper commonFileMapper
    * @param fileApiService fileApiService
    * @param disclosurePblntStartMailService disclosurePblntStartMailService
+   * @param caFileUploadService caFileUploadService
+   * @param commonFileService commonFileService
    * @param disclosureTx disclosureTx
    */
   public DisclosureServiceImpl(
@@ -95,12 +122,16 @@ public class DisclosureServiceImpl implements DisclosureService {
       DisclosurePartnerService disclosurePartnerService,
       CommonFileMapper commonFileMapper,
       FileApiService fileApiService,
+      CaFileUploadService caFileUploadService,
+      CommonFileService commonFileService,
       DisclosurePblntStartMailService disclosurePblntStartMailService,
       @Lazy DisclosureService disclosureTx ) {
     this.disclosureMapper = disclosureMapper;
     this.disclosurePartnerService = disclosurePartnerService;
     this.commonFileMapper = commonFileMapper;
     this.fileApiService = fileApiService;
+    this.caFileUploadService = caFileUploadService;
+    this.commonFileService = commonFileService;
     this.disclosurePblntStartMailService = disclosurePblntStartMailService;
     this.disclosureTx = disclosureTx;
   }
@@ -111,17 +142,42 @@ public class DisclosureServiceImpl implements DisclosureService {
     }
   }
 
-  /**
-   * 조건에 맞는 데이터를 조회한다.
-   *
-   * @param request request
-   * @return 처리 결과
-   */
+  // 공시 목록 조회 (관리자)
   @Override
   @Transactional(readOnly = true)
-  public List<DisclosureListResponse> search( DisclosureSearchRequest request ) {
-    List<TbCmMUldPblntVO> vos = disclosureMapper.search( request );
+  public List<DisclosureListResponse> searchAdminDisclosureList( DisclosureSearchRequest request, DisclosureMemberVO member ) {
+    List<TbCmMUldPblntVO> vos = disclosureMapper.searchDisclosureList( request );
     return vos.stream().map( this::toDisclosureListResponse ).collect( Collectors.toList() );
+  }
+
+  // 공시 목록 건수 조회 (관리자)
+  @Override
+  @Transactional(readOnly = true)
+  public int countAdminDisclosure( DisclosureSearchRequest request, DisclosureMemberVO member ) {
+    return disclosureMapper.countDisclosureList( request );
+  }
+
+  // 공시 목록 조회 (파트너)
+  @Override
+  @Transactional(readOnly = true)
+  public List<DisclosureListResponse> searchPartnerDisclosureList( DisclosureSearchRequest request, DisclosureMemberVO member ) {
+    String instBrno = member != null ? member.getInstBrno() : null;
+    if (instBrno == null || instBrno.isBlank()) {
+      return Collections.emptyList();
+    }
+    List<TbCmMUldPblntVO> vos = disclosureMapper.searchDisclosureListByPartnerInst( instBrno.trim(), request );
+    return vos.stream().map( this::toDisclosureListResponse ).collect( Collectors.toList() );
+  }
+
+  // 공시 목록 건수 조회 (파트너)
+  @Override
+  @Transactional(readOnly = true)
+  public int countPartnerDisclosure( DisclosureSearchRequest request, DisclosureMemberVO member ) {
+    String instBrno = member != null ? member.getInstBrno() : null;
+    if (instBrno == null || instBrno.isBlank()) {
+      return 0;
+    }
+    return disclosureMapper.countDisclosureListByPartnerInst( instBrno.trim(), request );
   }
 
   
@@ -183,11 +239,7 @@ public class DisclosureServiceImpl implements DisclosureService {
    * @param request request
    * @return 처리 결과
    */
-  @Override
-  @Transactional(readOnly = true)
-  public int count( DisclosureSearchRequest request ) {
-    return disclosureMapper.count( request );
-  }
+  // (기존 search/count 메서드가 필요하다면 위 admin 메서드를 사용)
 
   /**
    * 대상 데이터를 조회한다.
@@ -214,8 +266,8 @@ public class DisclosureServiceImpl implements DisclosureService {
    */
   @Override
   @Transactional
-  public Long create( UserVO sessionUser, DisclosureCreateRequest request ) {
-    String createBy = resolveAuditUserId( sessionUser );
+  public Long create( DisclosureMemberVO member, DisclosureCreateRequest request ) {
+    String createBy = resolveAuditUserId( member );
 
     validatePblntDateRange( request.getPblntBgngYmd(), request.getPblntEndYmd() );
 
@@ -234,7 +286,7 @@ public class DisclosureServiceImpl implements DisclosureService {
    */
   @Override
   @Transactional
-  public void update( UserVO sessionUser, Long pblntSn, DisclosureUpdateRequest request ) {
+  public void update( DisclosureMemberVO member, Long pblntSn, DisclosureUpdateRequest request ) {
     
     TbCmMUldPblntVO existing = disclosureMapper.findById( pblntSn );
     if (existing == null) {
@@ -243,7 +295,7 @@ public class DisclosureServiceImpl implements DisclosureService {
 
     validatePblntDateRange( request.getPblntBgngYmd(), request.getPblntEndYmd() );
 
-    String updateBy = resolveAuditUserId( sessionUser );
+    String updateBy = resolveAuditUserId( member );
     TbCmMUldPblntVO vo = request.toVO( pblntSn, updateBy );
 
     disclosureMapper.update( vo );
@@ -461,14 +513,14 @@ public class DisclosureServiceImpl implements DisclosureService {
    *
    * @param pblntSn pblntSn
    * @param ptcpInstSn ptcpInstSn
+   * @param fileSeCd 파일구분코드 필터 (null/blank 이면 전체)
    * @return 처리 결과
    */
   @Override
   @Transactional(readOnly = true)
-  public List<java.util.Map<String, Object>> findFilesByPblntSn( Long pblntSn, Long ptcpInstSn ) {
-
-    
-    List<TbCmMFileUldVO> uldList = commonFileMapper.selectFileUldList( pblntSn, CmTaskCodeType.CDM_NOTI.code(), null );
+  public List<java.util.Map<String, Object>> findFilesByPblntSn( Long pblntSn, Long ptcpInstSn, String fileSeCd ) {
+    String codeFilter = fileSeCd != null && !fileSeCd.trim().isEmpty() ? fileSeCd.trim() : null;
+    List<TbCmMFileUldVO> uldList = commonFileMapper.selectFileUldList( pblntSn, CmTaskCodeType.CDM_NOTI.code(), codeFilter );
     List<Map<String, Object>> out = new ArrayList<>();
     for (TbCmMFileUldVO uld : uldList) {
       if (shouldSkipUldForPartnerFileList( uld, ptcpInstSn )) {
@@ -482,6 +534,208 @@ public class DisclosureServiceImpl implements DisclosureService {
     }
 
     return out;
+  }
+
+  /**
+   * ResearchServiceImpl#buildFileIdToGroupIdIndex 와 동일 패턴 (공시·CDM_NOTI 기준).
+   */
+  private Map<String, String> buildFileIdToGroupIdIndex( Long pblntSn, String fileSeCd ) {
+    String code = fileSeCd != null && !fileSeCd.isEmpty() ? fileSeCd : null;
+    List<TbCmMFileUldVO> ulds = commonFileMapper.selectFileUldList( pblntSn, CmTaskCodeType.CDM_NOTI.code(), code );
+    Map<String, String> index = new HashMap<>();
+    if (ulds == null) {
+      return index;
+    }
+    for (TbCmMFileUldVO uld : ulds) {
+      String groupId = uld.getAtchFileId();
+      if (groupId == null || groupId.isBlank()) {
+        continue;
+      }
+      try {
+        for (CaFileItem item : FileApiService.toCaFileItemsFromCa( fileApiService, groupId )) {
+          if (item.atchFileId() != null && !item.atchFileId().isBlank()) {
+            index.putIfAbsent( item.atchFileId(), groupId );
+          }
+        }
+      } catch (Exception ex ) {
+        UploadNonFatal.discard( ex );
+      }
+    }
+    return index;
+  }
+
+  private static boolean isAllowedPblntRegisterAttachment( String originalFilename ) {
+    if (originalFilename == null || originalFilename.isBlank()) {
+      return false;
+    }
+    String name = originalFilename.replace( "\\", "/" );
+    int slash = name.lastIndexOf( '/' );
+    if (slash >= 0) {
+      name = name.substring( slash + 1 );
+    }
+    int dot = name.lastIndexOf( '.' );
+    if (dot <= 0 || dot >= name.length() - 1) {
+      return false;
+    }
+    return PBLNT_REGISTER_EXTENSIONS.contains( name.substring( dot + 1 ).toLowerCase().trim() );
+  }
+
+  private static void rejectIfPblntRegisterFilesInvalid( List<MultipartFile> files, String fileSeCd ) {
+    String fsc = fileSeCd != null ? fileSeCd.trim() : "";
+    if (!FILE_SE_CD_PBLNT_REGISTER.equals( fsc )) {
+      return;
+    }
+    for (MultipartFile f : files) {
+      if (f == null || f.isEmpty()) {
+        continue;
+      }
+      if (!isAllowedPblntRegisterAttachment( f.getOriginalFilename() )) {
+        throw new IllegalArgumentException( MSG_PBLNT_REGISTER_EXT );
+      }
+    }
+  }
+
+  @Override
+  @Transactional
+  public List<String> uploadDisclosureFiles( DisclosureMemberVO member, Long pblntSn, Long ptcpInstSn, String fileSeCd, List<MultipartFile> files ) {
+    if (files == null || files.isEmpty()) {
+      throw new IllegalArgumentException( "업로드할 파일이 없습니다." );
+    }
+    String fsc = fileSeCd != null && !fileSeCd.trim().isEmpty() ? fileSeCd.trim() : "08";
+    rejectIfPblntRegisterFilesInvalid( files, fsc );
+    boolean isAdmin = Boolean.TRUE.equals( member != null ? member.getIsAdmin() : null );
+    if (ptcpInstSn != null && !isAdmin) {
+      requireDisclosureInProgressForPartnerActions( pblntSn );
+    }
+    String rgtrId = resolveAuditUserId( member );
+    List<String> uploadedIds = new ArrayList<>();
+    for (MultipartFile file : files) {
+      if (file == null || file.isEmpty()) {
+        continue;
+      }
+      String groupId = caFileUploadService.uploadWithCaAndUld(
+          pblntSn,
+          ptcpInstSn,
+          List.of( file ),
+          rgtrId,
+          KidsTaskCodeType.CDM.code(),
+          CmTaskCodeType.CDM_NOTI.code(),
+          fsc );
+      if (groupId == null || groupId.isBlank()) {
+        continue;
+      }
+      List<TbCaEFileTrsmVo> list = commonFileService.selectFileListByGroup( groupId );
+      if (list == null || list.isEmpty()) {
+        uploadedIds.add( groupId );
+      } else {
+        for (TbCaEFileTrsmVo vo : list) {
+          if (vo.getAtchFileId() != null && !vo.getAtchFileId().isBlank()) {
+            uploadedIds.add( vo.getAtchFileId() );
+          }
+        }
+      }
+    }
+    return uploadedIds;
+  }
+
+  private boolean isAtchFileLinkedToDisclosure( Long pblntSn, String atchFileId ) {
+    if (pblntSn == null || atchFileId == null || atchFileId.isBlank()) {
+      return false;
+    }
+    Map<String, String> index = buildFileIdToGroupIdIndex( pblntSn, null );
+    return index.containsKey( atchFileId );
+  }
+
+  private boolean isAtchFileVisibleToPartner( Long pblntSn, Long ptcpInstSn, String atchFileId ) {
+    if (ptcpInstSn == null || atchFileId == null || atchFileId.isBlank()) {
+      return false;
+    }
+    for (Map<String, Object> row : findFilesByPblntSn( pblntSn, ptcpInstSn, null )) {
+      String id = firstNonBlankString( row, KEY_ATCH_FILE_ID, KEY_ATCH_FILE_ID_ALT );
+      if (atchFileId.equals( id )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 컨트롤러에서 상세·파일 접근이 허용된 멤버에 대해, 목록 조회와 동일한 가시성으로 파일 단건을 검증한다.
+   * 관리자: 공시에 연결된 모든 첨부. 참여기관 행이 있으면 해당 ptcp 기준. 없으면 ptcpInstSn=null 목록(공시 단위 첨부 등).
+   */
+  private boolean isAtchFileVisibleForDisclosureMember( DisclosureMemberVO member, Long pblntSn, String atchFileId ) {
+    if (atchFileId == null || atchFileId.isBlank()) {
+      return false;
+    }
+    if (Boolean.TRUE.equals( member.getIsAdmin() )) {
+      return isAtchFileLinkedToDisclosure( pblntSn, atchFileId );
+    }
+    Long ptcp = member.getPartner() != null ? member.getPartner().getPtcpInstSn() : null;
+    if (ptcp != null) {
+      return isAtchFileVisibleToPartner( pblntSn, ptcp, atchFileId );
+    }
+    for (Map<String, Object> row : findFilesByPblntSn( pblntSn, null, null )) {
+      String id = firstNonBlankString( row, KEY_ATCH_FILE_ID, KEY_ATCH_FILE_ID_ALT );
+      if (atchFileId.equals( id )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  @Transactional
+  public void deleteDisclosureFile( DisclosureMemberVO member, Long pblntSn, String atchFileId ) {
+    if (member == null) {
+      throw new IllegalArgumentException( "회원 정보가 없습니다." );
+    }
+    if (pblntSn == null) {
+      throw new IllegalArgumentException( "공시일련번호는 필수입니다." );
+    }
+    if (atchFileId == null || atchFileId.trim().isEmpty()) {
+      throw new IllegalArgumentException( "첨부파일ID(atchFileId)는 필수입니다." );
+    }
+    if (!isAtchFileVisibleForDisclosureMember( member, pblntSn, atchFileId )) {
+      throw new IllegalArgumentException( "파일을 찾을 수 없거나 권한이 없습니다." );
+    }
+    disclosureTx.deleteFile( pblntSn, atchFileId );
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public TbCaEFileTrsmVo resolveDisclosureFileForDownload( DisclosureMemberVO member, Long pblntSn, String atchFileSn ) {
+    if (atchFileSn == null || atchFileSn.trim().isEmpty()) {
+      throw new IllegalArgumentException( "첨부파일일련번호가 없습니다." );
+    }
+    if (pblntSn == null) {
+      throw new IllegalArgumentException( "공시일련번호(pblntSn)가 필요합니다." );
+    }
+    if (member == null) {
+      throw new IllegalArgumentException( "회원 정보가 없습니다." );
+    }
+    TbCaEFileTrsmVo caFile = commonFileService.selectFile( atchFileSn );
+    if (caFile == null || caFile.getSrvrFileNm() == null || caFile.getSrvrFileNm().trim().isEmpty()) {
+      TbCaEFileTrsmVo groupFile = commonFileService.selectFileByGroupId( atchFileSn );
+      if (groupFile != null) {
+        caFile = groupFile;
+      }
+    }
+    if (caFile == null) {
+      return null;
+    }
+    String canonicalFileId = caFile.getAtchFileId();
+    if (canonicalFileId == null || canonicalFileId.isBlank()) {
+      List<TbCaEFileTrsmVo> inGroup = commonFileService.selectFileListByGroup( atchFileSn );
+      if (inGroup != null && !inGroup.isEmpty() && inGroup.get( 0 ).getAtchFileId() != null) {
+        canonicalFileId = inGroup.get( 0 ).getAtchFileId();
+      } else {
+        canonicalFileId = atchFileSn;
+      }
+    }
+    if (!isAtchFileVisibleForDisclosureMember( member, pblntSn, canonicalFileId )) {
+      throw new IllegalArgumentException( "파일을 찾을 수 없거나 권한이 없습니다." );
+    }
+    return caFile;
   }
 
   /**

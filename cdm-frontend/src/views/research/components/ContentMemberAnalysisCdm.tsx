@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { STRINGS } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
-import { RsltGroupStcdType } from "@/constants/types";
+import { RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { getFilePreviewUrl } from "@/api/commonApi";
 import { setTooltipVisible } from "@/store/tooltipSlice";

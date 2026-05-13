@@ -8,7 +8,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CONTENT_GAP } from "@/constants/types";
 import type { ValidateRuleItem } from "@/interfaces/validateRuleInterface.ts";
 import { fetchValidateRuleList } from "@/api/validateRuleApi.ts";
-import { STD_SE_CD_OPTIONS, convertStdSeCd } from "@/utils/common";
+import { STD_SE_CD_OPTIONS, buildPath, convertStdSeCd } from "@/utils/common";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import CdmPagination from "@/components/CdmPagination";
 import CdmPaginationMove from "@/components/CdmPaginationMove";
@@ -238,7 +238,7 @@ function ValidateRuleListView() {
         </div>
 
         <div className="tbl_controller">
-          <Button variant="contained" size="medium" onClick={() => navigate(routes.CDM.VALIDATE_RULE_EDIT)}>
+          <Button variant="contained" size="medium" onClick={() => navigate(routes.CDM.VALIDATE_RULE_CREATE)}>
             등록
           </Button>
         </div>
@@ -256,11 +256,11 @@ function ValidateRuleListView() {
             if (!e.data?.vrfcSn) return;
 
             const currentParams = new URLSearchParams(globalThis.location.search);
-            currentParams.set("vrfcSn", String(e.data.vrfcSn));
-
+            currentParams.delete("vrfcSn");
+            const search = currentParams.toString();
             navigate({
-              pathname: routes.CDM.VALIDATE_RULE_DETAIL,
-              search: currentParams.toString(),
+              pathname: buildPath(routes.CDM.VALIDATE_RULE_DETAIL, { vrfcSn: String(e.data.vrfcSn) }),
+              ...(search ? { search } : {}),
             });
           }}
         />

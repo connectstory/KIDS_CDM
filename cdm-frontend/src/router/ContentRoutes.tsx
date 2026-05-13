@@ -1,18 +1,16 @@
-import CDMInfoReporting from "@/views/cdm/CDMInfoReporting.tsx";
-import DisclosureCreate from "@/views/cdm/DisclosureCreate.tsx";
-import DisclosureDetailAdmin from "@/views/cdm/DisclosureDetailAdmin.tsx";
-import DisclosureDetailCustomer from "@/views/cdm/DisclosureDetailCustomer.tsx";
-import DisclosureDetailWrapper from "@/views/cdm/DisclosureDetailWrapper.tsx";
-import DisclosureEdit from "@/views/cdm/DisclosureEdit.tsx";
-import DisclosureList from "@/views/cdm/DisclosureListAdmin.tsx";
-import DisclosureListCustomer from "@/views/cdm/DisclosureListCustomer.tsx";
-import DisclosureListWrapper from "@/views/cdm/DisclosureListWrapper.tsx";
-import Upload from "@/views/cdm/DisclosureUpload";
+// import CDMInfoReporting from "@/views/cdm/CDMInfoReporting.tsx";
+// import DisclosureDetailCustomer from "@/views/cdm/DisclosureDetailCustomer.tsx";
+// import Upload from "@/views/cdm/DisclosureUpload";
 import PartnerInformationWrite from "@/views/cdm/PartnerInformationWrite.tsx";
 import UploadSummaryReportPie from "@/views/cdm/UploadSummaryReportPie.tsx";
 import ValidateRuleCreateEdit from "@/views/cdm/ValidateRuleCreateEdit.tsx";
 import ValidateRuleDetail from "@/views/cdm/ValidateRuleDetail.tsx";
 import ValidateRuleList from "@/views/cdm/ValidateRuleList.tsx";
+import DisclosureCreate from "@/views/cdm/disclosure/DisclosureCreate.tsx";
+import DisclosureDetail from "@/views/cdm/disclosure/DisclosureDetail";
+import DisclosureEdit from "@/views/cdm/disclosure/DisclosureEdit.tsx";
+import DisclosureList from "@/views/cdm/disclosure/DisclosureListAdmin";
+import DisclosureListPartner from "@/views/cdm/disclosure/DisclosureListPartner";
 import AdminBoardDetail from "@/views/community/board/admin/BoardDetail.tsx";
 import AdminBoardList from "@/views/community/board/admin/BoardList.tsx";
 import AdminBoardWrite from "@/views/community/board/admin/BoardWrite.tsx";
@@ -53,9 +51,26 @@ import ResearchPartner from "@/views/research/ResearchPartner.tsx";
 import ResearchSetting from "@/views/research/ResearchSetting.tsx";
 import ResearchWrite from "@/views/research/ResearchWrite.tsx";
 
-export const contentRoutes = [
+export const adminContentRoutes = [
   { path: "dashboard", element: <Dashboard />, handle: { title: "대시보드" } },
-  { path: "partnerDashboard", element: <PartnerDashboard />, handle: { title: "대시보드" } },
+
+  {
+    path: "cdm",
+    handle: { title: "CDM" },
+    children: [
+      { path: "disclosures", element: <DisclosureList />, handle: { title: "공시목록" } },
+      { path: "disclosures/create", element: <DisclosureCreate />, handle: { title: "공시등록" } },
+      // { path: "disclosures/upload", element: <Upload />, handle: { title: "CDM 데이터 업로드" } },
+      { path: "disclosures/:pblntSn/edit", element: <DisclosureEdit />, handle: { title: "공시수정" } },
+      { path: "disclosures/:pblntSn", element: <DisclosureDetail />, handle: { title: "공시상세" } },
+      { path: "validators/new", element: <ValidateRuleCreateEdit />, handle: { title: "검증규칙생성편집" } },
+      { path: "validators/:vrfcSn/edit", element: <ValidateRuleCreateEdit />, handle: { title: "검증규칙생성편집" } },
+      { path: "validators/:vrfcSn", element: <ValidateRuleDetail />, handle: { title: "검증규칙상세" } },
+      { path: "validators", element: <ValidateRuleList />, handle: { title: "CDM 표준화 관리" } },
+      // { path: "summary", element: <CDMInfoReporting />, handle: { title: "수집현황상세" } },
+      { path: "summary/pie", element: <UploadSummaryReportPie />, handle: { title: "CDM 통계정보" } },
+    ],
+  },
 
   {
     path: "researches",
@@ -71,64 +86,38 @@ export const contentRoutes = [
   },
 
   {
-    path: "cdm",
-    handle: { title: "CDM" },
-    children: [
-      { path: "DisclosureList", element: <DisclosureListWrapper />, handle: { title: "공시목록" } },
-      { path: "DisclosureListAdmin", element: <DisclosureList />, handle: { title: "공시목록" } },
-      { path: "DisclosureListCustomer", element: <DisclosureListCustomer />, handle: { title: "공시목록" } },
-      { path: "DisclosureCreate", element: <DisclosureCreate />, handle: { title: "공시등록" } },
-      { path: "DisclosureEdit", element: <DisclosureEdit />, handle: { title: "공시수정" } },
-      { path: "DisclosureDetail", element: <DisclosureDetailWrapper />, handle: { title: "공시상세" } },
-      { path: "DisclosureDetailAdmin", element: <DisclosureDetailAdmin />, handle: { title: "공시상세" } },
-      { path: "DisclosureDetailCustomer", element: <DisclosureDetailCustomer />, handle: { title: "공시상세" } },
-      { path: "PartnerInformationWrite", element: <PartnerInformationWrite />, handle: { title: "기관현황작성" } },
-      { path: "ValidateRuleList", element: <ValidateRuleList />, handle: { title: "CDM 표준화 관리" } },
-      { path: "ValidateRuleDetail", element: <ValidateRuleDetail />, handle: { title: "검증규칙상세" } },
-      { path: "ValidateRuleCreateEdit", element: <ValidateRuleCreateEdit />, handle: { title: "검증규칙생성편집" } },
-      { path: "CDMInfoReporting", element: <CDMInfoReporting />, handle: { title: "수집현황상세" } },
-      { path: "UploadSummaryReportPie", element: <UploadSummaryReportPie />, handle: { title: "CDM 통계정보" } },
-      { path: "DisclosureUpload", element: <Upload />, handle: { title: "CDM 데이터 업로드" } },
-    ],
-  },
-
-  {
     path: "community",
     handle: { title: "참여마당" },
     children: [
-      { path: ":boardType/admin/qnaAnswer/:id", element: <QnAAdminAnswer />, handle: { titleKey: "Board" } },
-      { path: ":boardType/member/qnaList", element: <QnAMemberList />, handle: { titleKey: "Board" } },
-      { path: ":boardType/admin/qnaList", element: <QnAAdminList />, handle: { titleKey: "Board" } },
-      { path: ":boardType/qnaWrite", element: <QnAWrite />, handle: { titleKey: "Board" } },
-      { path: ":boardType/qnaWrite/:id", element: <QnAWrite />, handle: { titleKey: "Board" } },
-      { path: ":boardType/admin/qnaDetail/:id", element: <QnAAdminDetail />, handle: { titleKey: "Board" } },
-      { path: ":boardType/member/qnaDetail/:id", element: <QnAMemberDetail />, handle: { titleKey: "Board" } },
+      { path: "proposal/consent", element: <ProposalConsent />, handle: { title: "과제제안" } },
+      { path: "proposal/write/:id", element: <TaskproposalWrite />, handle: { title: "과제제안" } },
+      { path: "proposal/write", element: <TaskproposalWrite />, handle: { title: "과제제안" } },
+      { path: "proposal/member/detail/:id", element: <TaskproposalMemberDetail />, handle: { title: "과제제안" } },
+      { path: "proposal/member/list", element: <TaskproposalMemberList />, handle: { title: "과제제안" } },
+      { path: "proposal/admin/detail/:id", element: <TaskproposalAdminDetail />, handle: { title: "과제제안" } },
+      { path: "proposal/admin/list", element: <TaskproposalAdminList />, handle: { title: "과제제안" } },
+      { path: "proposal/admin/answer", element: <TaskproposalAdminAnswer />, handle: { title: "과제제안" } },
+
+      { path: "faq/admin/write", element: <FaqAdminWrite />, handle: { title: "FAQ" } },
+      { path: "faq/admin/detail/:id", element: <FaqAdminDetail />, handle: { title: "FAQ" } },
+      { path: "faq/admin/list", element: <FaqAdminList />, handle: { title: "FAQ" } },
+      { path: "faq/member/list", element: <FaqMemberList />, handle: { title: "FAQ" } },
+
+      { path: ":boardType/admin/qna/answer/:id", element: <QnAAdminAnswer />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/qna/list", element: <QnAMemberList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/qna/list", element: <QnAAdminList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/qna/write/:id", element: <QnAWrite />, handle: { titleKey: "Board" } },
+      { path: ":boardType/qna/write", element: <QnAWrite />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/qna/detail/:id", element: <QnAAdminDetail />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/qna/detail/:id", element: <QnAMemberDetail />, handle: { titleKey: "Board" } },
       { path: ":boardType/privacy", element: <PrivacyConsent />, handle: { titleKey: "Board" } },
 
-      { path: "taskproposal/proposalConsent", element: <ProposalConsent />, handle: { title: "과제제안" } },
-      { path: "taskproposal/taskproposalWrite", element: <TaskproposalWrite />, handle: { title: "과제제안" } },
-      { path: "taskproposal/taskproposalWrite/:id", element: <TaskproposalWrite />, handle: { title: "과제제안" } },
-      { path: "taskproposal/member/taskproposalList", element: <TaskproposalMemberList />, handle: { title: "과제제안" } },
-      {
-        path: "taskproposal/member/taskproposalDetail/:id",
-        element: <TaskproposalMemberDetail />,
-        handle: { title: "과제제안" },
-      },
-      { path: "taskproposal/admin/taskproposalList", element: <TaskproposalAdminList />, handle: { title: "과제제안" } },
-      { path: "taskproposal/admin/taskproposalDetail/:id", element: <TaskproposalAdminDetail />, handle: { title: "과제제안" } },
-      { path: "taskproposal/admin/taskproposalAdminAnswer", element: <TaskproposalAdminAnswer />, handle: { title: "과제제안" } },
+      { path: ":boardType/member/freeboard/list", element: <FreeBoardMemberList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/freeboard/write", element: <FreeBoardWrite />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/freeboard/detail/:id", element: <FreeBoardMemberDetail />, handle: { titleKey: "Board" } },
 
-      { path: "faq/admin/faqWrite", element: <FaqAdminWrite />, handle: { title: "FAQ" } },
-      { path: "faq/admin/faqDetail/:id", element: <FaqAdminDetail />, handle: { title: "FAQ" } },
-      { path: "faq/admin/faqList", element: <FaqAdminList />, handle: { title: "FAQ" } },
-      { path: "faq/member/faqList", element: <FaqMemberList />, handle: { title: "FAQ" } },
-
-      { path: ":boardType/member/freeBoardList", element: <FreeBoardMemberList />, handle: { titleKey: "Board" } },
-      { path: ":boardType/member/freeboardWrite", element: <FreeBoardWrite />, handle: { titleKey: "Board" } },
-      { path: ":boardType/member/freeboardDetail/:id", element: <FreeBoardMemberDetail />, handle: { titleKey: "Board" } },
-
-      { path: ":boardType/admin/freeBoardList", element: <FreeBoardAdminList />, handle: { titleKey: "Board" } },
-      { path: ":boardType/admin/freeboardDetail/:id", element: <FreeBoardAdminDetail />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/freeboard/list", element: <FreeBoardAdminList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/freeboard/detail/:id", element: <FreeBoardAdminDetail />, handle: { titleKey: "Board" } },
 
       { path: ":boardType/admin/list", element: <AdminBoardList />, handle: { titleKey: "Board" } },
       { path: ":boardType/admin/detail/:id", element: <AdminBoardDetail />, handle: { titleKey: "Board" } },
@@ -141,7 +130,88 @@ export const contentRoutes = [
       { path: "content/:boardType/member/list", element: <MemberContentList />, handle: { titleKey: "Board" } },
       { path: "content/:boardType/contentPreview", element: <ContentPreview />, handle: { titleKey: "Board" } },
 
-      { path: "userGuide/siteMap", element: <SiteMap />, handle: { title: "사이트맵" } },
+      { path: "guides/site-map", element: <SiteMap />, handle: { title: "사이트맵" } },
+    ],
+  },
+];
+
+export const partnerContentRoutes = [
+  { path: "partner/dashboard", element: <PartnerDashboard />, handle: { title: "대시보드" } },
+
+  {
+    path: "cdm",
+    handle: { title: "CDM" },
+    children: [
+      { path: "disclosures", element: <DisclosureListPartner />, handle: { title: "공시목록" } },
+      { path: "disclosures/:pblntSn", element: <DisclosureDetail />, handle: { title: "공시상세" } },
+      { path: "validators/new", element: <ValidateRuleCreateEdit />, handle: { title: "검증규칙생성편집" } },
+      { path: "validators/:vrfcSn/edit", element: <ValidateRuleCreateEdit />, handle: { title: "검증규칙생성편집" } },
+      { path: "validators/:vrfcSn", element: <ValidateRuleDetail />, handle: { title: "검증규칙상세" } },
+      { path: "validators", element: <ValidateRuleList />, handle: { title: "CDM 표준화 관리" } },
+      // { path: "summary", element: <CDMInfoReporting />, handle: { title: "수집현황상세" } },
+      // { path: "disclosures/upload", element: <Upload />, handle: { title: "CDM 데이터 업로드" } },
+      { path: "partner/information", element: <PartnerInformationWrite />, handle: { title: "기관현황작성" } },
+    ],
+  },
+
+  {
+    path: "researches",
+    handle: { title: "연구과제" },
+    children: [
+      { path: "owner", element: <ResearchOwner />, handle: { title: "과제 관리" } },
+      { path: "owner/post", element: <ResearchWrite />, handle: { title: "과제 등록" } },
+      { path: "partner", element: <ResearchPartner />, handle: { title: "과제 참여" } },
+      { path: ":asmtSn/edit", element: <ResearchWrite />, handle: { title: "과제 수정" } },
+      { path: ":role/:asmtSn", element: <ResearchDetail />, handle: { title: "과제 상세" } },
+    ],
+  },
+
+  {
+    path: "community",
+    handle: { title: "참여마당" },
+    children: [
+      { path: "proposal/consent", element: <ProposalConsent />, handle: { title: "과제제안" } },
+      { path: "proposal/write/:id", element: <TaskproposalWrite />, handle: { title: "과제제안" } },
+      { path: "proposal/write", element: <TaskproposalWrite />, handle: { title: "과제제안" } },
+      { path: "proposal/member/detail/:id", element: <TaskproposalMemberDetail />, handle: { title: "과제제안" } },
+      { path: "proposal/member/list", element: <TaskproposalMemberList />, handle: { title: "과제제안" } },
+      { path: "proposal/admin/detail/:id", element: <TaskproposalAdminDetail />, handle: { title: "과제제안" } },
+      { path: "proposal/admin/list", element: <TaskproposalAdminList />, handle: { title: "과제제안" } },
+      { path: "proposal/admin/answer", element: <TaskproposalAdminAnswer />, handle: { title: "과제제안" } },
+
+      { path: "faq/admin/write", element: <FaqAdminWrite />, handle: { title: "FAQ" } },
+      { path: "faq/admin/detail/:id", element: <FaqAdminDetail />, handle: { title: "FAQ" } },
+      { path: "faq/admin/list", element: <FaqAdminList />, handle: { title: "FAQ" } },
+      { path: "faq/member/list", element: <FaqMemberList />, handle: { title: "FAQ" } },
+
+      { path: ":boardType/admin/qna/answer/:id", element: <QnAAdminAnswer />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/qna/list", element: <QnAMemberList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/qna/list", element: <QnAAdminList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/qna/write/:id", element: <QnAWrite />, handle: { titleKey: "Board" } },
+      { path: ":boardType/qna/write", element: <QnAWrite />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/qna/detail/:id", element: <QnAAdminDetail />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/qna/detail/:id", element: <QnAMemberDetail />, handle: { titleKey: "Board" } },
+      { path: ":boardType/privacy", element: <PrivacyConsent />, handle: { titleKey: "Board" } },
+
+      { path: ":boardType/member/freeboard/list", element: <FreeBoardMemberList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/freeboard/write", element: <FreeBoardWrite />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/freeboard/detail/:id", element: <FreeBoardMemberDetail />, handle: { titleKey: "Board" } },
+
+      { path: ":boardType/admin/freeboard/list", element: <FreeBoardAdminList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/freeboard/detail/:id", element: <FreeBoardAdminDetail />, handle: { titleKey: "Board" } },
+
+      { path: ":boardType/admin/list", element: <AdminBoardList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/detail/:id", element: <AdminBoardDetail />, handle: { titleKey: "Board" } },
+      { path: ":boardType/admin/write", element: <AdminBoardWrite />, handle: { titleKey: "Board" } },
+
+      { path: ":boardType/member/list", element: <MemberBoardList />, handle: { titleKey: "Board" } },
+      { path: ":boardType/member/detail/:id", element: <MemberBoardDetail />, handle: { titleKey: "Board" } },
+
+      { path: "content/:boardType/admin/list", element: <AdminContentList />, handle: { titleKey: "Board" } },
+      { path: "content/:boardType/member/list", element: <MemberContentList />, handle: { titleKey: "Board" } },
+      { path: "content/:boardType/contentPreview", element: <ContentPreview />, handle: { titleKey: "Board" } },
+
+      { path: "guides/site-map", element: <SiteMap />, handle: { title: "사이트맵" } },
     ],
   },
 ];

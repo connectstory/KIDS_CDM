@@ -20,7 +20,11 @@ public record DisclosureListResponse(
   String rgtrNm,
   LocalDateTime regYmd,
   Long completedPartnersCount,
-  Long totalPartnersCount
+  Long totalPartnersCount,
+  /** 파트너 목록 전용 (TB_CM_M_ULD_PRST.uld_inst_prgrs_stts_cd) */
+  String uldInstPrgrsSttsCd,
+  /** 파트너 목록 전용 (TB_CM_M_ULD_PRST.uld_type_cd) */
+  String uldTypeCd
 ) {
   /**
    * 데이터를 변환한다.
@@ -31,6 +35,14 @@ public record DisclosureListResponse(
    * @return 처리 결과
    */
   public static DisclosureListResponse from( TbCmMUldPblntVO vo, Long completedPartnersCount, Long totalPartnersCount ) {
+    String uldInstPrgrsStts = vo.getUldInstPrgrsSttsCd();
+    if ( uldInstPrgrsStts != null && uldInstPrgrsStts.isBlank() ) {
+      uldInstPrgrsStts = null;
+    }
+    String uldType = vo.getUldTypeCd();
+    if ( uldType != null && uldType.isBlank() ) {
+      uldType = null;
+    }
     return new DisclosureListResponse(
       vo.getPblntSn(),
       vo.getPblntSeCd(),
@@ -42,7 +54,9 @@ public record DisclosureListResponse(
       vo.getRgtrNm(),
       vo.getRegYmd(),
       completedPartnersCount != null ? completedPartnersCount : 0L,
-      totalPartnersCount != null ? totalPartnersCount : 0L
+      totalPartnersCount != null ? totalPartnersCount : 0L,
+      uldInstPrgrsStts,
+      uldType
     );
   }
 }

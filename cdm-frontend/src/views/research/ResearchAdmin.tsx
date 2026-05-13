@@ -7,11 +7,11 @@ import "dayjs/locale/ko";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { CONTENT_GAP, ProgressStatusType } from "@/constants/types";
+import { CONTENT_GAP, PROGRESS_STATUS as ProgressStatusType } from "@/constants/types";
 import type { ResearchListResponse } from "@/interfaces/researchInterface";
 import { StatusMap, buildPath, getResearchStatusConfig, getStatusConfig } from "@/utils/common";
-import { useResearchListByAdmin } from "@/hooks/research/useResearchQueries";
 import { useResearchListUrlState } from "@/hooks/research/useResearchListUrlState";
+import { useResearchListByAdmin } from "@/hooks/research/useResearchQueries";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import CdmPagination from "@/components/CdmPagination";
 import CdmPaginationMove from "@/components/CdmPaginationMove";
@@ -20,6 +20,17 @@ import { SearchArea } from "@/components/SearchArea";
 import { SpaceBox } from "@/components/SpaceBox";
 import { AppButton, AppStatusChip } from "@/components/ui";
 import styles from "./researchListShared.module.scss";
+
+type ResearchRow = {
+  asmtSn: number;
+  asmtId: string;
+  instNm: string;
+  asmtNm: string;
+  period: { flfmtBgngDt: string; flfmtEndDt: string };
+  asmtPrgrsSttsCd: string;
+  metaStatus: number;
+  reviewInProgress: boolean;
+};
 
 export default function ResearchAdminView() {
   const routes = useCmRoutes();
@@ -59,17 +70,6 @@ export default function ResearchAdminView() {
     }),
     [researchListData]
   );
-
-  type ResearchRow = {
-    asmtSn: number;
-    asmtId: string;
-    instNm: string;
-    asmtNm: string;
-    period: { flfmtBgngDt: string; flfmtEndDt: string };
-    asmtPrgrsSttsCd: string;
-    metaStatus: number;
-    reviewInProgress: boolean;
-  };
 
   const rowData: ResearchRow[] = useMemo(
     () =>
@@ -254,7 +254,11 @@ export default function ResearchAdminView() {
           <Box className="tbl_info">
             <Box className="total">
               <Box component="p" className="cases">
-                전체<Box component="span" className="count">{pagination.total}</Box>건
+                전체
+                <Box component="span" className="count">
+                  {pagination.total}
+                </Box>
+                건
               </Box>
             </Box>
             <Box className="view_count">

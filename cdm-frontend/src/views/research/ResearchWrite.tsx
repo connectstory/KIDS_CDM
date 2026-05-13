@@ -12,7 +12,7 @@ import { Helmet } from "react-helmet";
 import { useBlocker, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ANALYSIS_QUERY_ACCEPT } from "@/constants/researchFileUpload";
 import { MSG, STRINGS } from "@/constants/string";
-import { CONTENT_GAP, ProgressStatusType } from "@/constants/types";
+import { CONTENT_GAP, PROGRESS_STATUS as ProgressStatusType } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { PartnerResponse, ResearchCreateRequest, ResearchUpdateRequest } from "@/interfaces/researchInterface";
 import { buildPath, formatFileSize, getFileExtension } from "@/utils/common";
@@ -130,7 +130,7 @@ export default function ResearchWriteView() {
       // 신규 작성 모드일 때만 오늘 날짜로 초기화
       setStartDate(dayjs(Date.now()));
     }
-  }, [isEditMode, researchDetail]);
+  }, [isEditMode]);
 
   /* ------------------------------
    * 수정 모드일 때 참여기관 데이터 변환 및 설정
@@ -145,7 +145,7 @@ export default function ResearchWriteView() {
       }));
       setPartners(convertedPartners);
     }
-  }, [isEditMode, researchPartners]);
+  }, [isEditMode]);
 
   /* ------------------------------
    * 수정 모드일 때 상세 데이터의 fileList / analysisFileList → existingFiles / existingAnalysisFiles 매핑
@@ -176,7 +176,7 @@ export default function ResearchWriteView() {
     });
     setExistingFiles((researchDetail.fileList ?? []).map(toFileData));
     setExistingAnalysisFiles((researchDetail.analysisFileList ?? []).map(toFileData));
-  }, [isEditMode, researchDetail]);
+  }, [isEditMode]);
 
   /* ------------------------------
    * 페이지 이동 방지 블로커 처리
@@ -346,14 +346,14 @@ export default function ResearchWriteView() {
    * 참여기관 추가 모달을 표시하는 함수
    * ------------------------------ */
   const handleAddPartners = async () => {
-    const result = (await AddPartnersModal.open({
+    const result: any = await AddPartnersModal.open({
       title: "참여기관 추가",
       data: partners,
-    })) as PartnerResponse[];
+    });
     // result가 undefined나 null이면 취소된 것이므로 무시
     // result가 배열이면 (빈 배열 포함) 항상 업데이트
     if (result !== undefined && result !== null) {
-      setPartners(result);
+      setPartners(result.data ?? []);
     }
   };
 
@@ -574,14 +574,15 @@ export default function ResearchWriteView() {
               >
                 <DatePicker
                   label={STRINGS["START_DATE"]}
-                  format="YYYY-MM-DD"
+                  format="YYYY년 MM월 DD일"
                   disabled={isEditMode}
                   slotProps={{
                     textField: {
                       size: "small",
                       sx: {
-                        width: 180,
+                        width: 190,
                       },
+                      placeholder: "",
                     },
                     calendarHeader: {
                       format: "YYYY년 M월",
@@ -592,18 +593,19 @@ export default function ResearchWriteView() {
                   minDate={isEditMode ? undefined : dayjs()}
                   maxDate={endDate ?? undefined}
                 />
-                <Box component="span" className="px-2">
+                <Box component="span" className="px-2 leading-[2.5]">
                   -
                 </Box>
                 <DatePicker
                   label={STRINGS["END_DATE"]}
-                  format="YYYY-MM-DD"
+                  format="YYYY년 MM월 DD일"
                   slotProps={{
                     textField: {
                       size: "small",
                       sx: {
-                        width: 180,
+                        width: 190,
                       },
+                      placeholder: "",
                     },
                     calendarHeader: {
                       format: "YYYY년 M월",
@@ -741,7 +743,11 @@ export default function ResearchWriteView() {
             <Box className="tbl_info">
               <Box className="total">
                 <Box component="p" className="cases">
-                  참여기관<Box component="span" className="count">{partners.length}</Box>건
+                  참여기관
+                  <Box component="span" className="count">
+                    {partners.length}
+                  </Box>
+                  건
                 </Box>
               </Box>
               <Box className="tbl_controller">

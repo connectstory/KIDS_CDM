@@ -16,7 +16,7 @@ import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { STRINGS } from "@/constants/string";
 import { TOOLTIP_IDS } from "@/constants/tooltip";
-import { AnalysisResultStatus, RsltGroupStcdType } from "@/constants/types";
+import { ANALYSIS_RESULT_STATUS as AnalysisResultStatus, RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface.ts";
 import { getFileDownloadUrl, getFilePreviewUrl } from "@/api/commonApi";
 import type { RootState } from "@/store";

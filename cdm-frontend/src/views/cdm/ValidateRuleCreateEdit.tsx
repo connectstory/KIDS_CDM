@@ -2,37 +2,38 @@ import { useEffect, useState } from "react";
 import { Box, Button, MenuItem, Select, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { StdSeCdType } from "@/constants/types";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { STD_SE_CD_TYPE } from "@/constants/types";
 import { fetchValidateRuleDetail, insertValidateRule, updateValidateRule } from "@/api/validateRuleApi.ts";
+import { buildPath } from "@/utils/common";
 import { useCmRoutes } from "@/hooks/useCmRoutes";
 import { useGlobalAlert } from "@/hooks/useGlobalAlert";
 
 const RULE_OPTIONS: Record<string, string[]> = {
-  [StdSeCdType.ACCURACY]: [
+  [STD_SE_CD_TYPE.ACCURACY]: [
     "date accuracy",
     "gender accuracy",
     "meas value range accuracy",
     "vital value range accuracy",
     "age accuracy",
   ],
-  [StdSeCdType.COMPLETENESS]: ["completeness"],
-  [StdSeCdType.UNIQUENESS]: ["local uniqueness", "global uniqueness"],
-  [StdSeCdType.CONSISTENCY]: ["table name consistency", "field name consistency", "field type consistency"],
-  [StdSeCdType.VALIDITY]: ["vocab validity"],
+  [STD_SE_CD_TYPE.COMPLETENESS]: ["completeness"],
+  [STD_SE_CD_TYPE.UNIQUENESS]: ["local uniqueness", "global uniqueness"],
+  [STD_SE_CD_TYPE.CONSISTENCY]: ["table name consistency", "field name consistency", "field type consistency"],
+  [STD_SE_CD_TYPE.VALIDITY]: ["vocab validity"],
 };
 
 export default function ValidateRuleCreateEditView() {
   const routes = useCmRoutes();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { showAlert } = useGlobalAlert();
 
-  const [searchParams] = useSearchParams();
-  const vrfcSn = searchParams.get("vrfcSn");
-  const isEditMode = !!vrfcSn;
+  const { vrfcSn } = useParams<{ vrfcSn?: string }>();
+  const isEditMode = Boolean(vrfcSn);
 
-  const [stdSeCd, setStdSeCd] = useState<string>(StdSeCdType.ACCURACY);
+  const [stdSeCd, setStdSeCd] = useState<string>(STD_SE_CD_TYPE.ACCURACY);
   const [levlSeq, setLevlSeq] = useState("1");
   const [vrfcTblNm, setVrfcTblNm] = useState("");
   const [vrfcColNm, setVrfcColNm] = useState("");
@@ -54,14 +55,14 @@ export default function ValidateRuleCreateEditView() {
 
   const { data: detailData } = useQuery({
     queryKey: ["validateRuleDetail", vrfcSn],
-    queryFn: () => fetchValidateRuleDetail({ vrfcSn: vrfcSn! }),
-    enabled: isEditMode,
+    queryFn: () => fetchValidateRuleDetail({ vrfcSn: vrfcSn as string }),
+    enabled: isEditMode && !!vrfcSn,
     retry: 1,
   });
 
   useEffect(() => {
     if (detailData) {
-      setStdSeCd(detailData.stdSeCd || StdSeCdType.ACCURACY);
+      setStdSeCd(detailData.stdSeCd || STD_SE_CD_TYPE.ACCURACY);
       setLevlSeq(detailData.levlSeq == null ? "1" : String(detailData.levlSeq));
       setVrfcTblNm(detailData.vrfcTblNm || "");
       setVrfcColNm(detailData.vrfcColNm || "");
@@ -81,7 +82,7 @@ export default function ValidateRuleCreateEditView() {
       setVrblDtlCn(detailData.vrblDtlCn || "");
       setVrblRsltCn(detailData.vrblRsltCn || "");
     } else if (!isEditMode) {
-      setStdSeCd(StdSeCdType.ACCURACY);
+      setStdSeCd(STD_SE_CD_TYPE.ACCURACY);
       setLevlSeq("1");
       setVrfcTblNm("");
       setVrfcColNm("");
@@ -104,7 +105,7 @@ export default function ValidateRuleCreateEditView() {
   }, [detailData, isEditMode]);
 
   const saveMutation = useMutation({
-    mutationFn: isEditMode ? (data: any) => updateValidateRule({ vrfcSn: vrfcSn, ...data }) : insertValidateRule,
+    mutationFn: isEditMode ? (data: any) => updateValidateRule({ vrfcSn: vrfcSn as string, ...data }) : insertValidateRule,
     onSuccess: () => {
       showAlert({
         message: isEditMode ? "CDM 표준화 정보가 수정되었습니다." : "CDM 표준화 정보가 등록되었습니다.",
@@ -154,10 +155,10 @@ export default function ValidateRuleCreateEditView() {
   };
   const filterNumericOnly = (value: string) => value.replaceAll(/[^0-9.]/g, "");
 
-  const isAccuracy = stdSeCd === StdSeCdType.ACCURACY; // 01 정확성
-  const isUniqueness = stdSeCd === StdSeCdType.UNIQUENESS; // 03 유일성
-  const isConsistency = stdSeCd === StdSeCdType.CONSISTENCY; // 04 일관성
-  const isValidity = stdSeCd === StdSeCdType.VALIDITY; // 05 유효성
+  const isAccuracy = stdSeCd === STD_SE_CD_TYPE.ACCURACY; // 01 정확성
+  const isUniqueness = stdSeCd === STD_SE_CD_TYPE.UNIQUENESS; // 03 유일성
+  const isConsistency = stdSeCd === STD_SE_CD_TYPE.CONSISTENCY; // 04 일관성
+  const isValidity = stdSeCd === STD_SE_CD_TYPE.VALIDITY; // 05 유효성
 
   // Ref(rfrnc_nm) 표시: 유일성·일관성·유효성
   const showRef = isUniqueness || isConsistency || isValidity;
@@ -243,11 +244,11 @@ export default function ValidateRuleCreateEditView() {
                 readOnly={isEditMode}
                 disabled={isEditMode}
               >
-                <MenuItem value={StdSeCdType.ACCURACY}>정확성</MenuItem>
-                <MenuItem value={StdSeCdType.COMPLETENESS}>완전성</MenuItem>
-                <MenuItem value={StdSeCdType.UNIQUENESS}>유일성</MenuItem>
-                <MenuItem value={StdSeCdType.CONSISTENCY}>일관성</MenuItem>
-                <MenuItem value={StdSeCdType.VALIDITY}>유효성</MenuItem>
+                <MenuItem value={STD_SE_CD_TYPE.ACCURACY}>정확성</MenuItem>
+                <MenuItem value={STD_SE_CD_TYPE.COMPLETENESS}>완전성</MenuItem>
+                <MenuItem value={STD_SE_CD_TYPE.UNIQUENESS}>유일성</MenuItem>
+                <MenuItem value={STD_SE_CD_TYPE.CONSISTENCY}>일관성</MenuItem>
+                <MenuItem value={STD_SE_CD_TYPE.VALIDITY}>유효성</MenuItem>
               </Select>
             </Box>
           </Box>
@@ -606,7 +607,7 @@ export default function ValidateRuleCreateEditView() {
           disabled={saveMutation.isPending}
           onClick={() =>
             isEditMode
-              ? navigate(`${routes.CDM.VALIDATE_RULE_DETAIL}?vrfcSn=${vrfcSn}`)
+              ? navigate(buildPath(routes.CDM.VALIDATE_RULE_DETAIL, { vrfcSn: vrfcSn as string }))
               : navigate(routes.CDM.VALIDATE_RULE_LIST + location.search)
           }
         >

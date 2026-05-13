@@ -48,6 +48,16 @@
       "mainClass": "kr.or.kids.CdmApplication",
       "args": "",
       "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-CdmApplication<cm-be-cdm-backend>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "kr.or.kids.CdmApplication",
+      "projectName": "cm-be-cdm-backend",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }

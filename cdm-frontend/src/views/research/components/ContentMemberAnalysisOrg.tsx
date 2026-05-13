@@ -5,7 +5,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { STRINGS } from "@/constants/string";
-import { RsltGroupStcdType } from "@/constants/types";
+import { RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy, getFilePreviewUrl } from "@/api/commonApi";
 import { getResearchAnalysisStatusConfig } from "@/utils/common";

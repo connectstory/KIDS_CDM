@@ -50,7 +50,7 @@ export default function AdminFreeBoardDetailView() {
         queryKey: ["adminBoardList", boardType],
       });
 
-      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/freeBoardList`);
+      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/freeboard/list`);
     },
     onError: (error) => {
       console.error("삭제 오류:", error);
@@ -174,7 +174,7 @@ export default function AdminFreeBoardDetailView() {
           삭제
         </Button>
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/freeBoardList`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/admin/freeboard/list`)}>
           목록
         </Button>
       </div>

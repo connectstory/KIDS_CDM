@@ -71,7 +71,7 @@ export default function MemberFreeBoardDetailView() {
         queryKey: ["memberBoardList", boardType],
       });
 
-      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/freeBoardList`);
+      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/freeboard/list`);
     },
     onError: (error) => {
       console.error("삭제 오류:", error);
@@ -224,7 +224,7 @@ export default function MemberFreeBoardDetailView() {
           variant="contained"
           size="medium"
           disabled={!isAuthor}
-          onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/freeboardWrite?pstSn=${id}`)}
+          onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/freeboard/write?pstSn=${id}`)}
         >
           수정
         </Button>
@@ -242,7 +242,7 @@ export default function MemberFreeBoardDetailView() {
         <Button
           variant="outlined"
           size="medium"
-          onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/freeBoardList`)}
+          onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/freeboard/list`)}
         >
           목록
         </Button>

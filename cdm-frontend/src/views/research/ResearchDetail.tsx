@@ -5,14 +5,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { MSG, STRINGS } from "@/constants/string";
 import {
-  AnalysisResultStatus,
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
   CONTENT_GAP,
-  CdmUploadType,
-  DeptCodeType,
-  ParticipationCdmStatus,
-  ProgressStatusType,
-  RoleType,
-  RsltGroupStcdType,
+  CDM_UPLOAD_TYPE as CdmUploadType,
+  DEPT_CODE_TYPE as DeptCodeType,
+  PARTICIPATION_CDM_STATUS as ParticipationCdmStatus,
+  PROGRESS_STATUS as ProgressStatusType,
+  ROLE_TYPE as RoleType,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
 } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { PartnerResponse } from "@/interfaces/researchInterface";
@@ -38,6 +38,11 @@ import ContentMemberAnalysisOrg from "./components/ContentMemberAnalysisOrg";
 import ContentMembers from "./components/ContentMembers";
 
 export default function ResearchDetailView() {
+  type AddPartnersModalResult = {
+    status: boolean;
+    data: PartnerResponse[];
+  };
+
   // 라우팅 파라미터
   const { role, asmtSn } = useParams<{ role: string; asmtSn: string }>();
   const asmtSnNumber = asmtSn ? Number(asmtSn) : null;
@@ -478,16 +483,17 @@ export default function ResearchDetailView() {
         }),
         lockInitial: research.asmtPrgrsSttsCd === ProgressStatusType.REQUEST_INVITE ? true : false,
       },
-    })) as PartnerResponse[];
+    })) as AddPartnersModalResult;
 
-    if (!result.length) return;
-    if (result.length === researchPartners.length) return;
+    if (!result?.status || !Array.isArray(result.data)) return;
+    if (!result.data.length) return;
+    if (result.data.length === researchPartners.length) return;
 
     try {
       await createPartnersMutation.mutateAsync({
         asmtSn: research.asmtSn,
         data: {
-          asmtPrcpInsttList: result.map((partner) => (partner.instId ? partner.instId : partner.brno)),
+          asmtPrcpInsttList: result.data.map((partner) => (partner.instId ? partner.instId : partner.brno)),
         },
       });
       await refetchPartners();

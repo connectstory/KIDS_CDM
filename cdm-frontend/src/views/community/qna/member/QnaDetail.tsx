@@ -94,7 +94,7 @@ export default function QnaDetailView() {
       });
 
       showAlert({ message: "삭제되었습니다.", severity: "success" });
-      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qnaList`);
+      navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qna/list`);
     },
     onError: () => {
       showAlert({ message: "삭제 중 오류가 발생했습니다.", severity: "error" });
@@ -269,7 +269,7 @@ export default function QnaDetailView() {
             <Button
               variant="contained"
               disabled={!isAuthor}
-              onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qnaWrite/${id}`)}
+              onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qna/write/${id}`)}
             >
               수정
             </Button>
@@ -288,7 +288,7 @@ export default function QnaDetailView() {
           </>
         )}
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qnaList`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qna/list`)}>
           목록
         </Button>
       </div>

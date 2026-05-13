@@ -101,7 +101,7 @@ export function SearchArea({
   statusLabel2 = "상태",
   showDateRange = false,
   showCategoryFilter = false,
-  statusFilter = "00",           // ← 기존 기본값 유지
+  statusFilter = "00", // ← 기존 기본값 유지
   onStatusFilterChange,
   statusOptions,
   statusOptionsIncludeCancel = true,
@@ -150,9 +150,9 @@ export function SearchArea({
         >
           <DatePicker
             label={STRINGS.START_DATE}
-            format="YYYY-MM-DD"
+            format="YYYY년 MM월 DD일"
             slotProps={{
-              textField: { size: "small", sx: { width: 180 } },
+              textField: { size: "small", sx: { width: 190 }, placeholder: "" },
               calendarHeader: { format: "YYYY년 M월" },
             }}
             value={startDate ?? null}
@@ -162,9 +162,9 @@ export function SearchArea({
           <span className="px-2 leading-[2.5]">-</span>
           <DatePicker
             label={STRINGS.END_DATE}
-            format="YYYY-MM-DD"
+            format="YYYY년 MM월 DD일"
             slotProps={{
-              textField: { size: "small", sx: { width: 180 } },
+              textField: { size: "small", sx: { width: 190 }, placeholder: "" },
               calendarHeader: { format: "YYYY년 M월" },
             }}
             value={endDate ?? null}

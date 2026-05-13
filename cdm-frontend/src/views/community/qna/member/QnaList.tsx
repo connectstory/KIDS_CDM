@@ -295,7 +295,7 @@ export default function MemberQnaListView() {
           </Select>
         </div>
         <div className="tbl_controller">
-          <Button variant="contained" size="medium" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qnaWrite`)}>
+          <Button variant="contained" size="medium" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qna/write`)}>
             등록
           </Button>
         </div>
@@ -313,7 +313,7 @@ export default function MemberQnaListView() {
           onRowClicked={(e) => {
             const data = e.data;
             if (!data) return;
-            navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qnaDetail/${data.qstnSn}`);
+            navigate(`${routes.COMMUNITY.ROOT}/${boardType}/member/qna/detail/${data.qstnSn}`);
           }}
         />
       </div>

@@ -178,7 +178,7 @@ export default function TaskproposalWriteView() {
       skipBlockRef.current = true;
       setShouldBlock(false);
 
-      navigate(`${routes.COMMUNITY.ROOT}/taskproposal/member/taskproposalList`, { replace: true });
+      navigate(`${routes.COMMUNITY.ROOT}/proposal/member/list`, { replace: true });
     },
     onError: () => {
       showAlert({
@@ -487,7 +487,7 @@ export default function TaskproposalWriteView() {
           onClick={() => {
             skipBlockRef.current = true;
             setShouldBlock(false);
-            navigate(`${routes.COMMUNITY.ROOT}/taskproposal/member/taskproposalList`);
+            navigate(`${routes.COMMUNITY.ROOT}/proposal/member/list`);
           }}
           disabled={saveMutation.isPending}
         >

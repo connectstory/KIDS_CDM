@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.kids.domain.cm.common.dto.ApiResponse;
+import kr.or.kids.domain.cm.research.service.support.ResearchMemberResolver;
 import kr.or.kids.domain.cm.research.dto.CommentCreateRequest;
 import kr.or.kids.domain.cm.research.dto.CommentResponse;
 import kr.or.kids.domain.cm.research.dto.CommentUpdateRequest;
 import kr.or.kids.domain.cm.research.service.ResearchCommentService;
-import kr.or.kids.domain.cm.research.service.support.ResearchMemberResolver;
 import kr.or.kids.domain.cm.research.vo.ResearchMemberVO;
 import kr.or.kids.global.common.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

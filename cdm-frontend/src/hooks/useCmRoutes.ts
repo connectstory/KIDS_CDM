@@ -12,7 +12,7 @@ export function useCmRoutes(): typeof ROUTES.CM.AD | typeof ROUTES.CM.MB {
 
 /**
  * 현재 URL이 관리자 포털(`/cm`)인지 여부.
- * `VITE_APP_TARGET`과 무관하게, 한 번의 빌드로 `/cm`·`/ucm`을 모두 쓸 때 올바른 화면 분기에 사용합니다.
+ * `VITE_APP_TARGET`과 무관하게, 한 번의 빌드로 `/cm`·`/ucm`을 모두 쓸 때 올바른 화면 분기에 사용.
  */
 export function useIsAdminCmShell(): boolean {
   const location = useLocation();

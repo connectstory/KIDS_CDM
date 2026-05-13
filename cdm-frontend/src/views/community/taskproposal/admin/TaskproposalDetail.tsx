@@ -57,7 +57,7 @@ export default function TaskproposalDetailView() {
       });
 
       showAlert({ message: "삭제되었습니다.", severity: "success" });
-      navigate(`${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalList`);
+      navigate(`${routes.COMMUNITY.ROOT}/proposal/admin/list`);
     },
     onError: () => {
       showAlert({ message: "삭제 중 오류가 발생했습니다.", severity: "error" });
@@ -232,7 +232,7 @@ export default function TaskproposalDetailView() {
         {!answer && (
           <Button
             variant="contained"
-            onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalAdminAnswer?asmtPrpSn=${id}`)}
+            onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/admin/answer?asmtPrpSn=${id}`)}
           >
             답변등록
           </Button>
@@ -250,7 +250,7 @@ export default function TaskproposalDetailView() {
           삭제
         </Button>
 
-        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalList`)}>
+        <Button variant="outlined" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/proposal/admin/list`)}>
           목록
         </Button>
       </div>
@@ -341,7 +341,7 @@ export default function TaskproposalDetailView() {
               variant="contained"
               onClick={() =>
                 navigate(
-                  `${routes.COMMUNITY.ROOT}/taskproposal/admin/taskproposalAdminAnswer?asmtPrpSn=${id}&ansSn=${answer?.ansSn}`
+                  `${routes.COMMUNITY.ROOT}/proposal/admin/answer?asmtPrpSn=${id}&ansSn=${answer?.ansSn}`
                 )
               }
             >

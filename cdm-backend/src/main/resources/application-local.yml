@@ -38,9 +38,9 @@ spring:
   datasource:
     #  내부용 (로컬은 log4jdbc 미사용)
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://34.47.107.166:5432/postgres?tcpKeepAlive=true&connectTimeout=10&socketTimeout=600
+    url: jdbc:postgresql://localhost:5432/postgres?tcpKeepAlive=true&connectTimeout=10&socketTimeout=600
     username: postgres
-    password: "!Testcm123"
+    password: "dprtm123"
     hikari:
       connection-timeout: 5000
       validation-timeout: 1000

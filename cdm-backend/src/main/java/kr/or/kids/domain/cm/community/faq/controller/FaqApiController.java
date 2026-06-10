@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -98,9 +97,6 @@ public class FaqApiController {
 	 */
 	@PostMapping("/insertFaq")
 	public ResponseEntity<ApiResponse<Integer>> insertFaq(HttpServletRequest request, @AuthenticationPrincipal CustomUserDetails user, @ModelAttribute TbPpMFaqVo inVo) {
-		if (user == null) {
-			return ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-		}
 		inVo.setRgtrId(user.getUserNo());
 		inVo.setMdfrId(user.getUserNo());
 		return ApiResponse.ok(ApiResponse.STATUS_SUCCESS, "FAQ 등록 성공", service.insertFaq(inVo));
@@ -116,9 +112,6 @@ public class FaqApiController {
 	 */
 	@PutMapping("/updateFaq")
 	public ResponseEntity<ApiResponse<Integer>> updateFaq(HttpServletRequest request, @AuthenticationPrincipal CustomUserDetails user, @ModelAttribute TbPpMFaqVo inVo) {
-		if (user == null) {
-			return ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-		}
 		inVo.setMdfrId(user.getUserNo());
 		return ApiResponse.ok(ApiResponse.STATUS_SUCCESS, "FAQ 수정 성공", service.updateFaq(inVo));
 	}

@@ -269,7 +269,7 @@ export default function QnaDetailView() {
             <Button
               variant="contained"
               disabled={!isAuthor}
-              onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qna/write/${id}`)}
+              onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qna/create/${id}`)}
             >
               수정
             </Button>

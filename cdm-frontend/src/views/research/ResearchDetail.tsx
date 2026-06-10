@@ -241,7 +241,7 @@ export default function ResearchDetailView() {
         convertResearchAnalysisStatus(research.asmtMetaRsltSttsCd) !== ProgressStatusType.APPROVAL_REVIEW
       ) {
         await confirmModal.open({
-          title: "확인",
+          title: STRINGS.CONFIRM,
           message: ["분석 데이터 승인 상태가 [검토완료]가 아닙니다.", "분석 데이터 등록 후 승인을 받아야합니다."],
           data: {
             hiddenCancelButton: true,
@@ -263,7 +263,7 @@ export default function ResearchDetailView() {
         //   severity: "warning",
         // });
         await confirmModal.open({
-          title: "확인",
+          title: STRINGS.CONFIRM,
           message: ["참여요청 중인 참여기관이 있습니다.", "참여요청에 대한 응답을 기다리고 있습니다."],
           data: {
             hiddenCancelButton: true,
@@ -273,7 +273,7 @@ export default function ResearchDetailView() {
       }
 
       const result = await confirmModal.open({
-        title: "확인",
+        title: STRINGS.CONFIRM,
         message: "과제를 진행하시겠습니까?",
         data: {},
       });
@@ -361,7 +361,7 @@ export default function ResearchDetailView() {
     }
 
     const result = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: "참여하시겠습니까?",
       data: {},
     });

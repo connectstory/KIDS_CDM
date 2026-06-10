@@ -92,7 +92,7 @@ export default function IrbViewModal() {
     }
 
     const ok = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: ["선택한 IRB 파일을 삭제하시겠습니까?"],
       data: {},
     });

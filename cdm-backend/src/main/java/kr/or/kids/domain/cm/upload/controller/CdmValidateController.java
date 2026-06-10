@@ -56,11 +56,6 @@ public class CdmValidateController {
             HttpServletRequest httpRequest
     ) {
         try {
-            if (du == null) {
-                return ApiResponse.error( HttpStatus.UNAUTHORIZED,
-                        "로그인이 필요합니다.", null );
-            }
-
             if (request.ptcpInstSn() == null) {
 
                 return ApiResponse.error(HttpStatus.BAD_REQUEST,
@@ -104,14 +99,9 @@ public class CdmValidateController {
      */
     @GetMapping("/{pblntSn}/cdm-validate/status")
     public ResponseEntity<ApiResponse<CdmValidateProgress>> getValidationStatus(
-            @AuthenticationPrincipal CustomUserDetails du,
             @PathVariable Long pblntSn,
             @RequestParam String taskId
     ) {
-        if (du == null) {
-            return ApiResponse.error( HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.", null );
-        }
-
         CdmValidateProgress progress = cdmValidateService.getProgress(taskId);
         return ApiResponse.ok(ApiResponse.STATUS_SUCCESS, "진행 상태 조회 성공", progress);
     }

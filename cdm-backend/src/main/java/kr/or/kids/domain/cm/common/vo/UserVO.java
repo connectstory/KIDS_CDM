@@ -13,6 +13,9 @@ public class UserVO {
   private String userId; // 사용자 아이디
   private String userNm; // 사용자 이름
   private String userTypeCd; // 사용자 유형 코드
+
+  /** 세션 사용자 구분: A 관리자, P 파트너, E 직원 ({@code CustomUserDetails#userType}) */
+  private String authUserType;
   private String brdt; // 생년월일(yyyyMMdd)
   private String telno; // 전화번호
   private String userSeCd; // 사용자 구분 (01:개인, 02:법인)

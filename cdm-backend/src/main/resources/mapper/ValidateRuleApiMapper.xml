@@ -30,8 +30,7 @@
              , COALESCE(E.emp_nm, A.rgtr_id) AS rgtrId
              , TO_CHAR(A.reg_dt, 'YY.MM.DD') AS regDt
           FROM kids_own.tb_cm_m_vrfc A
-          LEFT JOIN kids_own.tb_pp_m_mngr_info M  ON M.emp_no  = A.rgtr_id
-          LEFT JOIN kids_own.tb_pp_m_emp_info  E  ON E.emp_no  = M.emp_no
+          LEFT JOIN kids_own.tb_pp_m_emp_info E ON A.rgtr_id = E.emp_no
          WHERE 1=1
         <if test="stdSeCd != null and stdSeCd != ''">
            AND A.std_se_cd = #{stdSeCd}
@@ -99,8 +98,7 @@
              , A.mdfr_id        AS mdfrId
              , TO_CHAR(A.mdfcn_dt, 'YYYY-MM-DD HH24:MI:SS') AS mdfcnDt
           FROM kids_own.tb_cm_m_vrfc A
-          LEFT JOIN kids_own.tb_pp_m_mngr_info M  ON M.emp_no  = A.rgtr_id
-          LEFT JOIN kids_own.tb_pp_m_emp_info  E  ON E.emp_no  = M.emp_no
+          LEFT JOIN kids_own.tb_pp_m_emp_info E ON A.rgtr_id = E.emp_no
          WHERE A.vrfc_sn = #{vrfcSn}
     </select>
 

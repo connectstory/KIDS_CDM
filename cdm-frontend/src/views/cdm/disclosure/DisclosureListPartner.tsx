@@ -14,7 +14,7 @@ import {
   PROGRESS_STATUS,
 } from "@/constants/types";
 import type { DisclosureListPartnerGridRow, DisclosureListResponse } from "@/interfaces/disclosureInterface";
-import { DisclosureAPI, normalizePblntStcd } from "@/api/disclosureApi";
+import { DisclosureAPI } from "@/api/disclosureApi";
 import {
   buildPath,
   getDisclosurePartnerProgressStatusChipStyle,
@@ -175,7 +175,10 @@ export default function DisclosureListPartner() {
           width: 100,
           cellStyle: () => ({ textAlign: "center" }),
           cellRenderer: (p: ICellRendererParams<DisclosureListPartnerGridRow>) => {
-            if (normalizePblntStcd(p.data?.pblntStcd) === DISCLOSURE_PBLNT_STATUS_CODE.CLOSED) {
+            const pblntStcdRaw = p.data?.pblntStcd;
+            const s = pblntStcdRaw == null ? "" : String(pblntStcdRaw).trim();
+            const pblntKey = !s ? "" : s.length === 1 ? `0${s}` : s;
+            if (pblntKey === DISCLOSURE_PBLNT_STATUS_CODE.CLOSED) {
               const closedCfg = getDisclosurePblntStatusConfig(DISCLOSURE_PBLNT_STATUS_CODE.CLOSED);
               return (
                 <Box className="ag-cell-center-vertical">
@@ -184,13 +187,13 @@ export default function DisclosureListPartner() {
               );
             }
 
-            const raw = p.value != null ? String(p.value) : "";
+            const progressCdRaw = p.value != null ? String(p.value) : "";
             const statusText =
-              raw && DISCLOSURE_PARTNER_PROGRESS_CODE_VALUES.includes(raw)
-                ? DISCLOSURE_PARTNER_PROGRESS_STATUS_LABEL_MAP[raw] ?? "-"
-                : raw || "-";
+              progressCdRaw && DISCLOSURE_PARTNER_PROGRESS_CODE_VALUES.includes(progressCdRaw)
+                ? DISCLOSURE_PARTNER_PROGRESS_STATUS_LABEL_MAP[progressCdRaw] ?? "-"
+                : progressCdRaw || "-";
             const chipStyle =
-              getDisclosurePartnerProgressStatusChipStyle(raw || null) ??
+              getDisclosurePartnerProgressStatusChipStyle(progressCdRaw || null) ??
               getStatusConfig(PROGRESS_STATUS.NOT_REGISTERED)?.chipStyle;
             return (
               <Box className="ag-cell-center-vertical">

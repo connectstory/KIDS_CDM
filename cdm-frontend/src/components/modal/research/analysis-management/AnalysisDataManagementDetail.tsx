@@ -191,7 +191,7 @@ export default function AnalysisDataDetail({
     }
 
     const result = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: "관리자에게 검토 요청을 전송합니다.",
     });
 

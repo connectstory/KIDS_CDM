@@ -137,6 +137,25 @@ export const DISCLOSURE_PBLNT_STATUS_CODE = {
 } as const;
 export type DisclosurePblntStatusCodeValue = (typeof DISCLOSURE_PBLNT_STATUS_CODE)[keyof typeof DISCLOSURE_PBLNT_STATUS_CODE];
 
+/* ------------------------------
+ * 삭제여부 (delYn)
+ * ------------------------------ */
+export const DEL_YN = {
+  YES: "Y",
+  NO: "N",
+} as const;
+
+/* ------------------------------
+ * 공시 파일구분코드 (fileSeCd)
+ * 01:IRB, 06:공시등록, 07:DRB, 08:CDM
+ * ------------------------------ */
+export const DISCLOSURE_FILE_SE_CD = {
+  DISCLOSURE_REGISTER: "06",
+  DRB: "07",
+  CDM: "08",
+} as const;
+export type DisclosureFileSeCdValue = (typeof DISCLOSURE_FILE_SE_CD)[keyof typeof DISCLOSURE_FILE_SE_CD];
+
 //----------------------------------
 // 경로·에러 등 공통 타입 / 상수
 //----------------------------------

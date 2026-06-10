@@ -2,8 +2,9 @@ package kr.or.kids.domain.cm.upload.service.impl;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO;
+import kr.or.kids.domain.cm.upload.dto.CancelReasonMetaRow;
 import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerResponse;
 import kr.or.kids.domain.cm.upload.dto.PartnerBasicInfoRow;
@@ -28,15 +29,10 @@ import kr.or.kids.domain.cm.upload.service.DisclosurePartnerCloseDataCleanupServ
 import kr.or.kids.domain.cm.upload.service.DisclosurePartnerService;
 import kr.or.kids.domain.cm.upload.util.UploadNonFatal;
 import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
+import kr.or.kids.global.common.CustomUserDetails;
+import kr.or.kids.global.type.DisclosurePartnerProgressStatus;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 업로드 도메인 비즈니스 로직을 구현한다.
- *
- * <pre>
- * 업로드 업무 흐름에 따라 필요한 처리를 수행한다.
- * </pre>
- */
 @Service
 @RequiredArgsConstructor
 public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
@@ -45,12 +41,6 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
 
   private static final String MSG_INST_ALREADY_ON_IN_PROGRESS_DISCLOSURE = "이미 공시진행중입니다.";
 
-  private static final String DEFAULT_SYSTEM_USER = "SYSTEM";
-  
-  private static final String CLOSE_CANCEL_REASON = "마감에 의한 취소";
-  private static final String LOG_SEPARATOR = "========================================";
-  private static final String LOG_FMT_PBLNT_SN = "공시일련번호 (pblntSn): {}";
-  private static final String LOG_FMT_PTCP_INST_SN = "참여기관번호 (ptcpInstSn): {}";
   private static final String KEY_VER_INFO_NM = "verInfoNm";
   private static final String KEY_LAST_UPDT_YMD = "lastUpdtYmd";
   private static final String KEY_TBL_SE_CD = "tblSeCd";
@@ -74,12 +64,7 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
     return v != null ? v : m.get( snake );
   }
 
-  /**
-   * 대상 데이터를 조회한다.
-   *
-   * @param pblntSn pblntSn
-   * @return 처리 결과
-   */
+  // 참여기관 목록 조회
   @Override
   @Transactional(readOnly = true)
   public List<DisclosurePartnerResponse> findByPblntSn( Long pblntSn ) {
@@ -87,34 +72,20 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
     List<TbCmMUldPrstVO> vos = disclosurePartnerMapper.findByPblntSn( pblntSn );
 
     if (vos == null) {
-
       return List.of();
     }
 
-    if (!vos.isEmpty()) {
-      TbCmMUldPrstVO first = vos.get( 0 );
-
-    } else {
-
-    }
-
     return vos.stream().map( vo -> {
-      
       String instNm = vo.getInstNm();
       if (instNm == null || instNm.trim().isEmpty()) {
         instNm = vo.getInstId();
       }
-
-      
-
-      DisclosurePartnerResponse response = new DisclosurePartnerResponse( vo.getPtcpInstSn(), vo.getPblntSn(), vo.getInstId(), instNm, vo.getUldInstPrgrsSttsStcd(), vo.getPtcpDmndDt(), vo.getPtcpCfmtnDt(), vo.getPtcpRtrcnDt(), vo.getPtcpRegDt(), vo.getPtcpCmptnDt(), vo.getPtcpRdmndDt(), vo.getUldTypeCd(), vo.getUldDt(),
+      return new DisclosurePartnerResponse( vo.getPtcpInstSn(), vo.getPblntSn(), vo.getInstId(), instNm, vo.getUldInstPrgrsSttsStcd(), vo.getPtcpDmndDt(), vo.getPtcpCfmtnDt(), vo.getPtcpRtrcnDt(), vo.getPtcpRegDt(), vo.getPtcpCmptnDt(), vo.getPtcpRdmndDt(), vo.getUldTypeCd(), vo.getUldDt(),
           vo.getVerInfoNm(), vo.getLastUpdtYmd(), vo.getRegYmd(), vo.getUpdtCycle(), vo.getDelYn() );
-      
-      
-      return response;
     } ).collect( Collectors.toList() );
   }
 
+  // 공시 멤버 권한별 참여기관 목록 조회
   @Override
   @Transactional(readOnly = true)
   public List<DisclosurePartnerResponse> findByPblntSnForDisclosureMember( Long pblntSn, DisclosureMemberVO memberAndInst ) {
@@ -140,7 +111,6 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
         continue;
       }
       disclosurePartnerMapper.delete( existingPartner.getPtcpInstSn(), pblntSn );
-
     }
   }
 
@@ -157,18 +127,16 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
       }
       String trimmedInstId = instId.trim();
       if (existingInstIds.contains( trimmedInstId )) {
-
         continue;
       }
       if (fingerprintMatchesExistingPartner( trimmedInstId, existingPartners )) {
-
         continue;
       }
       TbCmMUldPrstVO vo = new TbCmMUldPrstVO();
       vo.setPblntSn( pblntSn );
       vo.setInstId( trimmedInstId );
       vo.setBrno( trimmedInstId );
-      vo.setUldInstPrgrsSttsStcd( "01" );
+      vo.setUldInstPrgrsSttsStcd( DisclosurePartnerProgressStatus.INVITATION_REQUEST.code() );
       vo.setPtcpDmndDt( now );
       vo.setDelYn( "N" );
       vo.setRgtrId( createBy );
@@ -176,11 +144,9 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
       vo.setMdfrId( createBy );
       vo.setMdfcnYmd( now );
       disclosurePartnerMapper.insert( vo );
-
     }
   }
 
-  
   private static Set<String> instMatchFingerprints( String raw ) {
     Set<String> out = new HashSet<>();
     if (raw == null) {
@@ -254,17 +220,11 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
     return false;
   }
 
-  /**
-   * addPartners 처리를 수행한다.
-   *
-   * @param user user
-   * @param pblntSn pblntSn
-   * @param request request
-   */
+  // 참여기관 추가
   @Override
   @Transactional
-  public void addPartners( UserVO user, Long pblntSn, DisclosurePartnerRequest request ) {
-    String createBy = user != null && user.getNi() != null ? user.getNi() : DEFAULT_SYSTEM_USER;
+  public void addPartners( CustomUserDetails user, Long pblntSn, DisclosurePartnerRequest request ) {
+    String createBy = user.getMbrId();
     LocalDateTime now = LocalDateTime.now();
 
     Set<String> requestedInstIds = request.getInstIds() != null ? request.getInstIds().stream().map( id -> id != null ? id.trim() : null ).filter( id -> id != null && !id.isEmpty() ).collect( Collectors.toSet() ) : Set.of();
@@ -287,15 +247,9 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
 
     removePartnersNotInRequest( pblntSn, existingPartners, requestedInstIds );
     insertNewPartnersForSync( pblntSn, requestedInstIds, existingInstIds, existingPartners, createBy, now );
-
   }
 
-  /**
-   * 대상 데이터를 조회한다.
-   *
-   * @param pblntSn pblntSn
-   * @return 처리 결과
-   */
+  // 진행중 다른 공시 사용 기관키 조회
   @Override
   @Transactional(readOnly = true)
   public List<String> findInstKeysBusyOnOtherInProgressDisclosures( Long pblntSn ) {
@@ -306,17 +260,11 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
     return rows != null ? rows : List.of();
   }
 
-  /**
-   * 데이터를 삭제한다.
-   *
-   * @param ptcpInstSn ptcpInstSn
-   * @param pblntSn pblntSn
-   */
+  // 참여기관 참여취소 처리
   @Override
   @Transactional
   public void deletePartner( Long ptcpInstSn, Long pblntSn ) {
     disclosurePartnerMapper.delete( ptcpInstSn, pblntSn );
-
   }
 
   private void persistWithdrawCancelReasonIfApplicable(
@@ -327,100 +275,45 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
       String updateBy,
       LocalDateTime updateTime ) {
 
-    if ("04".equals( uldInstPrgrsSttsStcd ) && cancelReason != null && !cancelReason.trim().isEmpty()) {
+    if ( DisclosurePartnerProgressStatus.CANCELLED.equalsNormalized( uldInstPrgrsSttsStcd ) && cancelReason != null && !cancelReason.trim().isEmpty()) {
       Long uldSttsChgSn = generateUldSttsChgSn();
       String chgRsnInfoCn = cancelReason.trim();
-
-      try {
-        disclosureMapper.insertUldSttsChg( uldSttsChgSn, ptcpInstSn, pblntSn, "04", updateTime, chgRsnInfoCn, updateBy, updateTime );
-
-      } catch (Exception e) {
-
-        throw e;
-      }
-    } else {
-
+      disclosureMapper.insertUldSttsChg( uldSttsChgSn, ptcpInstSn, pblntSn, DisclosurePartnerProgressStatus.CANCELLED.code(), updateTime, chgRsnInfoCn, updateBy, updateTime );
     }
   }
 
-  private void logPartnerConfirmedDetailsIfApplicable( String uldInstPrgrsSttsStcd, Long pblntSn, Long ptcpInstSn ) {
-    if (!"02".equals( uldInstPrgrsSttsStcd )) {
-      return;
-    }
-    List<TbCmMUldPrstVO> updatedPartner = disclosurePartnerMapper.findByPblntSn( pblntSn );
-    updatedPartner.stream().filter( p -> p.getPtcpInstSn().equals( ptcpInstSn ) ).findFirst().ifPresent( p -> {
-
-    } );
-  }
-
-  /**
-   * 조회 결과를 반환한다.
-   *
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @return 처리 결과
-   */
+  // 참여기관 상태 조회
   @Override
   @Transactional(readOnly = true)
   public String getStatus( Long pblntSn, Long ptcpInstSn ) {
     return disclosurePartnerMapper.findStatus( pblntSn, ptcpInstSn );
   }
 
-  /**
-   * 데이터를 수정한다.
-   *
-   * @param user user
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @param uldInstPrgrsSttsStcd uldInstPrgrsSttsStcd
-   * @param cancelReason cancelReason
-   */
+  // 참여기관 상태 변경
   @Override
   @Transactional
-  public void updateStatus( UserVO user, Long pblntSn, Long ptcpInstSn, String uldInstPrgrsSttsStcd, String cancelReason ) {
+  public void updateParticipationProgress( CustomUserDetails user, Long pblntSn, Long ptcpInstSn, String uldInstPrgrsSttsStcd, String cancelReason ) {
     if (pblntSn == null || ptcpInstSn == null) {
       throw new IllegalArgumentException( "공시번호와 참여기관번호는 필수입니다." );
     }
     if (uldInstPrgrsSttsStcd == null || uldInstPrgrsSttsStcd.trim().isEmpty()) {
       throw new IllegalArgumentException( "진행상태코드는 필수입니다." );
     }
-    String updateBy = user != null && user.getNi() != null ? user.getNi() : DEFAULT_SYSTEM_USER;
+    String updateBy = user.getMbrId();
     LocalDateTime updateTime = LocalDateTime.now();
 
-    
-    String currentStatus = disclosurePartnerMapper.findStatus( pblntSn, ptcpInstSn );
-
     disclosurePartnerMapper.updateStatus( pblntSn, ptcpInstSn, uldInstPrgrsSttsStcd, updateBy, updateTime );
-
     persistWithdrawCancelReasonIfApplicable( uldInstPrgrsSttsStcd, cancelReason, pblntSn, ptcpInstSn, updateBy, updateTime );
-
-    String updatedStatus = disclosurePartnerMapper.findStatus( pblntSn, ptcpInstSn );
-
-    logPartnerConfirmedDetailsIfApplicable( uldInstPrgrsSttsStcd, pblntSn, ptcpInstSn );
 
     if ( isParticipationCancelledStatus( uldInstPrgrsSttsStcd ) ) {
       closeDataCleanupService.purgeAfterCloseCancellation( pblntSn, ptcpInstSn, updateBy );
     }
-
   }
 
-  
   private static boolean isParticipationCancelledStatus( String uldInstPrgrsSttsStcd ) {
-    return "04".equals( normalizeTwoDigitUldCode( uldInstPrgrsSttsStcd ) );
+    return DisclosurePartnerProgressStatus.CANCELLED.equalsNormalized( uldInstPrgrsSttsStcd );
   }
 
-  private static String normalizeTwoDigitUldCode( String code ) {
-    if (code == null) {
-      return "";
-    }
-    String s = code.trim();
-    if (s.length() == 1) {
-      return "0" + s;
-    }
-    return s;
-  }
-
-  
   private Long generateUldSttsChgSn() {
     return System.currentTimeMillis() % 1000000000L + SECURE_RANDOM.nextInt( 10000 );
   }
@@ -516,18 +409,11 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
     }
   }
 
-  /**
-   * savePartnerInformation 처리를 수행한다.
-   *
-   * @param user user
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @param request request
-   */
+  // 참여기관 정보 저장
   @Override
   @Transactional
-  public void savePartnerInformation( UserVO user, Long pblntSn, Long ptcpInstSn, Map<String, Object> request ) {
-    String updateBy = user != null && user.getNi() != null ? user.getNi() : DEFAULT_SYSTEM_USER;
+  public void savePartnerInformation( CustomUserDetails user, Long pblntSn, Long ptcpInstSn, Map<String, Object> request ) {
+    String updateBy = user.getMbrId();
     LocalDateTime now = LocalDateTime.now();
 
     applyCdmBasicInfoFromRequest( request, pblntSn, ptcpInstSn, updateBy, now );
@@ -536,54 +422,36 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
 
   }
 
-  /**
-   * 조회 결과를 반환한다.
-   *
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @return 처리 결과
-   */
+  // 참여기관 정보 조회
   @Override
   @Transactional(readOnly = true)
   public Map<String, Object> getPartnerInformation( Long pblntSn, Long ptcpInstSn ) {
 
-    java.util.Map<String, Object> result = new java.util.HashMap<>();
+    Map<String, Object> result = new HashMap<>();
 
-    
     PartnerBasicInfoRow partnerBasicInfo = disclosurePartnerMapper.findPartnerBasicInfo( pblntSn, ptcpInstSn );
     if (partnerBasicInfo != null) {
       result.put( KEY_VER_INFO_NM, partnerBasicInfo.getVerInfoNm() );
       result.put( KEY_LAST_UPDT_YMD, partnerBasicInfo.getLastUpdtYmd() );
       result.put( KEY_UPDT_CYCLE_CNT, partnerBasicInfo.getUpdtCycleCnt() );
-
     }
 
-    
     List<PartnerPeriodScaleRow> periodScaleList = disclosurePartnerMapper.findPeriodScaleList( pblntSn, ptcpInstSn );
     result.put( KEY_PERIOD_SCALE_LIST, periodScaleList );
 
-    
     List<PartnerCatalogRow> catalogList = disclosurePartnerMapper.findCatalogList( pblntSn, ptcpInstSn );
     result.put( KEY_CATALOG_LIST, catalogList );
 
-    
     PartnerContactManagerRow contactManager = disclosurePartnerMapper.findPartnerInstContactAndManager( pblntSn, ptcpInstSn );
     if (contactManager != null) {
       result.put( KEY_INST_CONTACT, contactManager.getInstContact() );
       result.put( KEY_INST_MANAGER, contactManager.getInstManager() );
-
     }
 
     return result;
   }
 
-  /**
-   * 조회 결과를 반환한다.
-   *
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @return 처리 결과
-   */
+  // 참여취소 사유 조회 (문자열)
   @Override
   public String getCancelReason( Long pblntSn, Long ptcpInstSn ) {
     if (pblntSn == null || ptcpInstSn == null) {
@@ -592,93 +460,124 @@ public class DisclosurePartnerServiceImpl implements DisclosurePartnerService {
     return disclosurePartnerMapper.findCancelReason( pblntSn, ptcpInstSn );
   }
 
-  /**
-   * 데이터를 수정한다.
-   *
-   * @param user user
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @param cancelReason cancelReason
-   */
+  // 참여취소 사유 조회
+  @Override
+  @Transactional(readOnly = true)
+  public Map<String, Object> getCancelReasonView( Long pblntSn, Long ptcpInstSn, String editorUserType, String editorMbrId ) {
+    Map<String, Object> out = new HashMap<>();
+    if (pblntSn == null || ptcpInstSn == null) {
+      out.put( "cancelReason", "" );
+      out.put( "rgtrId", "" );
+      out.put( "rgtrNm", "" );
+      out.put( "regDt", "" );
+      out.put( "canEdit", Boolean.TRUE );
+      return out;
+    }
+    CancelReasonMetaRow meta = disclosurePartnerMapper.findCancelReasonMeta( pblntSn, ptcpInstSn );
+    String cancelReason = "";
+    String rgtrId = "";
+    String rgtrNm = "";
+    String regDt = "";
+    if (meta != null) {
+      cancelReason = meta.getCancelReason() != null ? meta.getCancelReason() : "";
+      rgtrId = meta.getRgtrId() != null ? meta.getRgtrId().trim() : "";
+      rgtrNm = meta.getRgtrNm() != null ? meta.getRgtrNm().trim() : "";
+      regDt = meta.getRegDt() != null ? meta.getRegDt().trim() : "";
+    }
+    out.put( "cancelReason", cancelReason );
+    out.put( "rgtrId", rgtrId );
+    out.put( "rgtrNm", rgtrNm );
+    out.put( "regDt", regDt );
+    out.put( "canEdit", computeCanEditCancelReason( cancelReason, rgtrId, editorUserType, editorMbrId ) );
+    return out;
+  }
+
+  // 관리자(A)는 사유가 있어도 수정 가능. 파트너(P)는 등록자(rgtr_id)와 로그인 mbrId가 같을 때만 수정 가능.
+  private static boolean computeCanEditCancelReason( String cancelReasonText, String rgtrIdTrimmed, String editorUserType, String editorMbrId ) {
+    String cr = cancelReasonText != null ? cancelReasonText.trim() : "";
+    if (cr.isEmpty()) {
+      return true;
+    }
+    if ("A".equals( editorUserType )) {
+      return true;
+    }
+    String r = rgtrIdTrimmed != null ? rgtrIdTrimmed.trim() : "";
+    String m = editorMbrId != null ? editorMbrId.trim() : "";
+    if (r.isEmpty() || m.isEmpty()) {
+      return false;
+    }
+    return r.equals( m );
+  }
+
+  // 참여취소 사유 수정
   @Override
   @Transactional
-  public void updateCancelReason( UserVO user, Long pblntSn, Long ptcpInstSn, String cancelReason ) {
+  public void updateCancelReason( CustomUserDetails user, Long pblntSn, Long ptcpInstSn, String cancelReason ) {
     if (pblntSn == null || ptcpInstSn == null) {
       throw new IllegalArgumentException( "공시번호와 참여기관번호는 필수입니다." );
     }
     if (cancelReason == null || cancelReason.trim().isEmpty()) {
       throw new IllegalArgumentException( "취소사유는 필수입니다." );
     }
-    String updateBy = user != null && user.getNi() != null ? user.getNi() : DEFAULT_SYSTEM_USER;
+    String updateBy = user.getMbrId();
     LocalDateTime updateTime = LocalDateTime.now();
+    boolean isAdmin = user.isAdmin();
+    String editorMbrId = updateBy != null ? updateBy.trim() : "";
 
-    
     String existingReason = disclosurePartnerMapper.findCancelReason( pblntSn, ptcpInstSn );
 
     if (existingReason != null && !existingReason.trim().isEmpty()) {
-      
 
-      int updatedRows = disclosurePartnerMapper.updateCancelReason( pblntSn, ptcpInstSn, cancelReason.trim(), updateBy, updateTime );
+      CancelReasonMetaRow meta = disclosurePartnerMapper.findCancelReasonMeta( pblntSn, ptcpInstSn );
+      String rgtr = meta != null && meta.getRgtrId() != null ? meta.getRgtrId().trim() : "";
+      if (!isAdmin) {
+        if (rgtr.isEmpty() || !rgtr.equals( editorMbrId )) {
+          throw new IllegalStateException( "취소사유는 최초 등록자만 수정할 수 있습니다." );
+        }
+      }
+
+      boolean requireRgtrMatch = !isAdmin;
+      String authorizedRgtrId = requireRgtrMatch ? editorMbrId : "";
+      int updatedRows = disclosurePartnerMapper.updateCancelReason( pblntSn, ptcpInstSn, cancelReason.trim(), updateBy, updateTime, authorizedRgtrId, requireRgtrMatch );
 
       if (updatedRows == 0) {
-
+        throw new IllegalStateException( "취소사유를 수정할 수 없습니다. 권한을 확인하세요." );
       }
     } else {
-      
-
       Long uldSttsChgSn = generateUldSttsChgSn();
       String chgRsnInfoCn = cancelReason.trim();
-
-      try {
-        disclosureMapper.insertUldSttsChg( uldSttsChgSn, ptcpInstSn, pblntSn, "04", updateTime, chgRsnInfoCn, updateBy, updateTime );
-
-      } catch (Exception e) {
-
-        throw e;
-      }
+      disclosureMapper.insertUldSttsChg( uldSttsChgSn, ptcpInstSn, pblntSn, DisclosurePartnerProgressStatus.CANCELLED.code(), updateTime, chgRsnInfoCn, updateBy, updateTime );
     }
 
   }
 
-  /**
-   * 조회 결과를 반환한다.
-   *
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @return 처리 결과
-   */
+  // 현황정보 입력 이력 조회
   @Override
   @Transactional(readOnly = true)
   public List<PartnerStatusInfoHistoryRow> getStatusInfoHistory( Long pblntSn, Long ptcpInstSn ) {
     if (pblntSn == null || ptcpInstSn == null) {
-      return java.util.Collections.emptyList();
+      return List.of();
     }
     List<PartnerStatusInfoHistoryRow> list = disclosurePartnerMapper.findStatusInfoHistory( pblntSn, ptcpInstSn );
-    return list != null ? list : java.util.Collections.emptyList();
+    return list != null ? list : List.of();
   }
 
-  /**
-   * tryCloseDisclosureIfAllSettled 처리를 수행한다.
-   *
-   * @param user user
-   * @param pblntSn pblntSn
-   * @return 처리 결과
-   */
+  // 전체 정산 시 공시 마감
   @Override
   @Transactional
-  public boolean tryCloseDisclosureIfAllSettled( UserVO user, Long pblntSn ) {
+  public boolean tryCloseDisclosureIfAllSettled( CustomUserDetails user, Long pblntSn ) {
     if (pblntSn == null) return false;
     List<TbCmMUldPrstVO> partners = disclosurePartnerMapper.findByPblntSn( pblntSn );
     if (partners == null || partners.isEmpty()) return false;
-    
+
     boolean allSettled = partners.stream().allMatch( p -> {
       String s = p.getUldInstPrgrsSttsStcd();
-      return "03".equals( s ) || "04".equals( s ) || "05".equals( s );
+      return DisclosurePartnerProgressStatus.isSettledForClose( s );
     } );
     if (!allSettled) return false;
     String current = disclosureMapper.findStatus( pblntSn );
     if ("03".equals( current )) return false;
-    String updateBy = user != null && user.getNi() != null ? user.getNi() : DEFAULT_SYSTEM_USER;
+    String updateBy = user.getMbrId();
     LocalDateTime updateTime = LocalDateTime.now();
     disclosureMapper.updateStatus( pblntSn, "03", updateBy, updateTime );
 

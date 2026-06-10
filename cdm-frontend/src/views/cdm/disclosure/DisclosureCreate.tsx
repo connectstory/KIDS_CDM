@@ -9,7 +9,7 @@ import "dayjs/locale/ko";
 import { Helmet } from "react-helmet";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { CONTENT_GAP } from "@/constants/types";
+import { CONTENT_GAP, DISCLOSURE_FILE_SE_CD } from "@/constants/types";
 import type { DisclosureCreateRequest, DisclosureUpdateRequest } from "@/interfaces/disclosureInterface";
 import { buildPath, formatFileSize, getFileExtension } from "@/utils/common";
 import { formatDateFromYYYYMMDD, formatDateToYYYYMMDD, validateDateRange } from "@/utils/dateUtils";
@@ -207,7 +207,7 @@ export default function DisclosureCreate() {
         await uploadDisclosureFiles.mutateAsync({
           pblntSn: sn,
           files: fileObjects,
-          fileSeCd: "06",
+          fileSeCd: DISCLOSURE_FILE_SE_CD.DISCLOSURE_REGISTER,
         });
         showAlert({
           message: mode === "create" ? "공시 및 파일이 성공적으로 등록되었습니다." : "공시 및 파일이 성공적으로 수정되었습니다.",

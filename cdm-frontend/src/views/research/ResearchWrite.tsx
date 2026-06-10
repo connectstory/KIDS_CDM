@@ -242,7 +242,7 @@ export default function ResearchWriteView() {
             if (!p.data) return;
 
             const result = await confirmModal.open({
-              title: "확인",
+              title: STRINGS.CONFIRM,
               message: `${p.data.instNm} 기관을 참여 취소합니다.`,
             });
 
@@ -411,13 +411,14 @@ export default function ResearchWriteView() {
       return;
     }
 
-    if (partners.length === 0) {
-      showAlert({
-        message: "참여기관을 추가해주세요.",
-        severity: "warning",
-      });
-      return;
-    }
+    // TODO: 참여기관 추가 모달 추가 후 주석 해제
+    // if (partners.length === 0) {
+    //   showAlert({
+    //     message: "참여기관을 추가해주세요.",
+    //     severity: "warning",
+    //   });
+    //   return;
+    // }
 
     if (existingAnalysisFiles.length === 0 && analysisFiles.length === 0) {
       showAlert({
@@ -430,7 +431,7 @@ export default function ResearchWriteView() {
     const confirmMessage = isEditMode ? "연구과제를 수정하시겠습니까?" : "연구과제를 등록하시겠습니까?";
 
     const result = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: confirmMessage,
     });
     if (!result) {
@@ -590,7 +591,6 @@ export default function ResearchWriteView() {
                   }}
                   value={startDate}
                   onChange={(v) => setStartDate(v)}
-                  minDate={isEditMode ? undefined : dayjs()}
                   maxDate={endDate ?? undefined}
                 />
                 <Box component="span" className="px-2 leading-[2.5]">

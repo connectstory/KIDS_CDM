@@ -4,7 +4,11 @@ import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { isPreviewableFile } from "@/constants/researchFileUpload";
 import { MSG } from "@/constants/string";
-import { ANALYSIS_RESULT_STATUS as AnalysisResultStatus, CONTENT_GAP, RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
+import {
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
+  CONTENT_GAP,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy, getFilePreviewUrl } from "@/api/commonApi";
 import type { RootState } from "@/store";
@@ -182,7 +186,7 @@ export default function OrgDataManagementDetail({
                   }
 
                   const result = await confirmModal.open({
-                    title: "확인",
+                    title: STRINGS.CONFIRM,
                     message: "연구과제 분석자에게 검토 요청을 전송합니다.",
                   });
 

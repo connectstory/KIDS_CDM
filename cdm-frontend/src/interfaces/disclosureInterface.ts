@@ -98,14 +98,6 @@ export type DisclosureListApiResponse = ApiResponse<DisclosureListResponse[]> & 
 export type DisclosureDetailApiResponse = ApiResponse<DisclosureDetailResponse>;
 export type DisclosureCreateApiResponse = ApiResponse<DisclosureCreateResponse>;
 
-/** GET /disclosures/{pblntSn}/status 응답 data (백엔드 Map 직렬화) */
-export interface DisclosureStatusData {
-  pblntSn: number;
-  pblntPrgrsSttsCd: string | null;
-}
-
-export type DisclosureStatusApiResponse = ApiResponse<DisclosureStatusData>;
-
 // 참여기관 관련 인터페이스
 export interface DisclosurePartnerResponse {
   ptcpInstSn: number; // 참여기관번호

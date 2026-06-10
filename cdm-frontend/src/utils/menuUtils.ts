@@ -29,7 +29,7 @@ export function pathsMatch(path1: string, path2: string): boolean {
 
 /**
  * 경로가 다른 경로를 포함하는지 확인합니다.
- * 예: "/cm/cdm/disclosures"는 "/cm/cdm"을 포함합니다.
+ * 예: "/cm/disclosures/1"는 "/cm/disclosures"를 포함합니다.
  */
 export function pathIncludes(path: string, basePath: string): boolean {
   const normalizedPath = normalizePath(path);

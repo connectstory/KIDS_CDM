@@ -11,7 +11,7 @@ import { CONTENT_GAP } from "@/constants/types";
 import type { DisclosureListResponse, DisclosureSearchRequest } from "@/interfaces/disclosureInterface";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { PartnerResponse } from "@/interfaces/researchInterface";
-import { DisclosureAPI, normalizePblntStcd } from "@/api/disclosureApi";
+import { DisclosureAPI } from "@/api/disclosureApi";
 import { buildPath, getDisclosurePblntStatusConfig } from "@/utils/common";
 import { formatDateToYYYYMMDD } from "@/utils/dateUtils";
 import { useCmRoutes, useIsAdminCmShell } from "@/hooks/useCmRoutes";
@@ -340,7 +340,9 @@ export default function CDMUploadNotice() {
         width: 110,
         cellStyle: () => ({ textAlign: "center" }),
         cellRenderer: (p: ICellRendererParams<DisclosureRow>) => {
-          const statusCode = normalizePblntStcd(p.data?.pblntStcd);
+          const raw = p.data?.pblntStcd;
+          const s = raw == null ? "" : String(raw).trim();
+          const statusCode = !s ? "" : s.length === 1 ? `0${s}` : s;
           if (!statusCode) return "-";
           const statusConfig = getDisclosurePblntStatusConfig(statusCode);
           return (

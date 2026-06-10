@@ -80,7 +80,7 @@ export default function ContentAnalysisMeta() {
 
   const showMetaAccessDeniedMessage = async () => {
     await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: "통합,메타 분석에서 결과제외, 활용미동의를 등록하신 기관은 메타분석 결과를 확인할 수 없습니다.",
       width: "xs",
       fullWidth: true,

@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import kr.or.kids.domain.cm.research.vo.TbCmMUldPrstVO;
+import kr.or.kids.domain.cm.upload.dto.CancelReasonMetaRow;
 import kr.or.kids.domain.cm.upload.dto.PartnerBasicInfoRow;
 import kr.or.kids.domain.cm.upload.dto.PartnerCatalogRow;
 import kr.or.kids.domain.cm.upload.dto.PartnerContactManagerRow;
@@ -212,6 +213,16 @@ public interface DisclosurePartnerMapper {
 
   
   /**
+   * 참여취소(04) 최신 이력의 사유·등록자아이디.
+   *
+   * @param pblntSn pblntSn
+   * @param ptcpInstSn ptcpInstSn
+   * @return 행 없으면 null
+   */
+  CancelReasonMetaRow findCancelReasonMeta( @Param("pblntSn") Long pblntSn, @Param("ptcpInstSn") Long ptcpInstSn );
+
+  
+  /**
    * 데이터를 수정한다.
    *
    * @param pblntSn pblntSn
@@ -219,9 +230,11 @@ public interface DisclosurePartnerMapper {
    * @param cancelReason cancelReason
    * @param mdfrId mdfrId
    * @param mdfcnDt mdfcnDt
+   * @param authorizedRgtrId {@code requireRgtrMatch}가 true일 때만 사용: 행의 {@code rgtr_id}와 일치해야 수정됨
+   * @param requireRgtrMatch false면 관리자 등 최초등록자 제약 없이 최신 04행만 갱신
    * @return 처리 결과
    */
-  int updateCancelReason( @Param("pblntSn") Long pblntSn, @Param("ptcpInstSn") Long ptcpInstSn, @Param("cancelReason") String cancelReason, @Param("mdfrId") String mdfrId, @Param("mdfcnDt") java.time.LocalDateTime mdfcnDt );
+  int updateCancelReason( @Param("pblntSn") Long pblntSn, @Param("ptcpInstSn") Long ptcpInstSn, @Param("cancelReason") String cancelReason, @Param("mdfrId") String mdfrId, @Param("mdfcnDt") java.time.LocalDateTime mdfcnDt, @Param("authorizedRgtrId") String authorizedRgtrId, @Param("requireRgtrMatch") boolean requireRgtrMatch );
 
   
   /**

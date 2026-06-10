@@ -115,7 +115,7 @@ export default function ValidateRuleCreateEditView() {
       if (isEditMode) queryClient.invalidateQueries({ queryKey: ["validateRuleDetail", vrfcSn] });
       navigate(routes.CDM.VALIDATE_RULE_LIST);
     },
-    onError: (e) => {
+    onError: () => {
       showAlert({
         message: isEditMode ? "CDM 표준화 정보 수정 중 오류가 발생했습니다." : "CDM 표준화 정보 등록 중 오류가 발생했습니다.",
         severity: "error",

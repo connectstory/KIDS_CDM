@@ -152,7 +152,7 @@ export function SearchArea({
             label={STRINGS.START_DATE}
             format="YYYY년 MM월 DD일"
             slotProps={{
-              textField: { size: "small", sx: { width: 190 }, placeholder: "" },
+              textField: { size: "small", sx: { width: 185 }, placeholder: "" },
               calendarHeader: { format: "YYYY년 M월" },
             }}
             value={startDate ?? null}
@@ -164,7 +164,7 @@ export function SearchArea({
             label={STRINGS.END_DATE}
             format="YYYY년 MM월 DD일"
             slotProps={{
-              textField: { size: "small", sx: { width: 190 }, placeholder: "" },
+              textField: { size: "small", sx: { width: 185 }, placeholder: "" },
               calendarHeader: { format: "YYYY년 M월" },
             }}
             value={endDate ?? null}

@@ -59,8 +59,9 @@ mail:
   uex-front-url: http://localhost:8080 # uex 프론트 주소 (섭외요청 승인/거부 팝업 URL) - dev 환경에 맞게 수정 필요
 
 ca:
+  auth-url: http://kids-ca-auth-service.kids-prod-ca:8080
   api-url: http://kids-ca-be-service.kids-prod-ca:8080 # 파드 주소
-  ext-url: https://stg.drugsafe.or.kr # 파드 주소
+  ext-url: https://drugsafe.or.kr # 파드 주소
 
 pp:
   api-url: http://kids-pp-adm-service.kids-prod-pp:8080 # 파드 주소
@@ -81,7 +82,7 @@ jwt:
     session-check-url: ${pp.api-url}/api/pp/adminSessionCheck
     # X-App-Target=cm → PP(adminSessionCheck), X-App-Target=ucm → CA(isLoggedIn)
     pp-session-check-url: ${pp.api-url}/api/pp/adminSessionCheck
-    ca-is-logged-in-url: ${ca.ext-url}/api/ca/auth/isLoggedIn
+    ca-is-logged-in-url: ${ca.auth-url}/api/ca/auth/isLoggedIn
 
 springdoc:
   swagger-ui:
@@ -103,7 +104,7 @@ file:
     path: /data/upload
 logging:
   level:
-    kr.or.kids: DEBUG
+    kr.or.kids: INFO
     jdbc.sqltiming: INFO
     jdbc.resultsettable: INFO
 

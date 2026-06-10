@@ -10,10 +10,11 @@ import "dayjs/locale/ko";
 import { Helmet } from "react-helmet";
 import { useNavigate, useParams } from "react-router-dom";
 import { STRINGS } from "@/constants/string";
-import { CONTENT_GAP } from "@/constants/types";
+import { CONTENT_GAP, DISCLOSURE_FILE_SE_CD } from "@/constants/types";
 import type { DisclosureCreateRequest, DisclosureUpdateRequest } from "@/interfaces/disclosureInterface";
+import { downloadFileViaProxy } from "@/api/commonApi";
 import { DisclosureAPI } from "@/api/disclosureApi";
-import { buildPath, formatFileSize, getFileExtension } from "@/utils/common";
+import { buildPath, formatFileSize, getFileExtension, isDeletedYn } from "@/utils/common";
 import { formatDateFromYYYYMMDD, formatDateToYYYYMMDD, validateDateRange } from "@/utils/dateUtils";
 import {
   DISCLOSURE_ATTACHMENT_EXTENSIONS,
@@ -89,8 +90,7 @@ export default function DisclosureEdit() {
     if (!Array.isArray(rawFileList)) return [];
     return rawFileList
       .map((file: any) => {
-        const delYn = file.delYn;
-        if (delYn === "Y" || delYn === "y") return null;
+        if (isDeletedYn(file.delYn)) return null;
 
         const strgFileNm =
           (file.strgFileNm && String(file.strgFileNm).trim()) || (file.strgfilenm && String(file.strgfilenm).trim()) || "";
@@ -169,26 +169,18 @@ export default function DisclosureEdit() {
   const handleExistingFileDownload = async (file: FileData) => {
     try {
       const fileWithSn = file as FileData & { atchFileSn?: string; downloadAs?: string };
-      const downloadFileName = fileWithSn.atchFileSn || file.name;
-      if (!downloadFileName || downloadFileName.trim() === "" || downloadFileName === "파일") {
-        showAlert({ message: "파일명을 찾을 수 없습니다.", severity: "error" });
+      const atchFileId =
+        (fileWithSn.atchFileSn && fileWithSn.atchFileSn.trim()) ||
+        ((file as FileData).atchFileId && String((file as FileData).atchFileId).trim()) ||
+        "";
+      const fileNm = fileWithSn.downloadAs || file.name || atchFileId;
+
+      if (!atchFileId) {
+        showAlert({ message: "다운로드할 파일 ID를 찾을 수 없습니다.", severity: "error" });
         return;
       }
 
-      if (!pblntSn) {
-        showAlert({ message: "공시번호가 없습니다.", severity: "error" });
-        return;
-      }
-      const response = await DisclosureAPI.downloadFile(downloadFileName, pblntSn);
-      const blob = new Blob([response.data]);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileWithSn.downloadAs || file.name || downloadFileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFileViaProxy(atchFileId, fileNm);
       showAlert({ message: "파일 다운로드가 시작되었습니다.", severity: "success" });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "파일 다운로드 중 오류가 발생했습니다.";
@@ -256,7 +248,11 @@ export default function DisclosureEdit() {
 
     if (newFileObjects.length > 0) {
       try {
-        await uploadDisclosureFiles.mutateAsync({ pblntSn: pblntSnId, files: newFileObjects, fileSeCd: "06" });
+        await uploadDisclosureFiles.mutateAsync({
+          pblntSn: pblntSnId,
+          files: newFileObjects,
+          fileSeCd: DISCLOSURE_FILE_SE_CD.DISCLOSURE_REGISTER,
+        });
         showAlert({ message: "공시 및 파일이 성공적으로 수정되었습니다.", severity: "success" });
       } catch (error: any) {
         const errorMessage = error?.response?.data?.message || error?.message || "파일 업로드 중 오류가 발생했습니다.";

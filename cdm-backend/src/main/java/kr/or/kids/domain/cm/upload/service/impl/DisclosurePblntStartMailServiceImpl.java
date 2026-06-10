@@ -13,6 +13,7 @@ import kr.or.kids.domain.cm.upload.mapper.DisclosureMapper;
 import kr.or.kids.domain.cm.upload.mapper.DisclosurePartnerMapper;
 import kr.or.kids.domain.cm.upload.service.DisclosurePblntStartMailService;
 import kr.or.kids.domain.cm.upload.vo.TbCmMUldPblntVO;
+import kr.or.kids.global.type.DisclosurePartnerProgressStatus;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -65,7 +66,7 @@ public class DisclosurePblntStartMailServiceImpl implements DisclosurePblntStart
     if (row == null || row.getPtcpInstSn() == null) {
       return;
     }
-    if ("04".equals( normalizeTwoDigit( row.getUldInstPrgrsSttsStcd() ) )) {
+    if ( DisclosurePartnerProgressStatus.CANCELLED.equalsNormalized( row.getUldInstPrgrsSttsStcd() ) ) {
       return;
     }
     String brno = row.getBrno();
@@ -87,16 +88,5 @@ public class DisclosurePblntStartMailServiceImpl implements DisclosurePblntStart
     vars.put( "contentValue", "[" + row.getInstNm() + "] 의 담당자님, 기관 데이터를 본원 자체 시스템에 등록해주세요." );
     String body = emailContentGenerator.render( "mail/common-notice.html", vars );
     mailApiService.sendHtmlMail( row.getInstId(), null, subject, body );
-  }
-
-  private static String normalizeTwoDigit( String code ) {
-    if (code == null) {
-      return "";
-    }
-    String s = code.trim();
-    if (s.length() == 1) {
-      return "0" + s;
-    }
-    return s;
   }
 }

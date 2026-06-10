@@ -1,15 +1,30 @@
 package kr.or.kids.domain.cm.upload.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import kr.or.kids.domain.cm.common.dto.ApiResponse;
 import kr.or.kids.domain.cm.common.mapper.CommonAuthrtMapper;
 import kr.or.kids.domain.cm.upload.mapper.DisclosurePartnerMapper;
 import kr.or.kids.domain.cm.upload.service.DisclosurePartnerService;
 import kr.or.kids.domain.cm.upload.service.DisclosureService;
+import kr.or.kids.domain.cm.upload.service.support.DisclosureMemberResolver;
 import kr.or.kids.domain.cm.upload.util.UploadNonFatal;
+import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
+import kr.or.kids.global.common.CustomUserDetails;
+import kr.or.kids.global.type.DisclosurePartnerProgressStatus;
+import kr.or.kids.global.type.RoleType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,10 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DisclosurePartnerController {
 
-  private static final String MSG_LOGIN_REQUIRED = "로그인이 필요합니다.";
   private static final String JSON_KEY_PBLNT_SN = "pblntSn";
   private static final String JSON_KEY_PTCP_INST_SN = "ptcpInstSn";
   private static final String JSON_KEY_CANCEL_REASON = "cancelReason";
+  private static final String JSON_KEY_RGTR_ID = "rgtrId";
+  private static final String JSON_KEY_RGTR_NM = "rgtrNm";
+  private static final String JSON_KEY_REG_DT = "regDt";
+  private static final String JSON_KEY_CAN_EDIT = "canEdit";
   private static final String JSON_KEY_STATUS = "status";
   private static final String JSON_KEY_REASON = "reason";
   private static final String MSG_STATUS_INFO_HIST_OK = "현황정보 입력 이력 조회 성공";
@@ -32,6 +50,20 @@ public class DisclosurePartnerController {
   private final DisclosurePartnerMapper disclosurePartnerMapper;
   private final DisclosureService disclosureService;
   private final CommonAuthrtMapper commonAuthrtMapper;
+  private final DisclosureMemberResolver disclosureMemberResolver;
+
+  private static boolean canAccessPartnerRow( DisclosureMemberVO member, Long ptcpInstSn ) {
+    if (member == null || ptcpInstSn == null) {
+      return false;
+    }
+    if ( Boolean.TRUE.equals( member.getIsAdmin() ) ) {
+      return true;
+    }
+    if ( member.getPartner() != null && ptcpInstSn.equals( member.getPartner().getPtcpInstSn() ) ) {
+      return true;
+    }
+    return false;
+  }
 
   private static Long parseLongFromRequestMap( Map<String, Object> request, String key ) {
     Object o = request != null ? request.get( key ) : null;
@@ -46,16 +78,16 @@ public class DisclosurePartnerController {
 
   private static String parseParticipationRequestedStatus( Map<String, Object> request ) {
     if ( request == null ) {
-      return "02";
+      return DisclosurePartnerProgressStatus.IN_PROGRESS.code();
     }
     Object statusObj = request.get( JSON_KEY_STATUS );
     if ( statusObj instanceof String status ) {
-      String trimmed = status.trim();
-      if ( !trimmed.isEmpty() ) {
-        return trimmed;
+      String normalized = DisclosurePartnerProgressStatus.normalizeCode( status );
+      if ( !normalized.isEmpty() ) {
+        return normalized;
       }
     }
-    return "02";
+    return DisclosurePartnerProgressStatus.IN_PROGRESS.code();
   }
 
   private static String parseParticipationCancelReason( Map<String, Object> request ) {
@@ -72,8 +104,73 @@ public class DisclosurePartnerController {
     return null;
   }
 
-  private void logParticipationRequestHeaders( Long pblntSn, Long ptcpInstSn, String currentStatus, String requestedStatus, String cancelReason ) {
+  private void logParticipationRequestHeaders(Long pblntSn, Long ptcpInstSn, String currentStatus,
+      String requestedStatus, String cancelReason) {
 
+  }
+  
+
+
+
+  // 참여취소 사유 조회
+  @GetMapping("/{pblntSn}/partners/{ptcpInstSn}/cancel-reason")
+  public ResponseEntity<ApiResponse<Map<String, Object>>> getCancelReason(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long pblntSn,
+      @PathVariable Long ptcpInstSn ) {
+    DisclosureMemberVO memberAndInst = disclosureMemberResolver.resolve( pblntSn, user );
+    if ( !canAccessPartnerRow( memberAndInst, ptcpInstSn ) ) {
+      return ApiResponse.error( HttpStatus.FORBIDDEN, "해당 참여기관에 대한 조회 권한이 없습니다.", null );
+    }
+
+    String editorUserType = user != null && user.getUserType() != null ? user.getUserType() : "";
+    String editorMbrId = user != null && user.getMbrId() != null ? user.getMbrId() : "";
+    Map<String, Object> view = disclosurePartnerService.getCancelReasonView( pblntSn, ptcpInstSn, editorUserType, editorMbrId );
+
+    Map<String, Object> result = new HashMap<>();
+    result.put( JSON_KEY_PBLNT_SN, pblntSn );
+    result.put( JSON_KEY_PTCP_INST_SN, ptcpInstSn );
+    result.put( JSON_KEY_CANCEL_REASON, view.get( "cancelReason" ) != null ? view.get( "cancelReason" ) : "" );
+    result.put( JSON_KEY_RGTR_ID, view.get( "rgtrId" ) != null ? view.get( "rgtrId" ) : "" );
+    result.put( JSON_KEY_RGTR_NM, view.get( "rgtrNm" ) != null ? view.get( "rgtrNm" ) : "" );
+    result.put( JSON_KEY_REG_DT, view.get( "regDt" ) != null ? view.get( "regDt" ) : "" );
+    result.put( JSON_KEY_CAN_EDIT, Boolean.TRUE.equals( view.get( "canEdit" ) ) );
+
+    return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "참여취소 사유 조회 성공", result );
+  }
+
+  // 참여취소 사유 수정
+  @PostMapping("/{pblntSn}/partners/{ptcpInstSn}/cancel-reason/update")
+  public ResponseEntity<ApiResponse<Map<String, Object>>> updateCancelReason(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long pblntSn,
+      @PathVariable Long ptcpInstSn,
+      @RequestBody Map<String, Object> request ) {
+    DisclosureMemberVO memberAndInst = disclosureMemberResolver.resolve( pblntSn, user );
+    if ( !canAccessPartnerRow( memberAndInst, ptcpInstSn ) ) {
+      return ApiResponse.error( HttpStatus.FORBIDDEN, "해당 참여기관에 대한 처리 권한이 없습니다.", null );
+    }
+
+    Object reasonObj = request != null ? request.get( JSON_KEY_CANCEL_REASON ) : null;
+    String cancelReason = reasonObj != null ? String.valueOf( reasonObj ).trim() : null;
+    if ( cancelReason == null || cancelReason.isEmpty() ) {
+      return ApiResponse.error( HttpStatus.BAD_REQUEST, "취소사유는 필수입니다.", null );
+    }
+
+    try {
+      disclosurePartnerService.updateCancelReason( user, pblntSn, ptcpInstSn, cancelReason );
+    } catch ( IllegalArgumentException e ) {
+      return ApiResponse.error( HttpStatus.BAD_REQUEST, e.getMessage(), null );
+    } catch ( IllegalStateException e ) {
+      return ApiResponse.error( HttpStatus.FORBIDDEN, e.getMessage(), null );
+    }
+
+    Map<String, Object> result = new HashMap<>();
+    result.put( JSON_KEY_PBLNT_SN, pblntSn );
+    result.put( JSON_KEY_PTCP_INST_SN, ptcpInstSn );
+    result.put( JSON_KEY_CANCEL_REASON, cancelReason );
+
+    return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "취소사유가 수정되었습니다.", result );
   }
 
  
@@ -110,63 +207,52 @@ public class DisclosurePartnerController {
 //   }
 
   
-//   /**
-//    * requestParticipation 처리를 수행한다.
-//    *
-//    * @param du du
-//    * @param pblntSn pblntSn
-//    * @param request request
-//    * @return 처리 결과
-//    */
-//   @PostMapping("/{pblntSn}/partners/request")
-//   public ResponseEntity<ApiResponse<Map<String, Object>>> requestParticipation(
-//       @AuthenticationPrincipal CustomUserDetails user,
-//       @PathVariable Long pblntSn,
-//       @RequestBody Map<String, Object> request ) {
+  // 참여기관 상태 변경
+  @PutMapping("/{pblntSn}/partners/{ptcpInstSn}/progress")
+  public ResponseEntity<ApiResponse<Map<String, Object>>> requestParticipation(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long pblntSn,
+      @PathVariable Long ptcpInstSn,
+      @RequestBody Map<String, Object> request) 
+  {
+    DisclosureMemberVO memberAndInst = disclosureMemberResolver.resolve( pblntSn, user );
+    if ( !canAccessPartnerRow( memberAndInst, ptcpInstSn ) ) {
+      return ApiResponse.error( HttpStatus.FORBIDDEN, "해당 공시에 대한 참여기관의 권한이 없습니다.", null );
+    }
 
-//     if (pblntSn == null) {
-//       return ApiResponse.error( HttpStatus.BAD_REQUEST, "공시번호가 없습니다.", null );
-//     }
-//     Long bodyPblntSn = parseLongFromRequestMap( request, JSON_KEY_PBLNT_SN );
-//     if ( bodyPblntSn != null && !bodyPblntSn.equals( pblntSn ) ) {
-//       return ApiResponse.error( HttpStatus.BAD_REQUEST, "요청 본문의 공시번호가 경로와 일치하지 않습니다.", null );
-//     }
+    String requestedStatus = parseParticipationRequestedStatus( request );
+    String cancelReason = parseParticipationCancelReason( request );
 
-//     Long ptcpInstSn = parseLongFromRequestMap( request, JSON_KEY_PTCP_INST_SN );
-//     if (ptcpInstSn == null) {
-//       return ApiResponse.error( HttpStatus.BAD_REQUEST, "참여기관번호가 없습니다.", null );
-//     }
-//     if ( !canAccessPartnerParticipation( du, pblntSn, ptcpInstSn ) ) {
-//       return ApiResponse.error( HttpStatus.FORBIDDEN, "해당 참여기관에 대한 처리 권한이 없습니다.", null );
-//     }
+    String currentStatus = disclosurePartnerService.getStatus( pblntSn, ptcpInstSn );
+    logParticipationRequestHeaders( pblntSn, ptcpInstSn, currentStatus, requestedStatus, cancelReason );
 
-//     String requestedStatus = parseParticipationRequestedStatus( request );
-//     String cancelReason = parseParticipationCancelReason( request );
+    boolean isAdminReq = Boolean.TRUE.equals( memberAndInst.getIsAdmin() );
+    if ( DisclosurePartnerProgressStatus.CANCELLED.code().equals( requestedStatus ) ) {
+      String ut = memberAndInst.getUserType();
+      if (RoleType.ADMIN.code().equals( ut )) {
+        log.info( "participation progress: pblntSn={} ptcpInstSn={} 참여취소(관리자 userType=A)", pblntSn, ptcpInstSn );
+      } else if (RoleType.PARTNER.code().equals( ut )) {
+        log.info( "participation progress: pblntSn={} ptcpInstSn={} 참여거부(참여기관 userType=P)", pblntSn, ptcpInstSn );
+      } else {
+        log.warn( "participation progress: pblntSn={} ptcpInstSn={} status=04 userType={}", pblntSn, ptcpInstSn, ut );
+      }
+    }
+    if (!isAdminReq && !DisclosurePartnerProgressStatus.CANCELLED.code().equals( requestedStatus )) {
+      disclosureService.requireDisclosureInProgressForPartnerActions( pblntSn );
+    }
 
-//     String currentStatus = disclosurePartnerService.getStatus( pblntSn, ptcpInstSn );
-//     logParticipationRequestHeaders( pblntSn, ptcpInstSn, currentStatus, requestedStatus, cancelReason );
+    disclosurePartnerService.updateParticipationProgress( user, pblntSn, ptcpInstSn, requestedStatus, cancelReason );
 
-//     boolean isAdminReq = UploadAuthUtil.isAdmin( du );
-//     String normalizedRequested = requestedStatus != null ? requestedStatus.trim() : "";
-//     if (normalizedRequested.length() == 1) {
-//       normalizedRequested = "0" + normalizedRequested;
-//     }
-//     if (!isAdminReq && !"04".equals( normalizedRequested )) {
-//       disclosureService.requireDisclosureInProgressForPartnerActions( pblntSn );
-//     }
+    String updatedStatus = disclosurePartnerService.getStatus( pblntSn, ptcpInstSn );
 
-//     disclosurePartnerService.updateStatus( user, pblntSn, ptcpInstSn, requestedStatus, cancelReason );
+    Map<String, Object> result = new HashMap<>();
+    result.put( JSON_KEY_PBLNT_SN, pblntSn );
+    result.put( JSON_KEY_PTCP_INST_SN, ptcpInstSn );
+    result.put( "previousStatus", currentStatus );
+    result.put( "currentStatus", updatedStatus );
 
-//     String updatedStatus = disclosurePartnerService.getStatus( pblntSn, ptcpInstSn );
-
-//     Map<String, Object> result = new HashMap<>();
-//     result.put( JSON_KEY_PBLNT_SN, pblntSn );
-//     result.put( JSON_KEY_PTCP_INST_SN, ptcpInstSn );
-//     result.put( "previousStatus", currentStatus );
-//     result.put( "currentStatus", updatedStatus );
-
-//     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "상태가 변경되었습니다.", result );
-//   }
+    return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "상태가 변경되었습니다.", result );
+  }
 
   
 //   /**
@@ -290,70 +376,6 @@ public class DisclosurePartnerController {
 //   }
 
   
-//   /**
-//    * 조회 결과를 반환한다.
-//    *
-//    * @param du du
-//    * @param pblntSn pblntSn
-//    * @param ptcpInstSn ptcpInstSn
-//    * @return 처리 결과
-//    */
-//   @GetMapping("/{pblntSn}/partners/{ptcpInstSn}/cancel-reason")
-//   public ResponseEntity<ApiResponse<Map<String, Object>>> getCancelReason( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long pblntSn, @PathVariable Long ptcpInstSn ) {
-//     if (du == null) {
-//       return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-//     }
-
-//     String cancelReason = disclosurePartnerService.getCancelReason( pblntSn, ptcpInstSn );
-
-//     Map<String, Object> result = new HashMap<>();
-//     result.put( JSON_KEY_PBLNT_SN, pblntSn );
-//     result.put( JSON_KEY_PTCP_INST_SN, ptcpInstSn );
-//     result.put( JSON_KEY_CANCEL_REASON, cancelReason != null ? cancelReason : "" );
-
-//     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "참여취소 사유 조회 성공", result );
-//   }
-
-  
-//   /**
-//    * 데이터를 수정한다.
-//    *
-//    * @param du du
-//    * @param pblntSn pblntSn
-//    * @param ptcpInstSn ptcpInstSn
-//    * @param request request
-//    * @return 처리 결과
-//    */
-//   @PostMapping("/{pblntSn}/partners/{ptcpInstSn}/cancel-reason/update")
-//   public ResponseEntity<ApiResponse<Map<String, Object>>> updateCancelReason( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long pblntSn, @PathVariable Long ptcpInstSn, @RequestBody Map<String, Object> request ) {
-//     if (du == null) {
-//       return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-//     }
-
-//     UserVO user = UploadAuthUtil.toUserVO( du );
-//     if (user == null) {
-//       return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_LOGIN_REQUIRED, null );
-//     }
-
-//     String cancelReason = null;
-//     Object reasonObj = request != null ? request.get( JSON_KEY_CANCEL_REASON ) : null;
-//     if (reasonObj instanceof String && !((String) reasonObj).trim().isEmpty()) {
-//       cancelReason = ((String) reasonObj).trim();
-//     }
-
-//     if (cancelReason == null || cancelReason.trim().isEmpty()) {
-//       return ApiResponse.error( HttpStatus.BAD_REQUEST, "취소사유는 필수입니다.", null );
-//     }
-
-//     disclosurePartnerService.updateCancelReason( user, pblntSn, ptcpInstSn, cancelReason );
-
-//     Map<String, Object> result = new HashMap<>();
-//     result.put( JSON_KEY_PBLNT_SN, pblntSn );
-//     result.put( JSON_KEY_PTCP_INST_SN, ptcpInstSn );
-//     result.put( JSON_KEY_CANCEL_REASON, cancelReason );
-
-//     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "취소사유가 수정되었습니다.", result );
-//   }
 
   
 //   /**
@@ -407,7 +429,7 @@ public class DisclosurePartnerController {
 //     }
 
 //     UserVO user = UploadAuthUtil.toUserVO( du );
-//     String mdfrId = user != null && user.getNi() != null ? user.getNi() : (du != null ? du.getMbrId() : "SYSTEM");
+//     String mdfrId = du != null ? du.getMbrId() : "SYSTEM";
 //     disclosurePartnerMapper.updateUldPrgrsYn( pblntSn, ptcpInstSn, "N", mdfrId );
 //     Map<String, Object> result = new HashMap<>();
 //     result.put( "uldPrgrsYn", "N" );

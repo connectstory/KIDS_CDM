@@ -4,6 +4,8 @@ import { STRINGS } from "@/constants/string";
 import type { PathParams, ProgressStatusTypeValue } from "@/constants/types";
 import {
   ANALYSIS_RESULT_STATUS,
+  DEL_YN,
+  DISCLOSURE_FILE_SE_CD,
   DISCLOSURE_PARTNER_PROGRESS_STATUS_LABEL_MAP,
   DISCLOSURE_PBLNT_STATUS_CODE,
   PARTICIPATION_CDM_STATUS,
@@ -240,7 +242,28 @@ export function getStatusConfig(statusKey: ProgressStatusTypeValue): StatusChipC
  * 공시 — 공시 단위(pblntStcd)·관리자 UI
  * ------------------------------ */
 
-/** 공시 진행상태(pblntStcd: 01/02/03) 칩 — `normalizePblntStcd` 결과와 호환 */
+/** 삭제여부(delYn) — Y/y 대소문자 무시 */
+export function isDeletedYn(delYn: string | null | undefined): boolean {
+  if (delYn == null) return false;
+  const s = String(delYn).trim();
+  return s !== "" && s.toUpperCase() === DEL_YN.YES;
+}
+
+/** DRB·CDM 업로드 파일구분 — 공시등록 첨부 목록에서 제외 */
+export function isDisclosurePartnerUploadFileSeCd(fileSeCd: string | null | undefined): boolean {
+  const raw = fileSeCd != null ? String(fileSeCd).trim() : "";
+  return raw === DISCLOSURE_FILE_SE_CD.DRB || raw === DISCLOSURE_FILE_SE_CD.CDM;
+}
+
+/** 공시 진행상태 — 마감(03/3) 여부 */
+export function isDisclosurePblntClosed(pblntStcd: string | null | undefined): boolean {
+  const s = pblntStcd == null ? "" : String(pblntStcd).trim();
+  if (!s) return false;
+  const n = s.length === 1 ? `0${s}` : s;
+  return n === DISCLOSURE_PBLNT_STATUS_CODE.CLOSED;
+}
+
+/** 공시 진행상태(pblntStcd: 01/02/03) 칩 — 한 자리 코드는 0패딩 후 조회 */
 export function getDisclosurePblntStatusConfig(pblntStcd: string | null | undefined): StatusChipConfig | undefined {
   const s = pblntStcd == null ? "" : String(pblntStcd).trim();
   if (!s) return undefined;
@@ -253,7 +276,7 @@ export function getDisclosurePblntStatusConfig(pblntStcd: string | null | undefi
   return undefined;
 }
 
-/** `normalizePblntStcd` 결과 기준 — 관리자 공시 상세의 시작·마감·취소 버튼 표시·비활성 */
+/** 두 자리 공시 진행상태코드 기준 — 관리자 공시 상세의 시작·마감·취소 버튼 표시·비활성 */
 export function getDisclosureDetailAdminActionFlags(pblntStcdNormalized: string): {
   showStartButton: boolean;
   showCloseButton: boolean;
@@ -673,3 +696,8 @@ export function vividColorForGradient(hex: string, targetLightness = 0.55): stri
   };
   return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
 }
+
+/* ------------------------------
+ * 날짜 표시 — 상세·그리드 등에서 `@/utils/common` 한곳에서 가져가도록 재노출
+ * ------------------------------ */
+export { formatDate, formatDateTime } from "./dateUtils";

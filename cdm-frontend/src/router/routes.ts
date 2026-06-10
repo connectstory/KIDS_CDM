@@ -1,7 +1,7 @@
 const ROOT = "";
 const AD = `${ROOT}/cm`;
 const MB = `${ROOT}/ucm`;
-const CDM = "/cdm";
+const CDM = "/disclosures";
 const RESEARCH = "/researches";
 const COMMUNITY = "/community";
 
@@ -21,26 +21,26 @@ export const ROUTES = {
         OWNER: `${AD}${RESEARCH}/owner`,
         PARTNER: `${AD}${RESEARCH}/partner`,
         SETTING: `${AD}${RESEARCH}/setting`,
-        CREATE: `${AD}${RESEARCH}/owner/post`,
+        CREATE: `${AD}${RESEARCH}/owner/create`,
         EDIT: `${AD}${RESEARCH}/:asmtSn/edit`,
         DETAIL: `${AD}${RESEARCH}/:role/:asmtSn`,
       },
 
       CDM: {
         ROOT: `${AD}${CDM}`,
-        DISCLOSURES: `${AD}${CDM}/disclosures`,
-        DISCLOSURE_CREATE: `${AD}${CDM}/disclosures/create`,
-        DISCLOSURE_EDIT: `${AD}${CDM}/disclosures/:pblntSn/edit`,
-        DISCLOSURE_DETAIL: `${AD}${CDM}/disclosures/:pblntSn`,
-        UPLOAD: `${AD}${CDM}/disclosures/upload`,
-        UPLOAD_SUMMARY: `${AD}${CDM}/summary`,
-        UPLOAD_SUMMARY_PIE: `${AD}${CDM}/summary/pie`,
+        DISCLOSURES: `${AD}${CDM}`,
+        DISCLOSURE_CREATE: `${AD}${CDM}/create`,
+        DISCLOSURE_EDIT: `${AD}${CDM}/:pblntSn/edit`,
+        DISCLOSURE_DETAIL: `${AD}${CDM}/:pblntSn`,
+        UPLOAD: `${AD}${CDM}/:pblntSn/upload`,
+        UPLOAD_SUMMARY: `${AD}${CDM}/:pblntSn/upload/summary`,
+        UPLOAD_SUMMARY_PIE: `${AD}${CDM}/summary/upload/pie`,
         VALIDATE_RULE_LIST: `${AD}${CDM}/validators`,
         VALIDATE_RULE_DETAIL: `${AD}${CDM}/validators/:vrfcSn`,
         VALIDATE_RULE_CREATE: `${AD}${CDM}/validators/new`,
         VALIDATE_RULE_EDIT: `${AD}${CDM}/validators/:vrfcSn/edit`,
         INFO: `${AD}${CDM}/info`,
-        INFO_REPORTING: `${AD}${CDM}/summary`,
+        INFO_REPORTING: `${AD}${CDM}/:pblntSn/summary`,
         PARTNER_INFO_WRITE: `${AD}${CDM}/partner/information`,
       },
 
@@ -49,7 +49,7 @@ export const ROUTES = {
         QNA: {
           MEMBER_LIST: `${AD}${COMMUNITY}/qna/member/qna/list`,
           ADMIN_LIST: `${AD}${COMMUNITY}/qna/admin/qna/list`,
-          WRITE: `${AD}${COMMUNITY}/qna/qna/write`,
+          WRITE: `${AD}${COMMUNITY}/qna/qna/create`,
           PRIVACY: `${AD}${COMMUNITY}/qna/privacy`,
           ADMIN_DETAIL: `${AD}${COMMUNITY}/qna/admin/qna/detail`,
           MEMBER_DETAIL: `${AD}${COMMUNITY}/qna/member/qna/detail`,
@@ -91,26 +91,25 @@ export const ROUTES = {
         ROOT: `${MB}${RESEARCH}`,
         OWNER: `${MB}${RESEARCH}/owner`,
         PARTNER: `${MB}${RESEARCH}/partner`,
-        CREATE: `${MB}${RESEARCH}/owner/post`,
+        CREATE: `${MB}${RESEARCH}/owner/create`,
         EDIT: `${MB}${RESEARCH}/:asmtSn/edit`,
         DETAIL: `${MB}${RESEARCH}/:role/:asmtSn`,
       },
 
       CDM: {
         ROOT: `${MB}${CDM}`,
-        DISCLOSURES: `${MB}${CDM}/disclosures`,
-        DISCLOSURE_CREATE: `${MB}${CDM}/disclosures/create`,
-        DISCLOSURE_EDIT: `${MB}${CDM}/disclosures/:pblntSn/edit`,
-        DISCLOSURE_DETAIL: `${MB}${CDM}/disclosures/:pblntSn`,
-        UPLOAD: `${MB}${CDM}/disclosures/upload`,
-        UPLOAD_SUMMARY: `${MB}${CDM}/summary`,
-        UPLOAD_SUMMARY_PIE: `${MB}${CDM}/summary/pie`,
+        DISCLOSURES: `${MB}${CDM}`,
+        DISCLOSURE_CREATE: `${MB}${CDM}/create`,
+        DISCLOSURE_EDIT: `${MB}${CDM}/:pblntSn/edit`,
+        DISCLOSURE_DETAIL: `${MB}${CDM}/:pblntSn`,
+        UPLOAD: `${MB}${CDM}/:pblntSn/upload`,
+        UPLOAD_SUMMARY: `${MB}${CDM}/:pblntSn/statistics`,
         VALIDATE_RULE_LIST: `${MB}${CDM}/validators`,
         VALIDATE_RULE_DETAIL: `${MB}${CDM}/validators/:vrfcSn`,
-        VALIDATE_RULE_CREATE: `${MB}${CDM}/validators/new`,
+        VALIDATE_RULE_CREATE: `${MB}${CDM}/validators/create`,
         VALIDATE_RULE_EDIT: `${MB}${CDM}/validators/:vrfcSn/edit`,
         INFO: `${MB}${CDM}/info`,
-        INFO_REPORTING: `${MB}${CDM}/summary`,
+        INFO_REPORTING: `${MB}${CDM}/:pblntSn/summary`,
         PARTNER_INFO_WRITE: `${MB}${CDM}/partner/information`,
       },
 
@@ -119,7 +118,7 @@ export const ROUTES = {
         QNA: {
           MEMBER_LIST: `${MB}${COMMUNITY}/qna/member/qna/list`,
           ADMIN_LIST: `${MB}${COMMUNITY}/qna/admin/qna/list`,
-          WRITE: `${MB}${COMMUNITY}/qna/qna/write`,
+          WRITE: `${MB}${COMMUNITY}/qna/qna/create`,
           PRIVACY: `${MB}${COMMUNITY}/qna/privacy`,
           ADMIN_DETAIL: `${MB}${COMMUNITY}/qna/admin/qna/detail`,
           MEMBER_DETAIL: `${MB}${COMMUNITY}/qna/member/qna/detail`,

@@ -23,7 +23,7 @@ import kr.or.kids.domain.cm.common.service.CommonFileService;
 import kr.or.kids.domain.cm.common.service.FileApiService;
 import kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo;
 import kr.or.kids.domain.cm.common.vo.TbCmMFileUldVO;
-import kr.or.kids.domain.cm.common.vo.UserVO;
+import kr.or.kids.global.common.CustomUserDetails;
 import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
 import kr.or.kids.domain.cm.upload.dto.DisclosureCreateRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosureDetailResponse;
@@ -46,21 +46,19 @@ public class DisclosureServiceImpl implements DisclosureService {
   private static final String DEFAULT_SYSTEM_USER = "SYSTEM";
 
   
-  private static String resolveAuditUserId( UserVO sessionUser ) {
+  private static String resolveAuditUserId( CustomUserDetails sessionUser ) {
     if (sessionUser == null) {
       return DEFAULT_SYSTEM_USER;
     }
     if (sessionUser.getUserNm() != null && !sessionUser.getUserNm().isBlank()) {
       return sessionUser.getUserNm().trim();
     }
-    if (sessionUser.getNi() != null && !sessionUser.getNi().isBlank()) {
-      return sessionUser.getNi().trim();
-    }
     if (sessionUser.getUserNo() != null && !sessionUser.getUserNo().isBlank()) {
       return sessionUser.getUserNo().trim();
     }
-    if (sessionUser.getUserId() != null && !sessionUser.getUserId().isBlank()) {
-      return sessionUser.getUserId().trim();
+    String loginId = sessionUser.getMbrId();
+    if (loginId != null && !loginId.isBlank()) {
+      return loginId.trim();
     }
     return DEFAULT_SYSTEM_USER;
   }
@@ -314,7 +312,17 @@ public class DisclosureServiceImpl implements DisclosureService {
     if (existing == null) {
       throw new IllegalArgumentException( "Disclosure not found with id: " + pblntSn );
     }
-    
+    String status = existing.getPblntPrgrsSttsCd();
+    if (status != null && !status.isBlank()) {
+      String normalized = status.trim();
+      if (normalized.length() == 1) {
+        normalized = "0" + normalized;
+      }
+      if ("03".equals( normalized )) {
+        throw new IllegalStateException( "마감된 공시는 삭제할 수 없습니다." );
+      }
+    }
+
     deleteAllAttachmentsForDisclosure( pblntSn );
     disclosureMapper.delete( pblntSn );
   }
@@ -391,18 +399,6 @@ public class DisclosureServiceImpl implements DisclosureService {
   }
 
   /**
-   * 조회 결과를 반환한다.
-   *
-   * @param pblntSn pblntSn
-   * @return 처리 결과
-   */
-  @Override
-  @Transactional(readOnly = true)
-  public String getStatus( Long pblntSn ) {
-    return disclosureMapper.findStatus( pblntSn );
-  }
-
-  /**
    * requireDisclosureInProgressForPartnerActions 처리를 수행한다.
    *
    * @param pblntSn pblntSn
@@ -413,7 +409,7 @@ public class DisclosureServiceImpl implements DisclosureService {
     if (pblntSn == null) {
       throw new IllegalArgumentException( "공시일련번호가 없습니다." );
     }
-    String code = disclosureTx.getStatus( pblntSn );
+    String code = disclosureMapper.findStatus( pblntSn );
     if (code == null || code.isBlank()) {
       throw new IllegalStateException( "공시 상태를 확인할 수 없습니다. 업로드·현황등록·참여승인을 진행할 수 없습니다." );
     }
@@ -442,7 +438,7 @@ public class DisclosureServiceImpl implements DisclosureService {
    */
   @Override
   @Transactional
-  public void updateStatus( UserVO sessionUser, Long pblntSn, String pblntPrgrsSttsCd ) {
+  public void updateStatus( CustomUserDetails sessionUser, Long pblntSn, String pblntPrgrsSttsCd ) {
     if (pblntPrgrsSttsCd == null || pblntPrgrsSttsCd.trim().isEmpty()) {
       throw new IllegalArgumentException( "공시상태(pblntPrgrsSttsCd)는 필수입니다." );
     }
@@ -699,43 +695,6 @@ public class DisclosureServiceImpl implements DisclosureService {
       throw new IllegalArgumentException( "파일을 찾을 수 없거나 권한이 없습니다." );
     }
     disclosureTx.deleteFile( pblntSn, atchFileId );
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public TbCaEFileTrsmVo resolveDisclosureFileForDownload( DisclosureMemberVO member, Long pblntSn, String atchFileSn ) {
-    if (atchFileSn == null || atchFileSn.trim().isEmpty()) {
-      throw new IllegalArgumentException( "첨부파일일련번호가 없습니다." );
-    }
-    if (pblntSn == null) {
-      throw new IllegalArgumentException( "공시일련번호(pblntSn)가 필요합니다." );
-    }
-    if (member == null) {
-      throw new IllegalArgumentException( "회원 정보가 없습니다." );
-    }
-    TbCaEFileTrsmVo caFile = commonFileService.selectFile( atchFileSn );
-    if (caFile == null || caFile.getSrvrFileNm() == null || caFile.getSrvrFileNm().trim().isEmpty()) {
-      TbCaEFileTrsmVo groupFile = commonFileService.selectFileByGroupId( atchFileSn );
-      if (groupFile != null) {
-        caFile = groupFile;
-      }
-    }
-    if (caFile == null) {
-      return null;
-    }
-    String canonicalFileId = caFile.getAtchFileId();
-    if (canonicalFileId == null || canonicalFileId.isBlank()) {
-      List<TbCaEFileTrsmVo> inGroup = commonFileService.selectFileListByGroup( atchFileSn );
-      if (inGroup != null && !inGroup.isEmpty() && inGroup.get( 0 ).getAtchFileId() != null) {
-        canonicalFileId = inGroup.get( 0 ).getAtchFileId();
-      } else {
-        canonicalFileId = atchFileSn;
-      }
-    }
-    if (!isAtchFileVisibleForDisclosureMember( member, pblntSn, canonicalFileId )) {
-      throw new IllegalArgumentException( "파일을 찾을 수 없거나 권한이 없습니다." );
-    }
-    return caFile;
   }
 
   /**

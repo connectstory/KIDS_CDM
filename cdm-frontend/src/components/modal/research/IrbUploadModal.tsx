@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch, useSelector } from "react-redux";
+import { STRINGS } from "@/constants/string";
 import { CONTENT_GAP } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import { downloadFileViaProxy } from "@/api/commonApi";
@@ -78,7 +79,7 @@ export default function IrbUploadModal() {
   const handleExistingFileDelete = async (file: FileData) => {
     if (!asmtSn || !file.atchFileId) return;
     const ok = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: ["선택한 IRB 파일을 삭제하시겠습니까?"],
       data: {},
     });
@@ -131,7 +132,7 @@ export default function IrbUploadModal() {
       fullWidth={true}
       footer={
         <Button variant="contained" onClick={() => handleConfirm()} disabled={submitting}>
-          {submitting ? "업로드 중..." : "확인"}
+          확인
         </Button>
       }
     >

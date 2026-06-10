@@ -8,7 +8,7 @@
  * - 파일 다운로드
  */
 import { useMemo } from "react";
-import { DisclosureAPI } from "@/api";
+import { DisclosureAPI, downloadFileViaProxy } from "@/api";
 import { Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useDispatch, useSelector } from "react-redux";
@@ -73,7 +73,7 @@ export default function DrbViewModal() {
     return list
       .filter((row) => {
         // DRB 파일만 (file_se_cd 필터는 프론트에서 수행)
-        // 다운로드 API는 atch_file_id(UUID) 기준으로 동작하므로 atchFileId가 없는 행은 제외
+        // 공통 다운로드는 atch_file_id(UUID) 기준이므로 atchFileId가 없는 행은 제외
         return row.fileSeCd === DRB_FILE_SE_CD && !!row.atchFileId;
       })
       .map((row): FileData & { atchFileSn?: string } => {
@@ -87,8 +87,7 @@ export default function DrbViewModal() {
           ext: row.fileExtnNm ?? "",
           size,
           showDeleteButton: false,
-          // 백엔드(/files/download)는 atchFileSn 파라미터에 atch_file_id(UUID)를 기대
-          atchFileSn: row.atchFileId!, // 다운로드용 키
+          atchFileSn: row.atchFileId!, // `/common/file/download/{atchFileId}` 용
         };
       });
   }, [filesResponse?.data?.data]);
@@ -100,10 +99,10 @@ export default function DrbViewModal() {
     dispatch(closeModal(ModalNames.DrbView));
   };
 
-  // 파일 다운로드 핸들러 (atchFileSn = atch_file_id(UUID))
+  // 파일 다운로드 (연구 IRB 등과 동일: `/common/file/download/{atchFileId}`)
   const handleFileClick = async (file: FileData & { atchFileSn?: string }) => {
-    const downloadParam = file.atchFileSn ?? (file as FileData).atchFileId ?? (file as FileData).name;
-    if (!downloadParam) {
+    const atchFileId = file.atchFileSn ?? file.atchFileId;
+    if (!atchFileId?.trim()) {
       showAlert({
         message: "파일 정보가 없습니다.",
         severity: "error",
@@ -112,22 +111,7 @@ export default function DrbViewModal() {
     }
 
     try {
-      if (!pblntSn) {
-        showAlert({
-          message: "공시번호가 없습니다.",
-          severity: "error",
-        });
-        return;
-      }
-      const response = await DisclosureAPI.downloadFile(downloadParam, pblntSn);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", file.name);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      await downloadFileViaProxy(atchFileId, file.name);
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || "파일 다운로드 중 오류가 발생했습니다.";
       showAlert({

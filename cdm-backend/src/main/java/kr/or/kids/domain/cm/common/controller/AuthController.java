@@ -49,13 +49,13 @@ public class AuthController {
   @Value("${jwt.remote.pp-extend-url:${pp.api-url:http://localhost:3000}/api/pp/adminExtend}")
   private String ppExtendUrl;
 
-  @Value("${jwt.remote.ca-extend-url:${ca.api-url:http://localhost:3000}/api/ca/auth/extend}")
+  @Value("${jwt.remote.ca-extend-url:${ca.auth-url:http://localhost:3000}/api/ca/auth/extend}")
   private String caExtendUrl;
 
   @Value("${jwt.remote.pp-logout-url:${pp.api-url:http://localhost:3000}/api/pp/adminLogout}")
   private String ppLogoutUrl;
 
-  @Value("${jwt.remote.ca-logout-url:${ca.api-url:http://localhost:3000}/api/ca/auth/logout}")
+  @Value("${jwt.remote.ca-logout-url:${ca.auth-url:http://localhost:3000}/api/ca/auth/logout}")
   private String caLogoutUrl;
 
   @GetMapping("/me/admin")

@@ -5,9 +5,10 @@ import dayjs from "dayjs";
 import { Helmet } from "react-helmet";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { STRINGS } from "@/constants/string";
+import { MSG, STRINGS } from "@/constants/string";
 import { CONTENT_GAP, DISCLOSURE_PBLNT_STATUS_CODE, ROLE_TYPE as RoleType } from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface.ts";
+import { downloadFileViaProxy } from "@/api/commonApi";
 import { DisclosureAPI } from "@/api/disclosureApi";
 import type { RootState } from "@/store";
 import {
@@ -16,6 +17,9 @@ import {
   getDisclosureDetailAdminActionFlags,
   getDisclosurePblntStatusConfig,
   getFileExtension,
+  isDeletedYn,
+  isDisclosurePartnerUploadFileSeCd,
+  isDisclosurePblntClosed,
 } from "@/utils/common";
 import { formatDate, formatDateTime } from "@/utils/dateUtils";
 import { disclosureKeys } from "@/hooks/disclosure/disclosureQueryKeys";
@@ -28,13 +32,12 @@ import FileContainer, { type FileData } from "@/components/FileContainer";
 import Loader from "@/components/Loader";
 import { SpaceBox } from "@/components/SpaceBox";
 import { AppButton, AppStatusChip } from "@/components/ui";
-import DisclosurePartnerSection from "./components/ContentDisclosurePartner";
+import DisclosurePartnerSection from "./components/ContentDisclosurePartners";
 
 export default function DisclosureDetailAdmin() {
   // 라우팅 파라미터
   const { pblntSn } = useParams<{ pblntSn: string }>();
   const pblntSnId = pblntSn ? Number(pblntSn) : NaN;
-  const hasValidPblntSn = !Number.isNaN(pblntSnId);
 
   const routes = useCmRoutes();
   const navigate = useNavigate();
@@ -68,13 +71,8 @@ export default function DisclosureDetailAdmin() {
 
     const mappedFiles = fileList
       .map((file: any) => {
-        // 삭제된 파일 제외
-        const delYn = file.delYn;
-        if (delYn === "Y" || delYn === "y") return null;
-
-        // CDM(08), DRB(07) 업로드 파일 제외 → 공시등록 첨부파일만 표시
-        const fileSeCdRaw = file.fileSeCd || "";
-        if (fileSeCdRaw === "07" || fileSeCdRaw === "08") return null;
+        if (isDeletedYn(file.delYn)) return null;
+        if (isDisclosurePartnerUploadFileSeCd(file.fileSeCd)) return null;
 
         const strgFileNm =
           (file.strgFileNm && String(file.strgFileNm).trim()) || (file.strgfilenm && String(file.strgfilenm).trim()) || "";
@@ -111,7 +109,7 @@ export default function DisclosureDetailAdmin() {
     return mappedFiles;
   }, [fileList]);
 
-  /** 공시진행상태코드 (normalizePblntStcd 없이 비교만 안정적으로 처리) */
+  /** 공시진행상태코드 (한 자리면 0패딩 후 상수와 비교) */
   const pblntStcdN = useMemo(() => {
     const raw = disclosure?.pblntStcd != null ? String(disclosure.pblntStcd).trim() : "";
     if (!raw) return "";
@@ -122,41 +120,29 @@ export default function DisclosureDetailAdmin() {
     showStartButton: showDisclosureStartButton,
     showCloseButton: showDisclosureCloseButton,
     closeDisabledByStatus,
-    cancelDisabledByStatus,
   } = useMemo(() => getDisclosureDetailAdminActionFlags(pblntStcdN), [pblntStcdN]);
 
   const disclosureCloseDisabled = closeDisabledByStatus || closeDisclosureMutation.isPending;
-  const disclosureCancelDisabled = cancelDisabledByStatus || deleteDisclosureMutation.isPending;
+  const disclosureCancelDisabled =
+    isDisclosurePblntClosed(disclosure?.pblntStcd) || deleteDisclosureMutation.isPending;
 
   // 파일 처리 핸들러
   // 파일 다운로드 핸들러
   const handleFileDownload = async (file: FileData) => {
     try {
-      // 다운로드 시 저장된 파일명(atchFileSn) 사용
-      const fileWithSn = file as FileData & { atchFileSn?: string };
-      const downloadFileName = fileWithSn.atchFileSn || file.name;
+      const fileWithSn = file as FileData & { atchFileSn?: string; downloadAs?: string };
+      const atchFileId =
+        (fileWithSn.atchFileSn && fileWithSn.atchFileSn.trim()) ||
+        ((file as FileData).atchFileId && String((file as FileData).atchFileId).trim()) ||
+        "";
+      const fileNm = fileWithSn.downloadAs || file.name || atchFileId;
 
-      if (!downloadFileName || downloadFileName.trim() === "" || downloadFileName === "파일") {
-        showAlert({ message: "파일명을 찾을 수 없습니다.", severity: "error" });
+      if (!atchFileId) {
+        showAlert({ message: "다운로드할 파일 ID를 찾을 수 없습니다.", severity: "error" });
         return;
       }
 
-      if (!pblntSn) {
-        showAlert({ message: "공시번호가 없습니다.", severity: "error" });
-        return;
-      }
-      const response = await DisclosureAPI.downloadFile(downloadFileName, pblntSn);
-      const blob = new Blob([response.data]);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      // 다운로드 파일명은 원본 파일명 사용 (표시된 파일명)
-      const originalName = (file as FileData & { downloadAs?: string }).downloadAs || file.name;
-      link.download = originalName || downloadFileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFileViaProxy(atchFileId, fileNm);
       showAlert({ message: "파일 다운로드가 시작되었습니다.", severity: "success" });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "파일 다운로드 중 오류가 발생했습니다.";
@@ -173,17 +159,16 @@ export default function DisclosureDetailAdmin() {
   // 공시 액션 핸들러 (Mutation)
   const handleDeleteDisclosure = async () => {
     if (!pblntSn) return;
+    if (isDisclosurePblntClosed(disclosure?.pblntStcd)) {
+      showAlert({ message: "마감된 공시는 취소할 수 없습니다.", severity: "warning" });
+      return;
+    }
     const result = await confirmModal.open({
-      title: "삭제 확인",
-      message: "정말 삭제하시겠습니까?",
+      title: STRINGS.CONFIRM,
+      message: MSG.CONFIRM_DELETE,
       width: "max-w-[30rem]",
     });
     if (!result) return;
-    if (!hasValidPblntSn) {
-      showAlert({ message: "공시번호가 올바르지 않습니다.", severity: "error" });
-      return;
-    }
-    if (!hasValidPblntSn) return;
     await deleteDisclosureMutation.mutateAsync(pblntSnId);
     navigate(routes.CDM.DISCLOSURES);
   };
@@ -203,11 +188,6 @@ export default function DisclosureDetailAdmin() {
     });
     if (!result) return;
     try {
-      if (!hasValidPblntSn) {
-        showAlert({ message: "공시번호가 올바르지 않습니다.", severity: "error" });
-        return;
-      }
-      if (!hasValidPblntSn) return;
       await closeDisclosureMutation.mutateAsync({ pblntSn: pblntSnId });
       await refetchDisclosure();
       // 참여기관 목록은 하위 섹션에서 조회하므로 쿼리 invalidate로 갱신 트리거
@@ -238,10 +218,16 @@ export default function DisclosureDetailAdmin() {
       showAlert({ message: "공시시작일자가 아직 도래하지 않아 공시를 시작할 수 없습니다.", severity: "warning" });
       return;
     }
-    if (!pblntSn || !hasValidPblntSn) {
+    if (!pblntSn) {
       showAlert({ message: "공시일련번호가 없습니다.", severity: "error" });
       return;
     }
+    const result = await confirmModal.open({
+      title: STRINGS.CONFIRM,
+      message: "공시를 진행중으로 변경하시겠습니까?",
+      width: "max-w-[30rem]",
+    });
+    if (!result) return;
     try {
       await updateDisclosureStatusMutation.mutateAsync({
         pblntSn: pblntSnId,
@@ -309,7 +295,7 @@ export default function DisclosureDetailAdmin() {
           <AppButton
             variant="outlined"
             size="medium"
-            disabled={disclosure?.pblntStcd === "03" || disclosure?.pblntStcd === "3"}
+            disabled={isDisclosurePblntClosed(disclosure?.pblntStcd)}
             onClick={handleEditDisclosure}
           >
             수정
@@ -487,7 +473,7 @@ export default function DisclosureDetailAdmin() {
           disabled={disclosureCancelDisabled}
         >
           <i className="fa-solid fa-ban mr-2"></i>
-          <Typography variant="default">{deleteDisclosureMutation.isPending ? "삭제 중..." : "공시 취소"}</Typography>
+          <Typography variant="default">공시 취소</Typography>
         </AppButton>
       </Box>
 

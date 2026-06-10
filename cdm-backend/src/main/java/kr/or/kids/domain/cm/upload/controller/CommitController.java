@@ -35,10 +35,6 @@ public class CommitController {
         @RequestBody CommitRequest req,
         @AuthenticationPrincipal CustomUserDetails du
     ) throws Exception {
-        if (du == null) {
-            throw new ResponseStatusException( HttpStatus.UNAUTHORIZED, "로그인이 필요합니다." );
-        }
-
         try {
             memberResolver.resolveUser( du );
         } catch (IllegalArgumentException e) {

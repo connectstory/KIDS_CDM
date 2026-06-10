@@ -1,7 +1,3 @@
-/**
- * 거부사유 등록 모달 컴포넌트
- * 참여기관의 거부사유를 등록하는 모달
- */
 import { useState } from "react";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";

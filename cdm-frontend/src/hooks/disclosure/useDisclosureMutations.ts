@@ -49,6 +49,9 @@ export function useRequestDisclosurePartnerStatus() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: disclosureKeys.partners(variables.pblntSn) });
       queryClient.invalidateQueries({ queryKey: disclosureKeys.detail(variables.pblntSn) });
+      queryClient.invalidateQueries({
+        queryKey: disclosureKeys.cancelReason(variables.pblntSn, variables.ptcpInstSn),
+      });
       if (variables.successMessage) {
         showAlert({ message: variables.successMessage, severity: "success" });
       }

@@ -3,7 +3,11 @@ import { Box, Button, Chip, Divider, List, ListItem, ListItemText, Stack, Typogr
 import { useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { STRINGS } from "@/constants/string";
-import { ANALYSIS_RESULT_STATUS as AnalysisResultStatus, CONTENT_GAP, RSLT_GROUP_STCD_TYPE as RsltGroupStcdType } from "@/constants/types";
+import {
+  ANALYSIS_RESULT_STATUS as AnalysisResultStatus,
+  CONTENT_GAP,
+  RSLT_GROUP_STCD_TYPE as RsltGroupStcdType,
+} from "@/constants/types";
 import { ModalNames } from "@/interfaces/modalInterface";
 import type { OpinionItemResponse } from "@/interfaces/researchInterface";
 import {
@@ -119,7 +123,7 @@ export default function CdmDataManagementVote({
     }
 
     const result = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: "참여기관에 분석결과 검토 요청 알림을 전송합니다.",
       width: "max-w-[25rem]",
     });
@@ -149,7 +153,7 @@ export default function CdmDataManagementVote({
     }
 
     const result = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: ["분석결과 검토를 마감합니다,", "미등록한 참여기관은 검토 결과에서 제외합니다."],
       width: "max-w-[25rem]",
     });

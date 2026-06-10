@@ -32,6 +32,7 @@ export const ANALYSIS_QUERY_ACCEPT: string[] = [
   ".jpeg",
   ".png",
   ".webp",
+  ".zip",
 ];
 
 const CDM_META_IMAGE_AND_DOC_LOWER = ["jpg", "jpeg", "png", "webp", "pdf"] as const;

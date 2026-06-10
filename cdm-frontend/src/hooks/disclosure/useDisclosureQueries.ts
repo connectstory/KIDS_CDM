@@ -74,27 +74,43 @@ export function useDisclosurePartners(pblntSn: string | null | undefined, enable
   });
 }
 
+export interface DisclosureCancelReasonView {
+  cancelReason: string;
+  rgtrId: string;
+  rgtrNm: string;
+  regDt: string;
+  canEdit: boolean;
+}
+
 /**
- * 취소사유 조회
- * - 서버에서 404를 주는 경우(사유 미존재)는 빈 문자열로 처리
+ * 취소사유 조회 (사유·등록자·수정 가능 여부)
  */
 export function useDisclosureCancelReason(
   pblntSn: string | number | null | undefined,
   ptcpInstSn: string | number | null | undefined,
   enabled?: boolean
 ) {
-  return useQuery<string, Error>({
+  return useQuery<DisclosureCancelReasonView, Error>({
     queryKey: disclosureKeys.cancelReason(pblntSn, ptcpInstSn),
     queryFn: async () => {
       if (!pblntSn || !ptcpInstSn) {
-        return "";
+        return { cancelReason: "", rgtrId: "", rgtrNm: "", regDt: "", canEdit: true };
       }
       try {
         const res = await DisclosureAPI.getCancelReason(Number(pblntSn), Number(ptcpInstSn));
-        return res.data?.data?.cancelReason || "";
+        const d = res.data?.data as
+          | { cancelReason?: string; rgtrId?: string; rgtrNm?: string; regDt?: string; canEdit?: boolean }
+          | undefined;
+        return {
+          cancelReason: d?.cancelReason ?? "",
+          rgtrId: d?.rgtrId ?? "",
+          rgtrNm: d?.rgtrNm ?? "",
+          regDt: d?.regDt ?? "",
+          canEdit: d?.canEdit !== false,
+        };
       } catch (error: any) {
         if (error?.response?.status === 404) {
-          return "";
+          return { cancelReason: "", rgtrId: "", rgtrNm: "", regDt: "", canEdit: true };
         }
         throw error;
       }

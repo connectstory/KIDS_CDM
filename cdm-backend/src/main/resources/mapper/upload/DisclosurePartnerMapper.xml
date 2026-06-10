@@ -392,6 +392,27 @@
     LIMIT 1
   </select>
 
+  <!-- 참여취소(04) 최신 행 사유·등록자 (일반: TB_PP_M_MBR_INFO, 관리자: tb_pp_m_emp_info) -->
+  <select id="findCancelReasonMeta" resultType="kr.or.kids.domain.cm.upload.dto.CancelReasonMetaRow">
+    SELECT chg.chg_rsn_info_cn AS cancelReason,
+           chg.rgtr_id AS rgtrId,
+           COALESCE(NULLIF(TRIM(mbr.encpt_mbr_flnm), ''),
+                    NULLIF(TRIM(adm.emp_nm), ''),
+                    chg.rgtr_id) AS rgtrNm,
+           TO_CHAR(chg.reg_dt, 'YYYY.MM.DD HH24:MI') AS regDt
+    FROM kids_own.TB_CM_E_ULD_STTS_CHG chg
+    LEFT JOIN kids_own.TB_PP_M_MBR_INFO mbr
+      ON TRIM(COALESCE(chg.rgtr_id, '')) = TRIM(COALESCE(mbr.mbr_id, ''))
+    LEFT JOIN kids_own.tb_pp_m_emp_info adm
+      ON TRIM(COALESCE(chg.rgtr_id, '')) = TRIM(COALESCE(adm.emp_no, ''))
+    WHERE chg.pblnt_sn = #{pblntSn}
+      AND chg.ptcp_inst_sn = #{ptcpInstSn}
+      AND chg.uld_inst_prgrs_stts_cd = '04'
+      AND (chg.del_yn IS NULL OR chg.del_yn = 'N')
+    ORDER BY chg.reg_dt DESC
+    LIMIT 1
+  </select>
+
   <!-- 참여취소 사유 업데이트 (TB_CM_E_ULD_STTS_CHG에서 상태가 04인 최신 레코드) -->
   <update id="updateCancelReason">
     UPDATE kids_own.TB_CM_E_ULD_STTS_CHG
@@ -402,6 +423,9 @@
       AND ptcp_inst_sn = #{ptcpInstSn}
       AND uld_inst_prgrs_stts_cd = '04' /* 참여취소 상태 */
       AND (del_yn IS NULL OR del_yn = 'N')
+      <if test="requireRgtrMatch">
+      AND rgtr_id = #{authorizedRgtrId}
+      </if>
       AND uld_stts_chg_sn = (
         SELECT uld_stts_chg_sn
         FROM kids_own.TB_CM_E_ULD_STTS_CHG

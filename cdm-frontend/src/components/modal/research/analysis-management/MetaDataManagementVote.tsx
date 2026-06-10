@@ -151,7 +151,7 @@ export default function MetaDataManagementVote({
     }
 
     const result = await confirmModal.open({
-      title: "확인",
+      title: STRINGS.CONFIRM,
       message: "참여기관에 분석결과 검토 요청 알림을 전송합니다.",
       width: "max-w-[25rem]",
     });
@@ -212,7 +212,7 @@ export default function MetaDataManagementVote({
               }
               onClick={async () => {
                 const result = await confirmModal.open({
-                  title: "확인",
+                  title: STRINGS.CONFIRM,
                   message: ["분석결과 검토를 마감합니다,", "미등록한 참여기관은 검토 결과에서 제외합니다."],
                   width: "max-w-[25rem]",
                 });
@@ -233,7 +233,7 @@ export default function MetaDataManagementVote({
                         onStatusUpdated?.();
                         if (hasCdmInstitutionDisagreeConsent) {
                           await confirmModal.open({
-                            title: "확인",
+                            title: STRINGS.CONFIRM,
                             message: "데이터 현황이 CDM인 기관이 활용미동의로 '통합 데이터 분석결과'를 다시 진행해야 합니다.",
                             width: "max-w-[32rem]",
                             data: {

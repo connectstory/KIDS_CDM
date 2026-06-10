@@ -1,14 +1,13 @@
 package kr.or.kids.domain.cm.upload.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosurePartnerResponse;
 import kr.or.kids.domain.cm.upload.dto.PartnerStatusInfoHistoryRow;
 import kr.or.kids.domain.cm.upload.vo.DisclosureMemberVO;
+import kr.or.kids.global.common.CustomUserDetails;
 
 /**
  * 업로드 도메인 서비스 계약을 정의한다.
@@ -42,7 +41,7 @@ public interface DisclosurePartnerService {
    * @param pblntSn pblntSn
    * @param request request
    */
-  void addPartners( UserVO user, Long pblntSn, DisclosurePartnerRequest request );
+  void addPartners( CustomUserDetails user, Long pblntSn, DisclosurePartnerRequest request );
 
   
   /**
@@ -74,7 +73,7 @@ public interface DisclosurePartnerService {
 
   
   /**
-   * 데이터를 수정한다.
+   * 참여기관 업로드 진행상태(참여 진행코드)를 변경한다.
    *
    * @param user user
    * @param pblntSn pblntSn
@@ -82,7 +81,7 @@ public interface DisclosurePartnerService {
    * @param uldInstPrgrsSttsStcd uldInstPrgrsSttsStcd
    * @param cancelReason cancelReason
    */
-  void updateStatus( UserVO user, Long pblntSn, Long ptcpInstSn, String uldInstPrgrsSttsStcd, String cancelReason );
+  void updateParticipationProgress( CustomUserDetails user, Long pblntSn, Long ptcpInstSn, String uldInstPrgrsSttsStcd, String cancelReason );
 
   
   /**
@@ -93,7 +92,7 @@ public interface DisclosurePartnerService {
    * @param ptcpInstSn ptcpInstSn
    * @param request request
    */
-  void savePartnerInformation( UserVO user, Long pblntSn, Long ptcpInstSn, Map<String, Object> request );
+  void savePartnerInformation( CustomUserDetails user, Long pblntSn, Long ptcpInstSn, Map<String, Object> request );
 
   
   /**
@@ -107,13 +106,18 @@ public interface DisclosurePartnerService {
 
   
   /**
-   * 조회 결과를 반환한다.
-   *
-   * @param pblntSn pblntSn
-   * @param ptcpInstSn ptcpInstSn
-   * @return 처리 결과
+   * 참여취소 사유 조회(문자열). 내부·호환용.
    */
   String getCancelReason( Long pblntSn, Long ptcpInstSn );
+
+  
+  /**
+   * 참여취소 사유 조회: 사유문자, 등록자, 현재 사용자 기준 수정 가능 여부.
+   *
+   * @param editorUserType 세션 사용자 구분 (A: 관리자, P: 파트너 등)
+   * @param editorMbrId 파트너 등의 로그인 식별자({@code CustomUserDetails#getMbrId})
+   */
+  Map<String, Object> getCancelReasonView( Long pblntSn, Long ptcpInstSn, String editorUserType, String editorMbrId );
 
   
   /**
@@ -124,7 +128,7 @@ public interface DisclosurePartnerService {
    * @param ptcpInstSn ptcpInstSn
    * @param cancelReason cancelReason
    */
-  void updateCancelReason( UserVO user, Long pblntSn, Long ptcpInstSn, String cancelReason );
+  void updateCancelReason( CustomUserDetails user, Long pblntSn, Long ptcpInstSn, String cancelReason );
 
   
   /**
@@ -144,5 +148,5 @@ public interface DisclosurePartnerService {
    * @param pblntSn pblntSn
    * @return 처리 결과
    */
-  boolean tryCloseDisclosureIfAllSettled( UserVO user, Long pblntSn );
+  boolean tryCloseDisclosureIfAllSettled( CustomUserDetails user, Long pblntSn );
 }

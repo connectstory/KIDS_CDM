@@ -1,3 +1,4 @@
+import { DISCLOSURE_FILE_SE_CD } from "@/constants/types";
 import type {
   DisclosureCreateApiResponse,
   DisclosureCreateRequest,
@@ -9,7 +10,6 @@ import type {
   DisclosurePartnerApiResponse,
   DisclosurePartnerRequest,
   DisclosureSearchRequest,
-  DisclosureStatusApiResponse,
   DisclosureUpdateRequest,
 } from "@/interfaces/disclosureInterface.ts";
 import axios from "./axios";
@@ -67,22 +67,22 @@ function convertDisclosureStatus(serverCode: string | null | undefined): string 
   return DISCLOSURE_STATUS_MAP[serverCode] || serverCode;
 }
 
-/** 공시 진행상태코드 정규화 (01 / 02 / 03). 표시는 convertStatus, 업무 분기는 이 값 사용 */
-export function normalizePblntStcd(raw: string | null | undefined): string {
-  if (raw == null) return "";
-  const s = String(raw).trim();
-  if (!s) return "";
-  return s.length === 1 ? `0${s}` : s;
-}
-
 /** 협력기관: 업로드·현황등록·참여승인 — 공시 코드 02(진행중)일 때만 허용 */
 export function isPartnerSubmissionAllowed(pblntStcd: string | null | undefined): boolean {
-  return normalizePblntStcd(pblntStcd) === "02";
+  if (pblntStcd == null) return false;
+  const s = String(pblntStcd).trim();
+  if (!s) return false;
+  const n = s.length === 1 ? `0${s}` : s;
+  return n === "02";
 }
 
 export function getPartnerSubmissionBlockedMessage(pblntStcd: string | null | undefined): string {
-  const n = normalizePblntStcd(pblntStcd);
-  if (!n) return "공시 상태를 확인할 수 없습니다. 업로드·현황등록·참여승인을 진행할 수 없습니다.";
+  if (pblntStcd == null) {
+    return "공시 상태를 확인할 수 없습니다. 업로드·현황등록·참여승인을 진행할 수 없습니다.";
+  }
+  const s = String(pblntStcd).trim();
+  if (!s) return "공시 상태를 확인할 수 없습니다. 업로드·현황등록·참여승인을 진행할 수 없습니다.";
+  const n = s.length === 1 ? `0${s}` : s;
   if (n === "02") return "";
   if (n === "03") return "마감된 공시에서는 업로드·현황등록·참여승인을 진행할 수 없습니다.";
   if (n === "01") return "관리자가 공시를 시작한 후에만 업로드·현황등록·참여승인을 진행할 수 있습니다.";
@@ -264,7 +264,12 @@ export const DisclosureAPI = {
    * @param fileSeCd 파일구분코드 (01:IRB, 06:공시등록, 07:DRB, 08:CDM, 기본값: 08)
    * @param ptcpInstSn 참여기관일련번호 (기관별 파일 구분용, 선택)
    */
-  uploadFiles: async (pblntSn: string | number, files: File[], fileSeCd: string = "08", ptcpInstSn?: number | null) => {
+  uploadFiles: async (
+    pblntSn: string | number,
+    files: File[],
+    fileSeCd: string = DISCLOSURE_FILE_SE_CD.CDM,
+    ptcpInstSn?: number | null
+  ) => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append("files", file);
@@ -293,7 +298,12 @@ export const DisclosureAPI = {
    * @param fileSeCd 파일구분코드 (기본값: 08)
    * @param ptcpInstSn 참여기관일련번호 (선택)
    */
-  uploadCsvTmp: async (pblntSn: string | number, files: File[], fileSeCd: string = "08", ptcpInstSn?: number | null) => {
+  uploadCsvTmp: async (
+    pblntSn: string | number,
+    files: File[],
+    fileSeCd: string = DISCLOSURE_FILE_SE_CD.CDM,
+    ptcpInstSn?: number | null
+  ) => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append("files", file);
@@ -317,21 +327,6 @@ export const DisclosureAPI = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-    });
-    return response;
-  },
-
-  /**
-   * 파일 다운로드 (백엔드 권한 검증을 위해 pblntSn 필수)
-   * @param atchFileSn 첨부파일 식별자(UUID 또는 그룹 조회 키)
-   * @param pblntSn 공시일련번호
-   */
-  downloadFile: async (atchFileSn: string, pblntSn: string | number) => {
-    const params = new URLSearchParams();
-    params.set("atchFileSn", atchFileSn);
-    params.set("pblntSn", String(pblntSn));
-    const response = await axios.get(`${BASE_URL}/files/download?${params.toString()}`, {
-      responseType: "blob",
     });
     return response;
   },
@@ -399,11 +394,13 @@ export const DisclosureAPI = {
    * @param reason 취소사유 (상태가 "04"일 때만 사용)
    */
   requestPartnerStatus: async (pblntSn: string | number, ptcpInstSn: number, status?: string, reason?: string) => {
-    const response = await axios.post<void>(`${BASE_URL}/${pblntSn}/partners/request`, {
-      ptcpInstSn,
-      status: status || "02", // 기본값: 참여확정
-      reason: reason, // 취소사유 (상태가 "04"일 때만 사용)
-    });
+    const body: Record<string, string> = {
+      status: status ?? "02",
+    };
+    if (reason != null && String(reason).trim() !== "") {
+      body.reason = String(reason).trim();
+    }
+    const response = await axios.put(`${BASE_URL}/${pblntSn}/partners/${ptcpInstSn}/progress`, body);
     return response;
   },
 
@@ -439,15 +436,6 @@ export const DisclosureAPI = {
     const response = await axios.post(`${BASE_URL}/${pblntSn}/partners/${ptcpInstSn}/cancel-reason/update`, {
       cancelReason,
     });
-    return response;
-  },
-
-  /**
-   * 공시 진행 상태 코드만 조회 (관리자 또는 해당 공시 참여기관)
-   * @param pblntSn 공시일련번호
-   */
-  getDisclosureStatus: async (pblntSn: string | number) => {
-    const response = await axios.get<DisclosureStatusApiResponse>(`${BASE_URL}/${pblntSn}/status`);
     return response;
   },
 
@@ -491,8 +479,6 @@ export const DisclosureAPI = {
    * 상태 코드를 표시용 텍스트로 변환
    */
   convertStatus: convertDisclosureStatus,
-
-  normalizePblntStcd,
 
   isPartnerSubmissionAllowed,
 

@@ -295,7 +295,7 @@ export default function MemberQnaListView() {
           </Select>
         </div>
         <div className="tbl_controller">
-          <Button variant="contained" size="medium" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qna/write`)}>
+          <Button variant="contained" size="medium" onClick={() => navigate(`${routes.COMMUNITY.ROOT}/${boardType}/qna/create`)}>
             등록
           </Button>
         </div>

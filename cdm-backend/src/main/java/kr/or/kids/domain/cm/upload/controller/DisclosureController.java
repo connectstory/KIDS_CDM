@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.kids.domain.cm.common.dto.ApiResponse;
-import kr.or.kids.domain.cm.common.service.FileApiService;
-import kr.or.kids.domain.cm.common.vo.TbCaEFileTrsmVo;
-import kr.or.kids.domain.cm.common.vo.UserVO;
 import kr.or.kids.domain.cm.upload.dto.DisclosureCreateRequest;
 import kr.or.kids.domain.cm.upload.dto.DisclosureCreateResponse;
 import kr.or.kids.domain.cm.upload.dto.DisclosureDetailResponse;
@@ -50,15 +46,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DisclosureController {
 
-  private static final String MSG_LOGIN_REQUIRED = "로그인이 필요합니다.";
   private static final String MSG_NO_PBLNT_SN = "공시번호가 없습니다.";
-  private static final String JSON_KEY_PBLNT_SN = "pblntSn";
   private static final String JSON_KEY_PBLNT_PRGRS_STTS_CD = "pblntPrgrsSttsCd";
 
   private final DisclosureService disclosureService;
   private final DisclosurePartnerService disclosurePartnerService;
   private final DisclosureMemberResolver disclosureMemberResolver;
-  private final FileApiService fileApiService;
 
   private static Long parseLongQueryParam( String value ) {
     if (value == null || value.trim().isEmpty()) {
@@ -69,18 +62,6 @@ public class DisclosureController {
     } catch (NumberFormatException e ) {
       return null;
     }
-  }
-
-  private static UserVO toUserVO( CustomUserDetails user ) {
-    if (user == null) return null;
-    UserVO vo = new UserVO();
-    vo.setNi( user.getNi() );
-    vo.setUserNo( user.getUserNo() );
-    vo.setUserId( user.getMbrId() );
-    vo.setUserNm( user.getUserNm() );
-    vo.setUserTypeCd( user.getMbrTypeCd() );
-    vo.setUserSeCd( user.getUserSeCd() );
-    return vo;
   }
 
   private boolean isDisclosureFileAccessAllowed( DisclosureMemberVO member, CustomUserDetails user, Long pblntSn ) {
@@ -137,9 +118,6 @@ public class DisclosureController {
   @GetMapping
   public ResponseEntity<ApiResponse<List<DisclosureListResponse>>> list(DisclosureSearchRequest request,
       @AuthenticationPrincipal CustomUserDetails user) {
-    if (user == null) {
-      return ApiResponse.error(HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null);
-    }
     int page = request.getPage() != null ? request.getPage() : 1;
     int length = PaginationUtils.normalizeSearchLength(request.getLength());
     int total = 0;
@@ -173,45 +151,12 @@ public class DisclosureController {
     return ApiResponse.ok(ApiResponse.STATUS_SUCCESS, "공시 상세 조회 성공", disclosureService.findById(pblntSn));
   }
 
-  // 공시 상태 조회
-  @GetMapping("/{pblntSn}/status")
-  public ResponseEntity<ApiResponse<Map<String, Object>>> getDisclosureStatus(
-      @AuthenticationPrincipal CustomUserDetails user,
-      @PathVariable Long pblntSn ) {
-    if (user == null) {
-      return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-    }
-
-    if (pblntSn == null) {
-      return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_NO_PBLNT_SN, null );
-    }
-    DisclosureMemberVO memberAndInst = disclosureMemberResolver.resolve( pblntSn, user );
-    boolean allowed = Boolean.TRUE.equals( memberAndInst.getIsAdmin() )
-        || memberAndInst.getPartner() != null
-        || disclosureMemberResolver.isAllowedToViewDisclosureDetail( user, pblntSn );
-    if ( !allowed ) {
-      return ApiResponse.error( HttpStatus.FORBIDDEN, "해당 공시에 대한 조회 권한이 없습니다.", null );
-    }
-    String pblntPrgrsSttsCd = disclosureService.getStatus( pblntSn );
-    return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "공시 상태 조회 성공",
-        Map.of( JSON_KEY_PBLNT_SN, pblntSn, JSON_KEY_PBLNT_PRGRS_STTS_CD, pblntPrgrsSttsCd ) );
-  }
-
   // 공시 상태 수정
   @PostMapping("/{pblntSn}/status")
   public ResponseEntity<ApiResponse<Void>> updateDisclosureStatus(
       @AuthenticationPrincipal CustomUserDetails user,
       @PathVariable Long pblntSn,
       @RequestBody Map<String, Object> request ) {
-    if (user == null) {
-      return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-    }
-
-    UserVO u = toUserVO( user );
-    if (u == null) {
-      return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_LOGIN_REQUIRED, null );
-    }
-
     if (pblntSn == null) {
       return ApiResponse.error( HttpStatus.BAD_REQUEST, MSG_NO_PBLNT_SN, null );
     }
@@ -221,7 +166,7 @@ public class DisclosureController {
 
     Object statusObj = request != null ? request.get( JSON_KEY_PBLNT_PRGRS_STTS_CD ) : null;
     String pblntPrgrsSttsCd = statusObj != null ? String.valueOf( statusObj ).trim() : null;
-    disclosureService.updateStatus( u, pblntSn, pblntPrgrsSttsCd );
+    disclosureService.updateStatus( user, pblntSn, pblntPrgrsSttsCd );
     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "공시 상태가 변경되었습니다.", null );
   }
 
@@ -251,50 +196,11 @@ public class DisclosureController {
       request.setInstIds( Collections.emptyList() );
     }
 
-    UserVO u = toUserVO( user );
-    if (u == null) {
-      return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-    }
-    disclosurePartnerService.addPartners( u, pblntSn, request );
+    disclosurePartnerService.addPartners( user, pblntSn, request );
     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "참여기관이 성공적으로 동기화되었습니다.", null );
   }
 
-  @GetMapping("/files/download")
-  public ResponseEntity<?> downloadDisclosureFile(
-      @RequestParam String atchFileSn,
-      @RequestParam Long pblntSn,
-      @AuthenticationPrincipal CustomUserDetails user ) {
-    try {
-      if (atchFileSn == null || atchFileSn.trim().isEmpty()) {
-        return ApiResponse.error( HttpStatus.BAD_REQUEST, "첨부파일일련번호가 없습니다.", null );
-      }
-      DisclosureMemberVO memberAndInst = disclosureMemberResolver.resolve( pblntSn, user );
-      if (!isDisclosureFileAccessAllowed( memberAndInst, user, pblntSn )) {
-        return ApiResponse.error( HttpStatus.FORBIDDEN, "파일 다운로드 권한이 없습니다.", null );
-      }
-      TbCaEFileTrsmVo caFile = disclosureService.resolveDisclosureFileForDownload( memberAndInst, pblntSn, atchFileSn );
-      if (caFile == null || caFile.getSrvrFileNm() == null || caFile.getSrvrFileNm().trim().isEmpty()) {
-        return ApiResponse.error( HttpStatus.NOT_FOUND, "첨부파일을 찾을 수 없습니다.", null );
-      }
-      ResponseEntity<byte[]> apiResponse = fileApiService.downloadFile( caFile.getSrvrFileNm() );
-      if (apiResponse.getBody() == null || !apiResponse.getStatusCode().is2xxSuccessful()) {
-        return ApiResponse.error( HttpStatus.NOT_FOUND, "첨부파일을 찾을 수 없습니다.", null );
-      }
-      String downloadFileName = (caFile.getFileNm() != null && !caFile.getFileNm().trim().isEmpty())
-          ? caFile.getFileNm()
-          : caFile.getSrvrFileNm();
-
-      return ResponseEntity.ok()
-          .contentType( MediaType.APPLICATION_OCTET_STREAM )
-          .header( HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadFileName + "\"" )
-          .body( apiResponse.getBody() );
-    } catch (IllegalArgumentException e) {
-      return ApiResponse.error( HttpStatus.BAD_REQUEST, e.getMessage(), null );
-    } catch (Exception e ) {
-      return ApiResponse.error( HttpStatus.INTERNAL_SERVER_ERROR, "파일 다운로드에 실패했습니다.", null );
-    }
-  }
-
+  // 공시 파일 목록 조회
   @GetMapping("/{pblntSn}/files")
   public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDisclosureFiles(
       @PathVariable Long pblntSn,
@@ -309,6 +215,7 @@ public class DisclosureController {
     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "파일 목록 조회 성공", files );
   }
 
+  // 공시 파일 업로드
   @PostMapping(value = "/{pblntSn}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<List<String>>> uploadDisclosureFiles(
       @AuthenticationPrincipal CustomUserDetails user,
@@ -317,9 +224,6 @@ public class DisclosureController {
       @RequestParam(value = "fileSeCd", required = false, defaultValue = "08") String fileSeCd,
       @RequestParam(value = "ptcpInstSn", required = false) String ptcpInstSn ) {
     try {
-      if (user == null) {
-        return ApiResponse.error( HttpStatus.UNAUTHORIZED, MSG_LOGIN_REQUIRED, null );
-      }
       DisclosureMemberVO memberAndInst = disclosureMemberResolver.resolve( pblntSn, user );
       if (!isDisclosureFileAccessAllowed( memberAndInst, user, pblntSn )) {
         return ApiResponse.error( HttpStatus.FORBIDDEN, "파일 업로드 권한이 없습니다.", null );
@@ -344,6 +248,7 @@ public class DisclosureController {
     }
   }
 
+  // 공시 파일 삭제
   @DeleteMapping("/{pblntSn}/files/{atchFileId}")
   public ResponseEntity<ApiResponse<Void>> deleteDisclosureFile(
       @AuthenticationPrincipal CustomUserDetails user,

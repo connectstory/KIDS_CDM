@@ -189,7 +189,7 @@ public class ResearchController {
     }
   }
 
-  /** 분석 데이터셋 조건 기반 복사 (비동기). asmtSn으로 과제·참여기관(CDM)·최신 메타·엑셀·스키마 조회 후 복사. 복사 완료 시 해당 과제가 진행 상태로 변경됨 */
+  // 분석 데이터셋 조건 기반 복사 (비동기). asmtSn으로 과제·참여기관(CDM)·최신 메타·엑셀·스키마 조회 후 복사. 복사 완료 시 해당 과제가 진행 상태로 변경됨
   @PostMapping("/analysis-dataset")
   public ResponseEntity<ApiResponse<AnalysisDatasetTaskResponse>> submitAnalysisDatasetCopy( @AuthenticationPrincipal CustomUserDetails user, @RequestParam("asmtSn") Long asmtSn ) {
     researchMemberResolver.resolve( null, user );
@@ -204,7 +204,7 @@ public class ResearchController {
     }
   }
 
-  /** 분석 데이터셋 복사 작업 상태 조회 */
+  // 분석 데이터셋 복사 작업 상태 조회
   @GetMapping("/analysis-dataset/tasks/{taskId}")
   public ResponseEntity<ApiResponse<AnalysisDatasetTaskResponse>> getAnalysisDatasetTaskStatus( @AuthenticationPrincipal CustomUserDetails user, @PathVariable String taskId ) {
     researchMemberResolver.resolve( null, user );
@@ -248,7 +248,7 @@ public class ResearchController {
     }
   }
 
-  /** IRB/DRB 파일 업로드 (file_se_cd=05) */
+  // IRB/DRB 파일 업로드 (file_se_cd=05)
   @PostMapping(value = "/{asmtSn}/irb-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<Void>> uploadIrbFiles( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @RequestPart(value = "files", required = false) List<MultipartFile> files ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );
@@ -256,7 +256,7 @@ public class ResearchController {
     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "IRB/DRB 파일 업로드 성공", null );
   }
 
-  /** IRB 파일 삭제 (본인 업로드분만, DRB는 삭제 불가) */
+  // IRB 파일 삭제 (본인 업로드분만, DRB는 삭제 불가)
   @DeleteMapping("/{asmtSn}/irb-files/{atchFileId}")
   public ResponseEntity<ApiResponse<Void>> deleteIrbFile( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @PathVariable String atchFileId ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );
@@ -269,7 +269,7 @@ public class ResearchController {
     }
   }
 
-  /** 참여기관 공유파일 업로드 (file_se_cd=17, pst_sn+ptcp_inst_sn 기준) */
+  // 참여기관 공유파일 업로드 (file_se_cd=17, pst_sn+ptcp_inst_sn 기준)
   @PostMapping(value = "/{asmtSn}/partner-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<Void>> uploadPartnerFiles( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @RequestParam("asmtPtcpInstSn") Long asmtPtcpInstSn, @RequestPart(value = "files", required = false) List<MultipartFile> files ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );
@@ -278,7 +278,7 @@ public class ResearchController {
     return ApiResponse.ok( ApiResponse.STATUS_SUCCESS, "참여기관 공유파일 업로드 성공", null );
   }
 
-  /** 참여기관 공유파일 삭제 (file_se_cd=17, pst_sn+ptcp_inst_sn+atchFileId 기준) */
+  // 참여기관 공유파일 삭제 (file_se_cd=17, pst_sn+ptcp_inst_sn+atchFileId 기준)
   @DeleteMapping("/{asmtSn}/partner-files/{atchFileId}")
   public ResponseEntity<ApiResponse<Void>> deletePartnerFile( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @PathVariable String atchFileId, @RequestParam("asmtPtcpInstSn") Long asmtPtcpInstSn ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );
@@ -291,7 +291,7 @@ public class ResearchController {
     }
   }
 
-  /** 연구과제 등록자/관리자 첨부파일 업로드 (file_se_cd=19) */
+  // 연구과제 등록자/관리자 첨부파일 업로드 (file_se_cd=19)
   @PostMapping(value = "/{asmtSn}/admin-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<Void>> uploadAdminFiles( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @RequestPart(value = "files", required = false) List<MultipartFile> files ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );
@@ -312,7 +312,7 @@ public class ResearchController {
     }
   }
 
-  /** 연구과제 등록자/관리자 첨부파일 삭제 (file_se_cd=19) */
+  // 연구과제 등록자/관리자 첨부파일 삭제 (file_se_cd=19)
   @DeleteMapping("/{asmtSn}/admin-files/{atchFileId}")
   public ResponseEntity<ApiResponse<Void>> deleteAdminFile( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @PathVariable String atchFileId ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );
@@ -333,7 +333,7 @@ public class ResearchController {
     }
   }
 
-  /** 연구과제 파일 목록 조회 (uldTaskSeCd=01, fileSeCd 필터) */
+  // 연구과제 파일 목록 조회 (uldTaskSeCd=01, fileSeCd 필터)
   @GetMapping("/{asmtSn}/files")
   public ResponseEntity<ApiResponse<List<CaFileItem>>> getResearchFiles( @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long asmtSn, @RequestParam(value = "uldTaskSeCd", required = false, defaultValue = "01") String uldTaskSeCd, @RequestParam(value = "fileSeCd", required = true) String fileSeCd, @RequestParam(value = "ptcpInstSn", required = false) Long ptcpInstSn ) {
     ResearchMemberVO memberAndInst = researchMemberResolver.resolve( asmtSn, user );

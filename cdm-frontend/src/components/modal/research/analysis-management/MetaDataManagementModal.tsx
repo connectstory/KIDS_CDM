@@ -88,12 +88,7 @@ export default function MetaDataManagementModal() {
     refetch,
     isLoading: isLoadingAnalysisList,
     isError: isErrorAnalysisList,
-  } = useAnalysisDataList(
-    research?.asmtSn ?? null,
-    rsltGroupStcd,
-    undefined,
-    !!research?.asmtSn && !!modal?.open
-  );
+  } = useAnalysisDataList(research?.asmtSn ?? null, rsltGroupStcd, undefined, !!research?.asmtSn && !!modal?.open);
 
   /* ------------------------------
    * 모달이 열릴 때 상태 초기화
@@ -280,7 +275,7 @@ export default function MetaDataManagementModal() {
     const { data: isAllCompleted } = await refetchAllStatusCompleted();
     if (!isAllCompleted) {
       await confirmModal.open({
-        title: "확인",
+        title: STRINGS.CONFIRM,
         message: "통합 데이터 / 기관 데이터 분석결과가 검토완료 상태이어야 합니다.",
         width: "xs",
         fullWidth: true,
@@ -511,7 +506,11 @@ export default function MetaDataManagementModal() {
                       borderRadius: "50%",
                     }}
                   >
-                    <Box component="i" className="fa-solid fa-file-arrow-up" sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }} />
+                    <Box
+                      component="i"
+                      className="fa-solid fa-file-arrow-up"
+                      sx={{ fontSize: "4.5rem", color: "grey.400", lineHeight: 1 }}
+                    />
                   </Box>
                   <SpaceBox gap={CONTENT_GAP.LARGE} />
                   <Typography variant="h5">분석결과가 없습니다.</Typography>
